@@ -1,0 +1,155 @@
+/* Corrections de contraste et lisibilité */
+.text-gray-500 {
+    color: #a0aec0 !important; /* Plus clair pour meilleur contraste */
+}
+
+.text-gray-700 {
+    color: #e2e8f0 !important; /* Beaucoup plus clair pour être lisible sur fond sombre */
+}
+
+/* Améliorations des tableaux */
+.table-styled {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.table-styled thead tr {
+    background-color: rgba(55, 65, 81, 0.8) !important; /* Gris plus foncé */
+}
+
+.table-styled thead th {
+    color: #ffffff;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    padding: 0.75rem 1rem;
+    letter-spacing: 0.05em;
+}
+
+.table-styled tbody tr {
+    transition: background-color 0.2s;
+}
+
+.table-styled tbody tr:hover {
+    background-color: rgba(75, 85, 99, 0.3) !important;
+}
+
+.table-styled tbody td {
+    padding: 0.75rem 1rem;
+    color: #e2e8f0;
+}
+
+/* Badges d'état améliorés */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.badge-success {
+    background-color: rgba(72, 187, 120, 0.2);
+    color: #48bb78;
+    border: 1px solid rgba(72, 187, 120, 0.4);
+}
+
+.badge-warning {
+    background-color: rgba(237, 137, 54, 0.2);
+    color: #ed8936;
+    border: 1px solid rgba(237, 137, 54, 0.4);
+}
+
+.badge-danger {
+    background-color: rgba(245, 101, 101, 0.2);
+    color: #f56565;
+    border: 1px solid rgba(245, 101, 101, 0.4);
+}
+
+.badge-info {
+    background-color: rgba(66, 153, 225, 0.2);
+    color: #4299e1;
+    border: 1px solid rgba(66, 153, 225, 0.4);
+}
+
+/* Améliorations des cartes */
+.card {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background-color: rgba(45, 55, 72, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: rgba(26, 32, 44, 0.4);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Animation pour les transitions de hover */
+.hover-transition {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Styles spécifiques pour les boutons d'action dans les tables */
+.btn-action {
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+    background-color: rgba(66, 153, 225, 0.8);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: rgba(66, 153, 225, 1);
+}
+
+.btn-secondary {
+    background-color: rgba(160, 174, 192, 0.8);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: rgba(160, 174, 192, 1);
+}
+
+/* Correction des liens dans la sidebar pour meilleure lisibilité */
+.sidebar-item:hover {
+    background-color: rgba(55, 65, 81, 0.5) !important;
+}
+
+/* Améliorations pour les composants dropdown */
+.dropdown-menu {
+    background-color: #1a202c;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.dropdown-item {
+    color: #e2e8f0;
+    padding: 0.5rem 1rem;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(55, 65, 81, 0.5);
+    color: #ffffff;
+}
