@@ -305,6 +305,9 @@
                                 <a href="{{ route('produits.create') }}" class="btn-action btn-primary">
                                     Ajouter un produit
                                 </a>
+                                <a href="{{ route('qrcode.chantier.print', $chantier->id) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                Imprimer QR Code
+                                </a>
                             </div>
                         @endif
                     </div>

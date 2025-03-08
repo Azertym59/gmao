@@ -34,6 +34,7 @@
                     <x-nav-link :href="route('rapports.index')" :active="request()->routeIs('rapports.*')">
                         {{ __('Rapports') }}
                     </x-nav-link>
+                    
                     @if (Auth::user()->isAdmin())
                     <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                         <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">

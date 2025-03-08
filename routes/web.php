@@ -47,6 +47,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/rapports/performance', [App\Http\Controllers\RapportController::class, 'genererRapportPerformance'])->name('rapports.performance');
     Route::get('/rapports/inventaire', [App\Http\Controllers\RapportController::class, 'genererRapportInventaire'])->name('rapports.inventaire');
     Route::get('/rapports/statistiques', [App\Http\Controllers\RapportController::class, 'genererRapportStatistiques'])->name('rapports.statistiques');
+    // Routes pour les QR codes
+    Route::prefix('qrcode')->name('qrcode.')->group(function () {
+    // Routes pour les chantiers
+    Route::get('/chantier/{id}/print', [App\Http\Controllers\QrCode\ChantierQrCodeController::class, 'printLabel'])->name('chantier.print');
+    Route::get('/chantier/{id}', [App\Http\Controllers\QrCode\ChantierQrCodeController::class, 'show'])->name('chantier.show');
+    // Route pour la page de scan
+    Route::get('/scan', function () {
+        return view('qrcodes.scan');
+    })->name('qrcode.scan');
+    }); 
+
+    // Routes pour les dalles
+    Route::get('/dalle/{id}/print', [App\Http\Controllers\QrCode\DalleQrCodeController::class, 'printLabel'])->name('dalle.print');
+    Route::get('/dalle/{id}', [App\Http\Controllers\QrCode\DalleQrCodeController::class, 'show'])->name('dalle.show');
+    
+    // Routes pour les modules
+    Route::get('/module/{id}/print', [App\Http\Controllers\QrCode\ModuleQrCodeController::class, 'printLabel'])->name('module.print');
+    Route::get('/module/{id}', [App\Http\Controllers\QrCode\ModuleQrCodeController::class, 'show'])->name('module.show');
+
     // Route pour le tableau de bord technicien
     Route::get('/technicien/dashboard', [App\Http\Controllers\TechnicienDashboardController::class, 'index'])
     ->middleware(['auth'])

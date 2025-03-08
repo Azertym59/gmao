@@ -103,6 +103,9 @@
                                                 Détails
                                             </a>
                                         </div>
+                                        <a href="{{ route('qrcode.dalle.print', $dalle->id) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                        Imprimer QR Code
+                                        </a>
                                     </div>
                                 @endforeach
                             </div>
