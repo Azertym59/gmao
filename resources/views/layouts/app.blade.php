@@ -281,7 +281,11 @@
                 
                 <!-- Contenu principal -->
                 <div class="space-y-6">
+                @if(isset($slot))
                     {{ $slot }}
+                @else
+                    @yield('content', '')
+                @endif
                 </div>
             </main>
             

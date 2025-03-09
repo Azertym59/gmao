@@ -305,12 +305,18 @@
                                 <a href="{{ route('produits.create') }}" class="btn-action btn-primary">
                                     Ajouter un produit
                                 </a>
-                                <a href="{{ route('qrcode.chantier.print', $chantier->id) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                Imprimer QR Code
-                                </a>
                             </div>
                         @endif
                     </div>
+                    <!-- Ajoutez le bouton ICI -->
+                    <div class="text-center mt-6">
+                        <a href="{{ route('qrcode.chantier.print', $chantier->id) }}" 
+                        class="btn-action btn-primary inline-flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4M4 8h16V5a1 1 0 00-1-1H5a1 1 0 00-1 1v3zm16 4v7a1 1 0 01-1 1H5a1 1 0 01-1-1v-7" />
+                            </svg>
+                            Générer QR Code
+                        </a>
                 </div>
             </div>
         </div>
