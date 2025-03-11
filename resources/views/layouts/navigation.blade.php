@@ -34,6 +34,21 @@
                     <x-nav-link :href="route('rapports.index')" :active="request()->routeIs('rapports.*')">
                         {{ __('Rapports') }}
                     </x-nav-link>
+                    <!-- Ajoutez ce bloc dans la section des liens de navigation, généralement après les autres éléments du menu -->
+                    @if(true)
+                        <!-- Séparateur -->
+                        <div class="border-t border-gray-200 my-2"></div>
+
+                        <!-- Élément de menu Gestion des Impressions -->
+                        <x-nav-link href="{{ route('printers.index') }}" :active="request()->routeIs('printers.*')">
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                {{ __('Gestion des imprimantes') }}
+                            </div>
+                        </x-nav-link>
+                    @endif
                     
                     @if (Auth::user()->isAdmin())
                     <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
@@ -118,6 +133,19 @@
             <x-responsive-nav-link :href="route('rapports.index')" :active="request()->routeIs('rapports.*')">
                         {{ __('Rapports') }}
             </x-responsive-nav-link>
+            <!-- Version pour les appareils mobiles (menu hamburger) -->
+            @if(true)
+                <div class="pt-2 pb-3 space-y-1">
+                    <x-responsive-nav-link href="{{ route('printers.index') }}" :active="request()->routeIs('printers.*')">
+                        <div class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            {{ __('Gestion des imprimantes') }}
+                        </div>
+                    </x-responsive-nav-link>
+                </div>
+            @endif
             @if (Auth::user()->isAdmin())
             <div class="pt-4 pb-1 border-t border-gray-700">
                 <div class="px-4">
