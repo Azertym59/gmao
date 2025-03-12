@@ -15,6 +15,7 @@
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="{{ asset('css/fixes.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2/qz-tray.js"></script>
 </head>
 <body class="font-sans antialiased bg-app-bg text-text-primary">
     <div class="flex h-screen overflow-hidden">

@@ -113,6 +113,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/printers/{id}/direct-print', [App\Http\Controllers\PrinterController::class, 'directPrint'])->name('printers.direct-print');
         Route::get('/printers/{id}/test-http', [App\Http\Controllers\PrinterController::class, 'testHttp'])->name('printers.test_http');
         Route::get('/printers/{id}/test-brother', [App\Http\Controllers\PrinterController::class, 'testBrotherPrint'])->name('printers.test-brother');
+        Route::get('/api/imprimer-etiquette/{id}', [EtiquetteController::class, 'imprimer']);
         
         // Routes d'administration
         Route::prefix('admin')->name('admin.')->group(function () {
