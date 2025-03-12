@@ -46,14 +46,48 @@ class Printer extends Model
      */
     public function isAvailable()
     {
-        // Pour les imprimantes réseau, vérifier si elles répondent
+        \Log::info('Checking printer availability', [
+            'printer_id' => $this->id,
+            'name' => $this->name,
+            'connection_type' => $this->connection_type,
+            'ip_address' => $this->ip_address,
+            'port' => $this->port
+        ]);
+    
         if ($this->connection_type === 'network' && $this->ip_address) {
-            // Simple ping pour vérifier si l'imprimante répond
-            $ping = @fsockopen($this->ip_address, $this->port ?: 9100, $errno, $errstr, 1);
-            return $ping !== false;
+            // Vérification par ping
+            exec("ping -c 4 " . escapeshellarg($this->ip_address), $output, $result);
+            
+            \Log::info('Ping result', [
+                'result' => $result,
+                'output' => $output
+            ]);
+    
+            if ($result === 0) {
+                return true;
+            }
+    
+            // Test de socket
+            $socket = @fsockopen(
+                $this->ip_address, 
+                $this->port ?: 9100, 
+                $errno, 
+                $errstr, 
+                2
+            );
+    
+            \Log::info('Socket check', [
+                'socket_opened' => $socket !== false,
+                'errno' => $errno,
+                'errstr' => $errstr
+            ]);
+    
+            if ($socket) {
+                fclose($socket);
+                return true;
+            }
         }
         
-        // Par défaut, supposer que l'imprimante est disponible
         return $this->is_active;
     }
 

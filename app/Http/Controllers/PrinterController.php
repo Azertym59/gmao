@@ -34,27 +34,39 @@ class PrinterController extends Controller
      * Enregistrer une nouvelle imprimante
      */
     public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'model' => 'required|string|max:255',
-            'ip_address' => 'nullable|string|max:45',
-            'port' => 'nullable|numeric',
-            'label_width' => 'required|numeric',
-            'label_height' => 'required|numeric',
-            'is_default' => 'boolean'
-        ]);
+{
+    $validationRules = [
+        'name' => 'required|string|max:255',
+        'model' => 'required|string|max:255',
+        'connection_type' => 'nullable|string',
+        'ip_address' => 'nullable|string|max:45',
+        'is_default' => 'boolean',
+        'dpi' => 'nullable|numeric',
+    ];
 
-        // Si cette imprimante est définie comme par défaut, retirer le statut par défaut des autres
-        if ($request->has('is_default') && $request->is_default) {
-            Printer::where('is_default', true)->update(['is_default' => false]);
-        }
-
-        Printer::create($request->all());
-
-        return redirect()->route('printers.index')
-            ->with('success', 'Imprimante ajoutée avec succès');
+    // Ajouter des règles conditionnelles pour les dimensions
+    if ($request->input('label_format') === 'custom') {
+        $validationRules['label_width'] = 'required|numeric|min:1';
+        $validationRules['label_height'] = 'required|numeric|min:1';
+    } else {
+        $validationRules['label_width'] = 'nullable|numeric';
+        $validationRules['label_height'] = 'nullable|numeric';
     }
+
+    // Effectuer la validation
+    $validatedData = $request->validate($validationRules);
+
+    // Si cette imprimante est définie comme par défaut, retirer le statut par défaut des autres
+    if ($request->has('is_default') && $request->is_default) {
+        Printer::where('is_default', true)->update(['is_default' => false]);
+    }
+
+    // Créer l'imprimante
+    $printer = Printer::create($validatedData);
+
+    return redirect()->route('printers.index')
+        ->with('success', 'Imprimante ajoutée avec succès');
+}
 
     /**
      * Afficher une imprimante spécifique
@@ -133,4 +145,17 @@ class PrinterController extends Controller
         return redirect()->route('printers.index')
             ->with('success', 'Imprimante "' . $printer->name . '" définie comme imprimante par défaut');
     }
+
+    public function updatePrinterStatus()
+{
+    $printers = Printer::all();
+    
+    foreach ($printers as $printer) {
+        $status = $printer->isAvailable() ? 'online' : 'offline';
+        $printer->update(['status' => $status]);
+    }
+
+    return redirect()->route('printers.index')
+        ->with('success', 'Statut des imprimantes mis à jour');
+}
 }

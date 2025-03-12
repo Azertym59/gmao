@@ -103,6 +103,10 @@
                     </div>
                 </div>
 
+                <!-- Champs cachés pour les dimensions d'étiquette -->
+                <input type="hidden" name="label_width" id="label_width" value="">
+                <input type="hidden" name="label_height" id="label_height" value="">
+
                 <!-- Options avancées -->
                 <div class="border-t border-gray-700 pt-6">
                     <h3 class="text-lg font-semibold text-text-primary mb-4">Options avancées</h3>
@@ -140,48 +144,9 @@
                 </div>
             </form>
         </div>
-        
-        <!-- Aide à la configuration -->
-        <div class="glassmorphism border border-blue-500/20 rounded-lg overflow-hidden">
-            <div class="bg-blue-500/10 px-6 py-4 border-b border-blue-500/20">
-                <h2 class="text-lg font-semibold text-blue-300">Conseils pour la configuration</h2>
-            </div>
-            <div class="p-6 text-text-secondary">
-                <ul class="space-y-3">
-                    <li class="flex items-start">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent-blue mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>Pour les imprimantes réseau, assurez-vous que l'adresse IP est statique ou réservée dans votre DHCP.</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent-blue mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>Les imprimantes Brother doivent avoir le mode P-touch activé pour fonctionner correctement avec le système.</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent-blue mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>Vérifiez que le type d'étiquette chargé dans l'imprimante correspond au format sélectionné.</span>
-                    </li>
-                </ul>
-                
-                <div class="mt-4 pt-4 border-t border-gray-700">
-                    <p>
-                        Pour obtenir de l'aide supplémentaire, consultez la 
-                        <a href="#" class="text-accent-blue hover:text-blue-400 transition-colors">
-                            documentation des imprimantes
-                        </a>
-                        ou contactez le support technique.
-                    </p>
-                </div>
-            </div>
-        </div>
     </div>
 
-    <!-- Script pour les champs conditionnels -->
+    <!-- Script pour les champs conditionnels et dimensions -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const connectionTypeSelect = document.getElementById('connection_type');
@@ -206,7 +171,47 @@
                 } else {
                     customFormatContainer.classList.add('hidden');
                 }
+                updateLabelDimensions();
             });
+            
+            // Fonction pour mettre à jour les dimensions d'étiquette
+            function updateLabelDimensions() {
+                const labelWidthHidden = document.getElementById('label_width');
+                const labelHeightHidden = document.getElementById('label_height');
+                const customWidthInput = document.getElementById('custom_width');
+                const customHeightInput = document.getElementById('custom_height');
+
+                switch(labelFormatSelect.value) {
+                    case '62mm':
+                        labelWidthHidden.value = 62;
+                        labelHeightHidden.value = 100; // valeur par défaut
+                        break;
+                    case '29mm':
+                        labelWidthHidden.value = 29;
+                        labelHeightHidden.value = 90; // valeur par défaut
+                        break;
+                    case '102mm':
+                        labelWidthHidden.value = 102;
+                        labelHeightHidden.value = 150; // valeur par défaut
+                        break;
+                    case '17mm':
+                        labelWidthHidden.value = 17;
+                        labelHeightHidden.value = 54; // valeur par défaut
+                        break;
+                    case 'custom':
+                        labelWidthHidden.value = customWidthInput.value || '';
+                        labelHeightHidden.value = customHeightInput.value || '';
+                        break;
+                    default:
+                        labelWidthHidden.value = '';
+                        labelHeightHidden.value = '';
+                }
+            }
+
+            // Ajouter des écouteurs pour mettre à jour les dimensions
+            labelFormatSelect.addEventListener('change', updateLabelDimensions);
+            document.getElementById('custom_width').addEventListener('input', updateLabelDimensions);
+            document.getElementById('custom_height').addEventListener('input', updateLabelDimensions);
             
             // Initialiser l'état des champs conditionnels
             if (connectionTypeSelect.value === 'network') {
@@ -216,6 +221,9 @@
             if (labelFormatSelect.value === 'custom') {
                 customFormatContainer.classList.remove('hidden');
             }
+
+            // Initialiser les dimensions au chargement
+            updateLabelDimensions();
         });
     </script>
 </x-app-layout>
