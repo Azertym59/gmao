@@ -109,6 +109,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware([AdminMiddleware::class])->group(function () {
         // Gestion des imprimantes (admin uniquement)
         Route::resource('printers', PrinterController::class);
+        Route::get('/printers/{id}/test', [App\Http\Controllers\PrinterController::class, 'testPrint'])->name('printers.test');
+        Route::get('/printers/{id}/direct-print', [App\Http\Controllers\PrinterController::class, 'directPrint'])->name('printers.direct-print');
+        Route::get('/printers/{id}/test-http', [App\Http\Controllers\PrinterController::class, 'testHttp'])->name('printers.test_http');
+        Route::get('/printers/{id}/test-brother', [App\Http\Controllers\PrinterController::class, 'testBrotherPrint'])->name('printers.test-brother');
         
         // Routes d'administration
         Route::prefix('admin')->name('admin.')->group(function () {
