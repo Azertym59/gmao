@@ -1,191 +1,138 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
-    <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
-                <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
-                    </a>
-                </div>
+<!-- Sidebar / Menu latéral -->
+<div id="sidebar" class="bg-sidebar flex-shrink-0 w-64 fixed h-full z-10 transition-all duration-300">
+    <div class="flex flex-col h-full">
+        <!-- Logo avec taille maximale -->
+        <div class="flex items-center justify-center h-[100px] bg-black p-0">
+            <img src="https://www.tecaled.fr/Logos/Logo%20rectangle%20V2.png" 
+                alt="TecaLED" 
+                class="w-full max-h-[90px] object-contain px-2">
+        </div>
+        
+        <!-- Menu principal -->
+        <nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+            <!-- Dashboard -->
+            <a href="{{ route('dashboard') }}" class="sidebar-item flex items-center px-4 py-3 text-text-primary rounded-lg {{ request()->routeIs('dashboard') ? 'bg-accent-blue/20 text-accent-blue' : 'hover:bg-gray-800' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span>Tableau de bord</span>
+            </a>
+            
+            <!-- Chantiers -->
+            <a href="{{ route('chantiers.index') }}" class="sidebar-item flex items-center px-4 py-3 text-text-primary rounded-lg {{ request()->routeIs('chantiers.*') ? 'bg-accent-green/20 text-accent-green' : 'hover:bg-gray-800' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span>Chantiers</span>
+            </a>
+            
+            <!-- Clients -->
+            <a href="{{ route('clients.index') }}" class="sidebar-item flex items-center px-4 py-3 text-text-primary rounded-lg {{ request()->routeIs('clients.*') ? 'bg-accent-purple/20 text-accent-purple' : 'hover:bg-gray-800' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span>Clients</span>
+            </a>
+            
+            <!-- Produits -->
+            <a href="{{ route('produits.index') }}" class="sidebar-item flex items-center px-4 py-3 text-text-primary rounded-lg {{ request()->routeIs('produits.*') ? 'bg-accent-pink/20 text-accent-pink' : 'hover:bg-gray-800' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                </svg>
+                <span>Produits</span>
+            </a>
+            
+            <!-- Catalogue -->
+            <a href="{{ route('produits-catalogue.index') }}" class="sidebar-item flex items-center px-4 py-3 text-text-primary rounded-lg {{ request()->routeIs('produits-catalogue.*') ? 'bg-accent-pink/20 text-accent-pink' : 'hover:bg-gray-800' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span>Catalogue</span>
+            </a>
+            
+            <!-- Interventions -->
+            <a href="{{ route('interventions.index') }}" class="sidebar-item flex items-center px-4 py-3 text-text-primary rounded-lg {{ request()->routeIs('interventions.*') ? 'bg-accent-yellow/20 text-accent-yellow' : 'hover:bg-gray-800' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>Interventions</span>
+            </a>
+            
+            <!-- Rapports -->
+            <a href="{{ route('rapports.index') }}" class="sidebar-item flex items-center px-4 py-3 text-text-primary rounded-lg {{ request()->routeIs('rapports.*') ? 'bg-accent-red/20 text-accent-red' : 'hover:bg-gray-800' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Rapports</span>
+            </a>
 
-                <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
-                    <!-- Ajouter le lien Clients ici -->
-                    <x-nav-link :href="route('clients.index')" :active="request()->routeIs('clients.*')">
-                        {{ __('Clients') }}
-                    </x-nav-link>
-                    <!-- Ajouter le lien Chantiers ici -->
-                    <x-nav-link :href="route('chantiers.index')" :active="request()->routeIs('chantiers.*')">
-                        {{ __('Chantiers') }}
-                    </x-nav-link>
-                    <!-- Ajouter le lien Produits ici -->
-                    <x-nav-link :href="route('produits.index')" :active="request()->routeIs('produits.*')">
-                        {{ __('Produits') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('produits-catalogue.index')" :active="request()->routeIs('produits-catalogue.*')">
-                        {{ __('Catalogue') }}
-                    </x-nav-link>
-                    <!-- Lien vers les rapports -->
-                    <x-nav-link :href="route('rapports.index')" :active="request()->routeIs('rapports.*')">
-                        {{ __('Rapports') }}
-                    </x-nav-link>
-
-                    @if(auth()->check())
-    <div>
-        Connecté en tant que : {{ auth()->user()->name }}
-        Rôle : {{ auth()->user()->role }}
-        Est admin : {{ auth()->user()->isAdmin() ? 'Oui' : 'Non' }}
-        Est technicien : {{ auth()->user()->isTechnicien() ? 'Oui' : 'Non' }}
-    </div>
-@endif
-
-@if(auth()->user()->isAdmin() || auth()->user()->isTechnicien())
-    <x-nav-link :href="route('printers.index')" :active="request()->routeIs('printers.*')">
-        <i class="mr-2 fas fa-print"></i> {{ __('Gestion des Imprimantes') }}
-    </x-nav-link>
-@endif
-                    
-                    @if (Auth::user()->isAdmin())
-                    <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                        <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                            {{ __('Admin') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users*')">
-                            {{ __('Utilisateurs') }}
-                        </x-nav-link>
-                    </div>
-                    @endif
-                </div>
+            <!-- Section Configuration -->
+            <div class="pt-4 mt-4 border-t border-gray-700">
+                <h3 class="px-4 text-sm font-semibold text-text-secondary uppercase tracking-wider">
+                    Configuration
+                </h3>
             </div>
 
-            <!-- Settings Dropdown -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
+            <!-- Tableau de bord technicien (si role est technicien) -->
+            @if(auth()->check() && auth()->user()->role === 'technicien')
+            <a href="{{ route('technicien.dashboard') }}" class="sidebar-item flex items-center px-4 py-3 text-text-primary rounded-lg {{ request()->routeIs('technicien.dashboard') ? 'bg-yellow-500/20 text-yellow-400' : 'hover:bg-gray-800' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span>Mon tableau de bord</span>
+            </a>
+            @endif
 
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
+            <!-- Section admin (si role est admin) -->
+            @if(auth()->check() && auth()->user()->role === 'admin')
+            <a href="{{ route('admin.dashboard') }}" class="sidebar-item flex items-center px-4 py-3 text-text-primary rounded-lg {{ request()->routeIs('admin.dashboard') ? 'bg-indigo-500/20 text-indigo-400' : 'hover:bg-gray-800' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span>Tableau de bord admin</span>
+            </a>
+            
+            <a href="{{ route('admin.users') }}" class="sidebar-item flex items-center px-4 py-3 text-text-primary rounded-lg {{ request()->routeIs('admin.users*') ? 'bg-indigo-500/20 text-indigo-400' : 'hover:bg-gray-800' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span>Gestion des utilisateurs</span>
+            </a>
+            
+            <!-- Configuration Imprimante (admin seulement) -->
+            <a href="{{ route('printers.index') }}" class="sidebar-item flex items-center px-4 py-3 text-text-primary rounded-lg {{ request()->routeIs('printers.*') ? 'bg-blue-500/20 text-blue-500' : 'hover:bg-gray-800' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                <span>Configuration Imprimante</span>
+            </a>
+            @endif
+            
+            <!-- Mon profil (visible par tous) -->
+            <a href="{{ route('profile.edit') }}" class="sidebar-item flex items-center px-4 py-3 text-text-primary rounded-lg {{ request()->routeIs('profile.*') ? 'bg-blue-500/20 text-blue-500' : 'hover:bg-gray-800' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span>Mon profil</span>
+            </a>
+        </nav>
+        
+        <!-- Profile section du bas -->
+        <div class="border-t border-gray-700 p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <img class="h-10 w-10 rounded-full bg-gray-700" src="{{ Auth::user()->profile_photo_url ?? 'https://ui-avatars.com/api/?name='.urlencode(Auth::user()->name).'&color=7F9CF5&background=EBF4FF' }}" alt="{{ Auth::user()->name }}">
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-text-primary">{{ Auth::user()->name }}</p>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="text-xs text-text-secondary hover:text-text-primary">
+                            Déconnexion
                         </button>
-                    </x-slot>
-
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
-
-                        <!-- Authentication -->
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-
-                            <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
-                        </form>
-                    </x-slot>
-                </x-dropdown>
-            </div>
-
-            <!-- Hamburger -->
-            <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-
-    <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
-            <!-- Ajouter le lien Clients pour la version mobile aussi -->
-            <x-responsive-nav-link :href="route('clients.index')" :active="request()->routeIs('clients.*')">
-                {{ __('Clients') }}
-            </x-responsive-nav-link>
-            <!-- Ajouter le lien Chantiers ici -->
-            <x-responsive-nav-link :href="route('chantiers.index')" :active="request()->routeIs('chantiers.*')">
-                {{ __('Chantiers') }}
-            </x-responsive-nav-link>
-            <!-- Ajouter le lien Produits ici -->
-            <x-responsive-nav-link :href="route('produits.index')" :active="request()->routeIs('produits.*')">
-                {{ __('Produits') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('produits-catalogue.index')" :active="request()->routeIs('produits-catalogue.*')">
-                        {{ __('Catalogue') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('rapports.index')" :active="request()->routeIs('rapports.*')">
-                        {{ __('Rapports') }}
-            </x-responsive-nav-link>
-            <!-- Version pour les appareils mobiles (menu hamburger) -->
-            @if(true)
-                <div class="pt-2 pb-3 space-y-1">
-                    <x-responsive-nav-link href="{{ route('printers.index') }}" :active="request()->routeIs('printers.*')">
-                        <div class="flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                            </svg>
-                            {{ __('Gestion des imprimantes') }}
-                        </div>
-                    </x-responsive-nav-link>
-                </div>
-            @endif
-            @if (Auth::user()->isAdmin())
-            <div class="pt-4 pb-1 border-t border-gray-700">
-                <div class="px-4">
-                    <div class="font-medium text-base text-indigo-300">Administration</div>
-                </div>
-                <div class="mt-3 space-y-1">
-                    <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                        {{ __('Tableau de bord') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('admin.users')" :active="request()->routeIs('admin.users*')">
-                        {{ __('Gestion des utilisateurs') }}
-                    </x-responsive-nav-link>
-                </div>
-            </div>
-            @endif
-        </div>
-
-        <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
-            </div>
-
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
-
-                <!-- Authentication -->
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
-                </form>
-            </div>
-        </div>
-    </div>
-</nav>
+</div>
