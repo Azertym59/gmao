@@ -5,6 +5,8 @@ use App\Http\Controllers\ClientController; // Ajoutez cette ligne
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PrinterController;  // Ajoutez cette ligne
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\TechnicienMiddleware;
 
 // Routes pour la configuration initiale
 Route::get('/setup/admin', [App\Http\Controllers\SetupController::class, 'showAdminSetup'])->name('setup.admin');
@@ -60,12 +62,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('qrcode.scan');
     }); 
 
-// Routes pour la gestion des imprimantes
-Route::middleware(['auth'])->group(function () {
+// Pour admins ET techniciens
+Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::resource('printers', PrinterController::class);
-    Route::get('printers/{printer}/test', [PrinterController::class, 'testPrint'])->name('printers.test');
-    Route::patch('printers/{printer}/set-default', [PrinterController::class, 'setDefault'])->name('printers.set-default');
 });
+
 
     // Routes pour les dalles
     Route::get('/dalle/{id}/print', [App\Http\Controllers\QrCode\DalleQrCodeController::class, 'printLabel'])->name('dalle.print');

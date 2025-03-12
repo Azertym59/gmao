@@ -34,21 +34,21 @@
                     <x-nav-link :href="route('rapports.index')" :active="request()->routeIs('rapports.*')">
                         {{ __('Rapports') }}
                     </x-nav-link>
-                    <!-- Ajoutez ce bloc dans la section des liens de navigation, généralement après les autres éléments du menu -->
-                    @if(true)
-                        <!-- Séparateur -->
-                        <div class="border-t border-gray-200 my-2"></div>
 
-                        <!-- Élément de menu Gestion des Impressions -->
-                        <x-nav-link href="{{ route('printers.index') }}" :active="request()->routeIs('printers.*')">
-                            <div class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                </svg>
-                                {{ __('Gestion des imprimantes') }}
-                            </div>
-                        </x-nav-link>
-                    @endif
+                    @if(auth()->check())
+    <div>
+        Connecté en tant que : {{ auth()->user()->name }}
+        Rôle : {{ auth()->user()->role }}
+        Est admin : {{ auth()->user()->isAdmin() ? 'Oui' : 'Non' }}
+        Est technicien : {{ auth()->user()->isTechnicien() ? 'Oui' : 'Non' }}
+    </div>
+@endif
+
+@if(auth()->user()->isAdmin() || auth()->user()->isTechnicien())
+    <x-nav-link :href="route('printers.index')" :active="request()->routeIs('printers.*')">
+        <i class="mr-2 fas fa-print"></i> {{ __('Gestion des Imprimantes') }}
+    </x-nav-link>
+@endif
                     
                     @if (Auth::user()->isAdmin())
                     <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">

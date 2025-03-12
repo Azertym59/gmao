@@ -13,10 +13,14 @@ class PrinterController extends Controller
      * Afficher la liste des imprimantes
      */
     public function index()
-    {
-        $printers = Printer::all();
-        return view('printers.index', compact('printers'));
-    }
+{
+    file_put_contents(storage_path('logs/printer_debug.log'), date('Y-m-d H:i:s') . " - Printer index method\n", FILE_APPEND);
+    file_put_contents(storage_path('logs/printer_debug.log'), "User connected: " . (auth()->check() ? auth()->user()->name : 'Not logged in') . "\n", FILE_APPEND);
+    file_put_contents(storage_path('logs/printer_debug.log'), "User role: " . (auth()->check() ? auth()->user()->role : 'No role') . "\n", FILE_APPEND);
+
+    $printers = Printer::all();
+    return view('printers.index', compact('printers'));
+}
 
     /**
      * Afficher le formulaire de création d'une imprimante
