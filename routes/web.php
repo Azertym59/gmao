@@ -75,7 +75,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/rapports/inventaire', [RapportController::class, 'genererRapportInventaire'])->name('rapports.inventaire');
     Route::get('/rapports/statistiques', [RapportController::class, 'genererRapportStatistiques'])->name('rapports.statistiques');
     
-    // Routes pour les QR codes
+    // Routes pour les QR codes - Structure originale conservée
     Route::prefix('qrcode')->name('qrcode.')->group(function () {
         // Routes pour les chantiers
         Route::get('/chantier/{id}/print', [ChantierQrCodeController::class, 'printLabel'])->name('chantier.print');
@@ -107,13 +107,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Routes pour les administrateurs seulement
     Route::middleware([AdminMiddleware::class])->group(function () {
-        // Gestion des imprimantes (admin uniquement)
-        Route::resource('printers', PrinterController::class);
-        Route::get('/printers/{id}/test', [App\Http\Controllers\PrinterController::class, 'testPrint'])->name('printers.test');
-        Route::get('/printers/{id}/direct-print', [App\Http\Controllers\PrinterController::class, 'directPrint'])->name('printers.direct-print');
-        Route::get('/printers/{id}/test-http', [App\Http\Controllers\PrinterController::class, 'testHttp'])->name('printers.test_http');
-        Route::get('/printers/{id}/test-brother', [App\Http\Controllers\PrinterController::class, 'testBrotherPrint'])->name('printers.test-brother');
-        Route::get('/api/imprimer-etiquette/{id}', [EtiquetteController::class, 'imprimer']);
+        // Gestion des imprimantes (admin uniquement) - Mise à jour pour QZ Tray
+        Route::prefix('printers')->name('printers.')->group(function () {
+            Route::get('/', [PrinterController::class, 'index'])->name('index');
+            Route::get('/create', [PrinterController::class, 'create'])->name('create');
+            Route::post('/', [PrinterController::class, 'store'])->name('store');
+            Route::get('/{printer}', [PrinterController::class, 'show'])->name('show');
+            Route::get('/{printer}/edit', [PrinterController::class, 'edit'])->name('edit');
+            Route::put('/{printer}', [PrinterController::class, 'update'])->name('update');
+            Route::delete('/{printer}', [PrinterController::class, 'destroy'])->name('destroy');
+            Route::post('/{printer}/default', [PrinterController::class, 'setDefault'])->name('set-default');
+            
+            // Routes pour QZ Tray
+            Route::get('/test', [PrinterController::class, 'testQzTray'])->name('test');
+            Route::post('/test/print', [PrinterController::class, 'printTestQr'])->name('print-test');
+            
+            // On conserve cette route pour compatibilité et debuggage
+            Route::get('/{id}/test-http', [PrinterController::class, 'testHttp'])->name('test-http');
+        });
         
         // Routes d'administration
         Route::prefix('admin')->name('admin.')->group(function () {

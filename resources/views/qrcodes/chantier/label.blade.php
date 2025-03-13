@@ -38,7 +38,7 @@
             <!-- QR Code - Toujours en noir pour meilleure lisibilité -->
             <div class="w-1/2 flex justify-center items-center">
                 <div class="bg-white p-1 border border-black qr-container">
-                    {!! $qrCode !!}
+                    <img src="{{ $printData['imageData'] }}" alt="QR Code" class="w-full">
                 </div>
             </div>
         </div>
@@ -159,13 +159,29 @@
         </div>
     </div>
     
+    <!-- Statut QZ Tray et messages -->
+    <div class="mt-4 max-w-md mx-auto">
+        <div class="flex items-center justify-between">
+            <div>
+                <span class="text-sm mr-2">Statut QZ Tray:</span>
+                <span id="qz-status" class="badge bg-warning text-white text-xs px-2 py-1 rounded">Vérification...</span>
+            </div>
+            <div>
+                <span id="print-success" class="badge bg-success text-white text-xs px-2 py-1 rounded" style="display: none;">
+                    Impression envoyée!
+                </span>
+            </div>
+        </div>
+        <div id="qz-error" class="mt-2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm" style="display: none;"></div>
+    </div>
+    
     <!-- Boutons d'action -->
-    <div class="text-center mt-4 space-x-2">
+    <div class="text-center mt-4 space-x-2 max-w-md mx-auto">
         <button id="printButton" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded-md shadow text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
-            Imprimer
+            Imprimer avec QZ Tray
         </button>
         <a href="{{ route('chantiers.show', $chantier->id) }}" class="inline-flex items-center bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-4 rounded-md shadow text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -178,7 +194,7 @@
 
 <style>
     /* Styles pour le QR code */
-    .qr-container svg {
+    .qr-container img {
         width: 100%;
         height: auto;
         max-width: 80px; /* Limite la taille du QR code */
@@ -243,7 +259,7 @@
             print-color-adjust: exact;
         }
         
-        .qr-container svg {
+        .qr-container img {
             max-width: 60px; /* Légèrement plus petit pour l'impression */
         }
     }
@@ -255,116 +271,23 @@
     }
 </style>
 
+@endsection
+
+@section('scripts')
+<!-- Inclure QZ Tray JavaScript -->
+<script src="{{ asset('js/qz-tray.js') }}"></script>
+
+<!-- Script d'impression QZ Tray -->
+{!! $qzTrayService->getQzTrayPrintScript($printData) !!}
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Bouton d'impression QZ Tray
         const printButton = document.getElementById('printButton');
         
         if (printButton) {
             printButton.addEventListener('click', function() {
-                // Créer une fenêtre d'impression dédiée
-                const printWindow = window.open('', '_blank', 'width=600,height=600');
-                
-                if (!printWindow) {
-                    alert("Veuillez autoriser les fenêtres pop-up pour cette page afin d'imprimer.");
-                    return;
-                }
-                
-                // Contenu complet de l'étiquette, optimisé pour Brother
-                const labelContent = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="utf-8">
-                        <title>Impression étiquette</title>
-                        <style>
-                            body {
-                                margin: 0;
-                                padding: 0;
-                                width: 62mm; /* Largeur DK22251 */
-                                font-family: Arial, sans-serif;
-                            }
-                            .print-red { color: #ff0000; }
-                            .text-black { color: #000000; }
-                            .label-content {
-                                border: 1px solid black;
-                                width: 62mm;
-                                background-color: white;
-                            }
-                            .header {
-                                background-color: black;
-                                color: white;
-                                padding: 4px;
-                                display: flex;
-                                justify-content: space-between;
-                                align-items: center;
-                            }
-                            .header img {
-                                height: 30px;
-                            }
-                            .header h1 {
-                                color: #ff0000;
-                                font-size: 14px;
-                                font-weight: bold;
-                                margin: 0;
-                            }
-                            .reference-section {
-                                display: flex;
-                                border-bottom: 1px solid black;
-                                padding: 4px;
-                            }
-                            .reference {
-                                width: 50%;
-                            }
-                            .reference p {
-                                margin: 2px 0;
-                            }
-                            .qr {
-                                width: 50%;
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                            }
-                            /* Le reste des styles ici... */
-                            @media print {
-                                @page {
-                                    size: 62mm 100mm;
-                                    margin: 0;
-                                }
-                                body {
-                                    width: 62mm;
-                                }
-                                /* Styles d'impression supplémentaires */
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="label-content">
-                            <!-- Contenu de l'étiquette ici -->
-                            <div class="header">
-                                <img src="https://www.tecaled.fr/Logos/Logo%20rectangle%20flag%20repair.png" alt="TecaLED">
-                                <h1 class="print-red">FICHE CHANTIER</h1>
-                            </div>
-                            <!-- Le reste du contenu de l'étiquette ici -->
-                        </div>
-                        <script>
-                            // Script pour imprimer immédiatement puis fermer
-                            window.onload = function() {
-                                setTimeout(function() {
-                                    window.print();
-                                    setTimeout(function() {
-                                        window.close();
-                                    }, 500);
-                                }, 300);
-                            };
-                        </script>
-                    </body>
-                    </html>
-                `;
-                
-                // Écrire le contenu
-                printWindow.document.open();
-                printWindow.document.write(labelContent);
-                printWindow.document.close();
+                window.QZTray.printFromController(@json($printData));
             });
         }
     });

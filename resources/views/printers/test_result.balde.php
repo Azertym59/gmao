@@ -5,25 +5,18 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">Impression d'étiquette QR Code - Module</div>
+                <div class="card-header">Impression de test</div>
 
                 <div class="card-body">
                     <div class="alert alert-info">
                         <h5>Impression en cours...</h5>
-                        <p>Un QR code pour le module <strong>{{ $module->reference }}</strong> est en cours d'impression.</p>
+                        <p>Un QR code de test est en cours d'impression sur <strong>{{ $printer->name }}</strong>.</p>
                     </div>
 
                     <!-- QR Code Preview -->
                     <div class="text-center my-4">
                         <h5>Aperçu du QR Code</h5>
                         <img src="{{ $printData['imageData'] }}" alt="QR Code" class="img-fluid" style="max-width: 250px;">
-
-                        <div class="mt-2">
-                            <h6>{{ $module->reference }}</h6>
-                            <p class="small">Dalle: {{ $module->dalle->reference }}</p>
-                            <p class="small">Chantier: {{ $module->dalle->chantier->nom }}</p>
-                            <p class="small">ID: {{ $module->id }}</p>
-                        </div>
                     </div>
 
                     <!-- Status -->
@@ -39,7 +32,7 @@
                     </div>
 
                     <div class="mt-4">
-                        <a href="{{ route('modules.show', $module->id) }}" class="btn btn-primary">Retour au module</a>
+                        <a href="{{ route('printers.test') }}" class="btn btn-primary">Retour au test</a>
                         <button type="button" class="btn btn-success" id="reprint">
                             Réimprimer
                         </button>

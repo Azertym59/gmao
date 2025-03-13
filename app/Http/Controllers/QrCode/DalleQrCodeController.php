@@ -4,44 +4,93 @@ namespace App\Http\Controllers\QrCode;
 
 use App\Http\Controllers\Controller;
 use App\Models\Dalle;
-use App\Services\QrCodeService;
+use App\Models\Printer;
+use App\Services\QzTrayService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class DalleQrCodeController extends Controller
 {
-    protected $qrCodeService;
-    
-    public function __construct(QrCodeService $qrCodeService)
+    protected $qzTrayService;
+
+    public function __construct(QzTrayService $qzTrayService)
     {
-        $this->qrCodeService = $qrCodeService;
+        $this->qzTrayService = $qzTrayService;
     }
-    
+
     /**
-     * Affiche l'étiquette QR code pour une dalle
-     */
-    public function printLabel($id)
-    {
-        $dalle = Dalle::with(['produit', 'produit.chantier', 'produit.chantier.client'])
-            ->findOrFail($id);
-            
-        $qrCode = $this->qrCodeService->generateDalleQrCode($id);
-        
-        return view('qrcodes.dalle.label', compact('dalle', 'qrCode'));
-    }
-    
-    /**
-     * Affiche les informations de la dalle après scan du QR code
-     * y compris les modules actuellement installés
+     * Display QR code for a dalle
+     *
+     * @param int $id
+     * @return \Illuminate\Http\Response
      */
     public function show($id)
     {
-        $dalle = Dalle::with([
-            'produit', 
-            'produit.chantier', 
-            'produit.chantier.client',
-            'modules'
-        ])->findOrFail($id);
+        $dalle = Dalle::with('chantier')->findOrFail($id);
         
-        return view('qrcodes.dalle.show', compact('dalle'));
+        // Generate QR code data URL
+        $url = route('qrcode.dalle.show', $dalle->id);
+        $qrCodeData = $this->qzTrayService->generateQrCode($url, 300);
+        
+        return view('qrcode.dalle.show', [
+            'dalle' => $dalle,
+            'qrCode' => $qrCodeData
+        ]);
+    }
+
+    /**
+     * Print QR code label for a dalle
+     *
+     * @param int $id
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function printLabel($id, Request $request)
+    {
+        $dalle = Dalle::with('chantier')->findOrFail($id);
+        
+        try {
+            // Get default printer or specified printer
+            $printer = null;
+            
+            if ($request->has('printer_id')) {
+                $printer = Printer::findOrFail($request->printer_id);
+            } else {
+                $printer = Printer::where('is_default', true)->first();
+                
+                if (!$printer) {
+                    return redirect()->back()
+                        ->with('error', 'Aucune imprimante par défaut trouvée. Veuillez en configurer une.');
+                }
+            }
+            
+            // Generate QR code URL
+            $url = route('qrcode.dalle.show', $dalle->id);
+            
+            // Prepare print data
+            $printData = $this->qzTrayService->prepareQrCodePrint(
+                $printer->name,
+                $url,
+                ['size' => 300],
+                [
+                    'copies' => $request->input('copies', 1),
+                    'size' => $printer->type === 'thermal' ? '57mm' : 'A4'
+                ]
+            );
+            
+            // Return view with label and print script
+            return view('qrcode.dalle.label', [
+                'dalle' => $dalle,
+                'printData' => $printData,
+                'qzTrayService' => $this->qzTrayService
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Dalle QR code print error: ' . $e->getMessage());
+            
+            return redirect()->back()
+                ->with('error', 'Erreur lors de l\'impression: ' . $e->getMessage());
+        }
     }
 }

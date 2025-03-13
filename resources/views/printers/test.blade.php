@@ -1,96 +1,113 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold mb-2">Test d'impression : {{ $printer->name }}</h1>
-        <p class="text-gray-600">Cette page vous permet de tester l'impression sur l'imprimante configurée.</p>
-    </div>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">Test QZ Tray</div>
 
-    @if (session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
-            <p>{{ session('success') }}</p>
-        </div>
-    @endif
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Info:</strong> Assurez-vous que QZ Tray est installé et en cours d'exécution sur votre ordinateur.
+                    </div>
 
-    @if (session('error'))
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-            <p>{{ session('error') }}</p>
-        </div>
-    @endif
+                    <!-- QZ Tray Status -->
+                    <div class="mb-4">
+                        <h5>Statut QZ Tray</h5>
+                        <div id="qz-status" class="badge bg-warning">Vérification...</div>
+                        <div id="qz-error" class="alert alert-danger mt-2" style="display: none;"></div>
+                        <button id="connect-qz" class="btn btn-primary btn-sm mt-2">
+                            Connecter à QZ Tray
+                        </button>
+                    </div>
 
-    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h2 class="text-xl font-semibold mb-4">Informations de l'imprimante</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <p><strong>Nom :</strong> {{ $printer->name }}</p>
-                <p><strong>Modèle :</strong> {{ $printer->model }}</p>
-                <p><strong>Adresse IP :</strong> {{ $printer->ip_address }}</p>
-                <p><strong>Port :</strong> {{ $printer->port }}</p>
-            </div>
-            <div>
-                <p><strong>Largeur d'étiquette :</strong> {{ $printer->label_width }} mm</p>
-                <p><strong>Hauteur d'étiquette :</strong> {{ $printer->label_height }} mm</p>
-                <p><strong>Par défaut :</strong> {{ $printer->is_default ? 'Oui' : 'Non' }}</p>
-            </div>
-        </div>
-    </div>
+                    <!-- Printer Selection Form -->
+                    <form method="POST" action="{{ route('printers.print-test') }}" class="mb-4">
+                        @csrf
+                        <div class="mb-3">
+                            <label for="printer_id" class="form-label">Sélectionner une imprimante</label>
+                            <select class="form-control" id="printer_id" name="printer_id" required>
+                                <option value="">Sélectionner...</option>
+                                @foreach($printers as $printer)
+                                    <option value="{{ $printer->id }}">
+                                        {{ $printer->name }} ({{ $printer->type }})
+                                        @if($printer->is_default) [Par défaut] @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success" id="print-test">
+                            Imprimer QR Code de test
+                        </button>
+                    </form>
 
-    <div class="bg-white shadow-md rounded-lg p-6">
-        <h2 class="text-xl font-semibold mb-4">Options d'impression</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <h3 class="text-lg font-medium mb-3">Impression directe</h3>
-                <p class="mb-4">Envoie directement à l'imprimante réseau sans passer par la boîte de dialogue Windows.</p>
-                
-                <a href="{{ isset($directPrintUrl) ? $directPrintUrl : route('printers.direct-print', $printer->id) }}" 
-                   class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md shadow">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z" />
-                    </svg>
-                    Imprimer directement
-                </a>
-                <a href="{{ route('printers.test_http', $printer->id) }}" class="inline-flex items-center px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-md shadow ml-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012-2v-1a2 2 0 012-2h1.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h.5A2.5 2.5 0 0020 5.5V3.935M8 3.935V2.5A2.5 2.5 0 0110.5 0h4A2.5 2.5 0 0117 2.5v1.435" />
-                </svg>
-                Test HTTP/HTTPS
-                 </a>
-                 <a href="{{ route('printers.test-brother', $printer->id) }}" class="inline-flex items-center px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-md shadow">
-                Tester avec protocole Brother
-                </a>
-            </div>
-            
-            <div>
-                <h3 class="text-lg font-medium mb-3">Impression via navigateur</h3>
-                <p class="mb-4">Ouvre la boîte de dialogue d'impression du navigateur (pour les tests uniquement).</p>
-                
-                <div id="label-content" class="border border-gray-300 p-4 mb-4" style="width: {{ $printer->label_width }}mm; height: {{ $printer->label_height }}mm;">
-                    <div class="text-center">
-                        <h3 class="text-lg font-bold mb-2">TEST D'IMPRESSION</h3>
-                        <p class="mb-2">Imprimante : {{ $printer->name }}</p>
-                        <p class="mb-2">Date : {{ date('d/m/Y H:i:s') }}</p>
-                        
-                        <div class="qr-container inline-block p-2 border border-gray-400 mt-2">
-                            {!! QrCode::size(80)->generate('Test QR Code - ' . $printer->name) !!}
+                    <!-- Printers List from QZ Tray -->
+                    <div class="mt-4">
+                        <h5>Imprimantes détectées par QZ Tray</h5>
+                        <div id="printer-list" class="list-group">
+                            <div class="text-center p-2">Chargement en cours...</div>
                         </div>
                     </div>
+
+                    <!-- Success Message -->
+                    <div id="print-success" class="alert alert-success mt-4" style="display: none;">
+                        Impression envoyée avec succès!
+                    </div>
                 </div>
-                
-                {!! App\Services\PrinterService::printButton('Imprimer via navigateur') !!}
             </div>
-        </div>
-        
-        <div class="mt-6 pt-4 border-t border-gray-200">
-            <a href="{{ route('printers.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-bold rounded-md shadow">
-                Retour à la liste
-            </a>
         </div>
     </div>
 </div>
+@endsection
 
+@section('scripts')
+<script src="{{ asset('js/qz-tray.js') }}"></script>
 <script>
-    {!! App\Services\PrinterService::generatePrintScript() !!}
+    document.addEventListener('DOMContentLoaded', function() {
+        // Connect QZ Tray button
+        document.getElementById('connect-qz').addEventListener('click', function() {
+            window.QZTray.connect();
+        });
+
+        // Get printers from QZ Tray after connection
+        setTimeout(function() {
+            const printerListElem = document.getElementById('printer-list');
+            
+            window.QZTray.getPrinters()
+                .then(function(printers) {
+                    if (printers.length === 0) {
+                        printerListElem.innerHTML = '<div class="alert alert-warning">Aucune imprimante détectée</div>';
+                        return;
+                    }
+                    
+                    printerListElem.innerHTML = '';
+                    printers.forEach(function(printer) {
+                        const item = document.createElement('a');
+                        item.href = '#';
+                        item.className = 'list-group-item list-group-item-action';
+                        item.textContent = printer;
+                        item.onclick = function(e) {
+                            e.preventDefault();
+                            // Auto-select this printer in the dropdown
+                            const printerSelect = document.getElementById('printer_id');
+                            
+                            // Find by name
+                            for(let i = 0; i < printerSelect.options.length; i++) {
+                                const option = printerSelect.options[i];
+                                if (option.text.includes(printer)) {
+                                    printerSelect.value = option.value;
+                                    break;
+                                }
+                            }
+                        };
+                        printerListElem.appendChild(item);
+                    });
+                })
+                .catch(function(error) {
+                    printerListElem.innerHTML = '<div class="alert alert-danger">Erreur: ' + error + '</div>';
+                });
+        }, 2000);
+    });
 </script>
 @endsection

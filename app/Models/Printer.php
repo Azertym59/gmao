@@ -10,131 +10,63 @@ class Printer extends Model
     use HasFactory;
 
     /**
-     * Les attributs qui sont assignables en masse.
+     * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
         'name',
-        'model',
-        'ip_address',
-        'port',
-        'label_width',
-        'label_height',
+        'description',
+        'type',
         'is_default',
-        'is_active',
-        'connection_type', // 'network', 'usb', 'bluetooth'
-        'driver',
-        'additional_settings' // JSON pour stocker des paramètres spécifiques
+        'options'
     ];
 
     /**
-     * Les attributs qui doivent être castés.
+     * The attributes that should be cast.
      *
      * @var array
      */
     protected $casts = [
         'is_default' => 'boolean',
-        'is_active' => 'boolean',
-        'label_width' => 'float',
-        'label_height' => 'float',
-        'additional_settings' => 'array',
+        'options' => 'array'
     ];
 
     /**
-     * Vérifier si l'imprimante est disponible
+     * Get all print jobs for this printer
      */
-    public function isAvailable()
+    public function printJobs()
     {
-        \Log::info('Checking printer availability', [
-            'printer_id' => $this->id,
-            'name' => $this->name,
-            'connection_type' => $this->connection_type,
-            'ip_address' => $this->ip_address,
-            'port' => $this->port
-        ]);
-    
-        if ($this->connection_type === 'network' && $this->ip_address) {
-            // Vérification par ping
-            exec("ping -c 4 " . escapeshellarg($this->ip_address), $output, $result);
-            
-            \Log::info('Ping result', [
-                'result' => $result,
-                'output' => $output
-            ]);
-    
-            if ($result === 0) {
-                return true;
-            }
-    
-            // Test de socket
-            $socket = @fsockopen(
-                $this->ip_address, 
-                $this->port ?: 9100, 
-                $errno, 
-                $errstr, 
-                2
-            );
-    
-            \Log::info('Socket check', [
-                'socket_opened' => $socket !== false,
-                'errno' => $errno,
-                'errstr' => $errstr
-            ]);
-    
-            if ($socket) {
-                fclose($socket);
-                return true;
-            }
-        }
-        
-        return $this->is_active;
+        return $this->hasMany(PrintJob::class);
     }
 
     /**
-     * Obtenir l'imprimante par défaut
+     * Check if this is a thermal printer
+     * 
+     * @return bool
      */
-    public static function getDefault()
+    public function isThermal()
     {
-        return self::where('is_default', true)->first();
+        return $this->type === 'thermal';
     }
 
     /**
-     * Obtenir la liste des modèles supportés
+     * Check if this is a label printer
+     * 
+     * @return bool
      */
-    public static function getSupportedModels()
+    public function isLabel()
     {
-        return [
-            'brother_ql820nwb' => 'Brother QL-820NWB',
-            'brother_ql720nw' => 'Brother QL-720NW',
-            'generic_thermal' => 'Imprimante thermique générique',
-            'other' => 'Autre',
-        ];
+        return $this->type === 'label';
     }
 
     /**
-     * Obtenir les types de connexion possibles
+     * Check if this is a standard printer
+     * 
+     * @return bool
      */
-    public static function getConnectionTypes()
+    public function isStandard()
     {
-        return [
-            'network' => 'Réseau (Wi-Fi/Ethernet)',
-            'usb' => 'USB',
-            'bluetooth' => 'Bluetooth',
-        ];
-    }
-
-    /**
-     * Obtenir les formats de rouleaux pour les imprimantes Brother
-     */
-    public static function getBrotherRollFormats()
-    {
-        return [
-            'dk22251' => 'DK22251 - 62mm x continu (Rouge/Noir)',
-            'dk22205' => 'DK22205 - 62mm x continu (Noir)',
-            'dk11204' => 'DK11204 - 17mm x 54mm (Étiquettes multiples)',
-            'dk11203' => 'DK11203 - 17mm x 87mm (Adresses)',
-            'custom' => 'Format personnalisé',
-        ];
+        return $this->type === 'standard';
     }
 }
