@@ -112,7 +112,7 @@
                 <span class="info-label">Société:</span> {{ $intervention->module->dalle->produit->chantier->client->societe ?: 'N/A' }}
             </div>
             <div class="info-item">
-                <span class="info-label">Technicien:</span> {{ $intervention->technicien->name }}
+                <span class="info-label">Technicien:</span> {{ $intervention->technicien ? $intervention->technicien->name : "Non assigné" }}
             </div>
             <div class="info-item">
                 <span class="info-label">Durée de l'intervention:</span> {{ $tempsFormate }}
@@ -201,7 +201,7 @@
         <div class="signature-box">
             <p class="info-label">Signature du technicien:</p>
             <div style="height: 60px;"></div>
-            <p>{{ $intervention->technicien->name }}</p>
+            <p>{{ $intervention->technicien ? $intervention->technicien->name : "Non assigné" }}</p>
         </div>
 
         <div class="signature-box">

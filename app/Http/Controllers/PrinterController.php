@@ -148,12 +148,29 @@ class PrinterController extends Controller
         try {
             $printer = Printer::findOrFail($id);
             
+            // Vérifier si l'imprimante est disponible
+            $isAvailable = $printer->isAvailable();
+            
+            // Journaliser
+            \Log::info('Test d\'impression demandé pour ' . $printer->name, [
+                'printer_id' => $printer->id,
+                'printer_name' => $printer->name,
+                'printer_type' => $printer->type,
+                'is_available' => $isAvailable
+            ]);
+            
             // Afficher la vue de test avec un bouton pour l'impression directe
             return view('printers.test', [
                 'printer' => $printer,
-                'directPrintUrl' => route('printers.direct-print', $id)
+                'directPrintUrl' => route('printers.direct-print', $id),
+                'isAvailable' => $isAvailable
             ]);
         } catch (\Exception $e) {
+            \Log::error('Erreur lors de la préparation du test d\'impression: ' . $e->getMessage(), [
+                'printer_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return redirect()->route('printers.index')
                 ->with('error', 'Erreur : ' . $e->getMessage());
         }
@@ -349,12 +366,22 @@ class PrinterController extends Controller
     /**
      * Test connection to QZ Tray
      * 
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function testQzTray()
+    public function testQzTray(Request $request)
     {
+        $printers = Printer::all();
+        $selectedPrinter = null;
+        
+        // Si un ID d'imprimante est fourni, le préselectionner
+        if ($request->has('printer_id')) {
+            $selectedPrinter = Printer::find($request->printer_id);
+        }
+        
         return view('printers.test', [
-            'printers' => Printer::all()
+            'printers' => $printers,
+            'selectedPrinter' => $selectedPrinter
         ]);
     }
 
@@ -373,19 +400,50 @@ class PrinterController extends Controller
         try {
             $printer = Printer::findOrFail($request->printer_id);
             
-            // Generate test QR code and prepare print data
-            $testData = 'GMAO QZ Tray Test - ' . now()->toDateTimeString();
+            // Log détaillé
+            \Log::info('QZ Tray Test Print', [
+                'printer_id' => $printer->id,
+                'printer_name' => $printer->name,
+                'printer_type' => $printer->type,
+                'printer_ip' => $printer->ip_address ?? 'N/A',
+            ]);
+
+            // Récupérer ou calculer la DPI pour la qualité d'impression
+            $dpi = $printer->dpi ?? ($printer->type === 'thermal' ? 203 : 300);
+            
+            // Calculer la taille de papier appropriée
+            $paperSize = $this->getPaperSizeByPrinterType($printer);
+            
+            // Générer un QR code de test avec plus de données utiles
+            $testData = json_encode([
+                'test' => true,
+                'printer' => $printer->name,
+                'timestamp' => now()->toDateTimeString(),
+                'id' => uniqid()
+            ]);
+            
+            // Préparer les options d'impression avec plus de paramètres
             $printData = $this->qzTrayService->prepareQrCodePrint(
-                $printer->name,
+                $printer->name,  // Nom exact de l'imprimante
                 $testData,
-                ['size' => 250],
+                [
+                    'size' => 250,
+                    'errorCorrection' => 'H'  // Haute correction d'erreur pour meilleure lisibilité
+                ],
                 [
                     'copies' => 1,
-                    'size' => $printer->type === 'thermal' ? '57mm' : 'A4'
+                    'size' => $paperSize,
+                    'dpi' => $dpi,
+                    'orientation' => 'portrait',
+                    'margins' => [
+                        'top' => $printer->type === 'thermal' ? 1 : 5,
+                        'right' => $printer->type === 'thermal' ? 1 : 5,
+                        'bottom' => $printer->type === 'thermal' ? 1 : 5,
+                        'left' => $printer->type === 'thermal' ? 1 : 5
+                    ]
                 ]
             );
 
-            // Return view with JavaScript to trigger printing
             return view('printers.test_result', [
                 'printer' => $printer,
                 'printData' => $printData,
@@ -393,9 +451,40 @@ class PrinterController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            Log::error('QZ Tray test error: ' . $e->getMessage());
+            // Log de l'erreur avec plus de détails
+            \Log::error('QZ Tray test error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'printer_id' => $request->printer_id ?? 'unknown',
+                'user_id' => auth()->id() ?? 'guest',
+                'user_agent' => $request->userAgent()
+            ]);
             
             return back()->with('error', 'Erreur lors du test d\'impression: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Déterminer la taille de papier appropriée selon le type d'imprimante
+     *
+     * @param Printer $printer L'imprimante
+     * @return string La taille de papier pour QZ Tray
+     */
+    private function getPaperSizeByPrinterType(Printer $printer)
+    {
+        switch ($printer->type) {
+            case 'thermal':
+                // Utiliser la largeur spécifique si disponible, sinon valeur par défaut
+                return $printer->label_width ? "{$printer->label_width}mm" : '57mm';
+                
+            case 'label':
+                // Format pour étiquettes
+                return $printer->label_width && $printer->label_height 
+                       ? "{$printer->label_width}mm x {$printer->label_height}mm" 
+                       : '62mm x 29mm';
+                
+            default:
+                // Format standard pour imprimantes normales
+                return 'A4';
         }
     }
 }

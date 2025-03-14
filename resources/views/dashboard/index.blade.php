@@ -121,15 +121,14 @@
                                     <a href="{{ route('chantiers.show', $chantier) }}" class="font-medium text-white hover:text-accent-blue">
                                         {{ $chantier->reference }}
                                     </a>
-                                    <p class="text-sm text-gray-400">{{ $chantier->client->nom ?? 'Client inconnu' }}</p>
+                                    <p class="text-sm text-gray-400">{{ $chantier->client->societe ?: ($chantier->client->nom_complet ?? 'Client inconnu') }}</p>
                                 </div>
                                 <div class="flex items-center">
                                     <div class="tooltip-container">
                                         <div class="mr-6 text-sm">
-                                            <span class="block text-right {{ $chantier->jours_restants <= 7 ? 'text-red-500 font-semibold' : 'text-gray-400' }}">
-                                                {{ $chantier->jours_restants }} jours
+                                            <span class="block text-right {{ \App\Helpers\DateHelper::getTimeRemainingClass($chantier->date_butoir) }}">
+                                                {{ \App\Helpers\DateHelper::formatTimeRemaining($chantier->date_butoir) }}
                                             </span>
-                                            <span class="block text-gray-500 text-xs">restants</span>
                                         </div>
                                         <div class="tooltip">Date butoir: {{ \Carbon\Carbon::parse($chantier->date_butoir)->format('d/m/Y') }}</div>
                                     </div>
@@ -303,7 +302,7 @@
                                         {{ $chantier->reference }}
                                     </a>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{{ $chantier->client->nom ?? 'Client inconnu' }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{{ $chantier->client->societe ?: ($chantier->client->nom_complet ?? 'Client inconnu') }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
                                     <span class="font-medium">{{ $chantier->nb_modules_termines ?? 0 }}</span>
                                     <span class="text-gray-500">/</span>

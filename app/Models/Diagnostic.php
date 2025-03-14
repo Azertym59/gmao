@@ -15,7 +15,11 @@ class Diagnostic extends Model
         'nb_leds_hs',
         'nb_ic_hs',
         'nb_masques_hs',
-        'remarques'
+        'remarques',
+        'description',
+        'conclusion',
+        'composant_defectueux',
+        'pose_fake_pcb'
     ];
 
     /**

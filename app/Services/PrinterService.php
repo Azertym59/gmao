@@ -10,16 +10,65 @@ class PrinterService
 {
     /**
      * Récupère l'imprimante à utiliser
+     * 
+     * @param int|null $printerId ID spécifique de l'imprimante ou null pour l'imprimante par défaut
+     * @return Printer|null
      */
-    public static function getPrinter()
+    public static function getPrinter($printerId = null)
     {
+        // Si un ID est fourni, utiliser cette imprimante
+        if ($printerId) {
+            return Printer::find($printerId);
+        }
+        
         // Vérifier s'il y a une imprimante en session (pour les tests)
         if (Session::has('test_printer')) {
-            return (object) Session::get('test_printer');
+            $testPrinter = Session::get('test_printer');
+            if (is_array($testPrinter)) {
+                return (object) $testPrinter;
+            }
+            return $testPrinter;
         }
         
         // Sinon, récupérer l'imprimante par défaut
         return Printer::getDefault();
+    }
+    
+    /**
+     * Crée un job d'impression dans la file d'attente
+     * 
+     * @param int $printerId ID de l'imprimante
+     * @param string $content Contenu à imprimer
+     * @param string $contentType Type de contenu (html, image, qrcode)
+     * @param array $options Options d'impression
+     * @return PrintJob
+     */
+    public static function queuePrintJob($printerId, $content, $contentType = 'html', $options = [])
+    {
+        // Créer un token unique pour ce job
+        $jobToken = uniqid('print_');
+        
+        // Créer l'entrée dans la base de données
+        $printJob = PrintJob::create([
+            'printer_id' => $printerId,
+            'content' => $content,
+            'content_type' => $contentType,
+            'name' => $options['name'] ?? 'Print Job ' . date('Y-m-d H:i:s'),
+            'status' => PrintJob::STATUS_PENDING,
+            'options' => $options,
+            'job_token' => $jobToken,
+            'user_id' => auth()->id(),
+            'attempts' => 0
+        ]);
+        
+        // Journaliser la création du job
+        \Log::info("Job d'impression créé", [
+            'job_id' => $printJob->id,
+            'printer_id' => $printerId,
+            'content_type' => $contentType
+        ]);
+        
+        return $printJob;
     }
     
     /**

@@ -27,13 +27,13 @@ class DalleQrCodeController extends Controller
      */
     public function show($id)
     {
-        $dalle = Dalle::with('chantier')->findOrFail($id);
+        $dalle = Dalle::with('produit.chantier')->findOrFail($id);
         
         // Generate QR code data URL
         $url = route('qrcode.dalle.show', $dalle->id);
-        $qrCodeData = $this->qzTrayService->generateQrCode($url, 300);
+        $qrCodeData = $this->qzTrayService->generateQrCode($url, 150);
         
-        return view('qrcode.dalle.show', [
+        return view('qrcodes.dalle.show', [
             'dalle' => $dalle,
             'qrCode' => $qrCodeData
         ]);
@@ -48,7 +48,7 @@ class DalleQrCodeController extends Controller
      */
     public function printLabel($id, Request $request)
     {
-        $dalle = Dalle::with('chantier')->findOrFail($id);
+        $dalle = Dalle::with(['produit.chantier', 'modules.interventions'])->findOrFail($id);
         
         try {
             // Get default printer or specified printer
@@ -65,6 +65,13 @@ class DalleQrCodeController extends Controller
                 }
             }
             
+            // Get latest repair date
+            $latestIntervention = $dalle->modules->flatMap(function ($module) {
+                return $module->interventions;
+            })->sortByDesc('date_debut')->first();
+            
+            $repairDate = $latestIntervention ? $latestIntervention->date_debut : null;
+            
             // Generate QR code URL
             $url = route('qrcode.dalle.show', $dalle->id);
             
@@ -72,18 +79,25 @@ class DalleQrCodeController extends Controller
             $printData = $this->qzTrayService->prepareQrCodePrint(
                 $printer->name,
                 $url,
-                ['size' => 300],
+                ['size' => 150, 'margin' => 1],
                 [
                     'copies' => $request->input('copies', 1),
-                    'size' => $printer->type === 'thermal' ? '57mm' : 'A4'
+                    'size' => '62mm',
+                    'height' => '20mm',
+                    'logoUrl' => asset('images/Logo rectangle V2.png'),
+                    'clientName' => $dalle->produit->chantier->client->nom ?? '',
+                    'chantierReference' => $dalle->produit->chantier->reference ?? '',
+                    'reference' => $dalle->reference_dalle ?: 'Dalle #' . $dalle->id,
+                    'repairDate' => $repairDate ? \Carbon\Carbon::parse($repairDate)->format('d/m/Y') : null
                 ]
             );
             
             // Return view with label and print script
-            return view('qrcode.dalle.label', [
+            return view('qrcodes.dalle.label', [
                 'dalle' => $dalle,
                 'printData' => $printData,
-                'qzTrayService' => $this->qzTrayService
+                'qzTrayService' => $this->qzTrayService,
+                'repairDate' => $repairDate
             ]);
             
         } catch (\Exception $e) {

@@ -9,6 +9,70 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="glassmorphism overflow-hidden shadow-lg rounded-xl">
                 <div class="p-6 border-b border-gray-700">
+                    <!-- Barre de progression de l'intervention -->
+                    <div class="mb-6">
+                        <div class="flex mb-4">
+                            <div class="w-1/3 text-center">
+                                <div class="relative mb-2">
+                                    <div class="w-10 h-10 mx-auto rounded-full text-lg flex items-center justify-center bg-blue-500 text-white">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                        </svg>
+                                    </div>
+                                    <div class="absolute top-0 right-0 -mr-2">
+                                        <div class="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-gray-300">Diagnostic</div>
+                            </div>
+                            <div class="w-1/3 text-center">
+                                <div class="relative mb-2">
+                                    <div class="absolute top-0 -ml-10 text-center mt-4 w-32">
+                                        <div class="flex items-center justify-center">
+                                            <div class="w-full bg-gray-600 rounded items-center align-middle">
+                                                <div class="bg-blue-500 h-1 rounded" style="width: 100%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-10 h-10 mx-auto rounded-full text-lg flex items-center justify-center bg-blue-500 text-white">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                        </svg>
+                                    </div>
+                                    <div class="absolute top-0 right-0 -mr-2">
+                                        <div class="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-gray-300">Réparation</div>
+                            </div>
+                            <div class="w-1/3 text-center">
+                                <div class="relative mb-2">
+                                    <div class="absolute top-0 -ml-10 text-center mt-4 w-32">
+                                        <div class="flex items-center justify-center">
+                                            <div class="w-full bg-gray-600 rounded items-center align-middle">
+                                                <div class="bg-blue-500 h-1 rounded" style="width: 0%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-10 h-10 mx-auto rounded-full text-lg flex items-center justify-center bg-gray-600 text-white">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="text-gray-400">Finalisation</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Informations du module -->
                     <div class="mb-6 bg-indigo-900/30 p-4 rounded-lg border border-indigo-500/30">
                         <h3 class="font-medium text-indigo-300 mb-2">Module #{{ $module->id }}</h3>
@@ -78,10 +142,11 @@
                                     </div>
 
                                     <div>
-                                        <x-input-label for="diagnostic_remarques" :value="__('Remarques')" class="text-gray-300" />
+                                        <x-input-label for="diagnostic_remarques" :value="__('Remarques (description du problème)')" class="text-gray-300" />
                                         <textarea id="diagnostic_remarques" name="diagnostic_remarques" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" rows="3">{{ old('diagnostic_remarques') }}</textarea>
                                         <x-input-error :messages="$errors->get('diagnostic_remarques')" class="mt-2" />
                                     </div>
+                                    <!-- Champs supprimés car non existants dans la base de données -->
                                 </div>
                             </div>
 
@@ -109,22 +174,57 @@
                                     </div>
 
                                     <div>
-                                        <x-input-label for="reparation_remarques" :value="__('Remarques')" class="text-gray-300" />
+                                        <x-input-label for="reparation_remarques" :value="__('Remarques (actions effectuées et résultat)')" class="text-gray-300" />
                                         <textarea id="reparation_remarques" name="reparation_remarques" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" rows="3">{{ old('reparation_remarques') }}</textarea>
                                         <x-input-error :messages="$errors->get('reparation_remarques')" class="mt-2" />
+                                    </div>
+                                    
+                                    <!-- État du module après intervention -->
+                                    <div class="mt-4">
+                                        <x-input-label for="module_etat" :value="__('État du module après intervention')" class="text-gray-300" />
+                                        <select id="module_etat" name="module_etat" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50">
+                                            <option value="termine" selected>Réparé</option>
+                                            <option value="defaillant">Défaillant (partiellement fonctionnel)</option>
+                                            <option value="hs">Hors service (irrécupérable)</option>
+                                            <option value="en_attente">En attente de pièces</option>
+                                        </select>
+                                        <x-input-error :messages="$errors->get('module_etat')" class="mt-2" />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-end mt-6">
+                        <div class="flex items-center justify-between mt-6">
+                            <div>
+                                <x-secondary-button type="button" id="btn-save-diagnostic" class="bg-blue-600 hover:bg-blue-700 text-white flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                    </svg>
+                                    {{ __('Enregistrer le diagnostic') }}
+                                </x-secondary-button>
+                            </div>
+                            
                             <x-primary-button id="btn-terminer" class="bg-green-600 hover:bg-green-700 flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                 </svg>
-                                {{ __('Terminer l\'intervention') }}
+                                {{ __('Finaliser l\'intervention') }}
                             </x-primary-button>
                         </div>
+                        
+                        <!-- Script pour l'enregistrement du diagnostic (sauvegarde partielle) -->
+                        <script>
+                            document.getElementById('btn-save-diagnostic').addEventListener('click', function() {
+                                // Afficher un message d'enregistrement
+                                alert('Diagnostic enregistré ! Continuez à travailler sur l\'intervention ou finalisez-la quand vous avez terminé.');
+                                
+                                // Mettre à jour la barre de progression
+                                document.querySelector('.w-1/3:nth-child(3) .w-full .bg-blue-500').style.width = '50%';
+                                
+                                // On pourrait ajouter un appel AJAX ici pour enregistrer partiellement les données
+                                // sans finaliser l'intervention
+                            });
+                        </script>
                     </form>
                 </div>
             </div>

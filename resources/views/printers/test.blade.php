@@ -30,7 +30,7 @@
                             <select class="form-control" id="printer_id" name="printer_id" required>
                                 <option value="">Sélectionner...</option>
                                 @foreach($printers as $printer)
-                                    <option value="{{ $printer->id }}">
+                                    <option value="{{ $printer->id }}" {{ isset($selectedPrinter) && $selectedPrinter && $selectedPrinter->id == $printer->id ? 'selected' : '' }}>
                                         {{ $printer->name }} ({{ $printer->type }})
                                         @if($printer->is_default) [Par défaut] @endif
                                     </option>

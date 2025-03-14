@@ -53,10 +53,21 @@ class ModuleController extends Controller
             'shift_register' => 'nullable|string|max:255',
             'buffer' => 'nullable|string|max:255',
             'reference_module' => 'nullable|string|max:255',
+            'position_lettre' => 'nullable|string|max:10',
+            'position_x' => 'nullable|integer|min:0',
+            'position_y' => 'nullable|integer|min:0',
+            'etat' => 'nullable|in:non_commence,en_cours,defaillant,termine',
         ]);
         
-        // Par défaut, l'état est "non_commence"
-        $validated['etat'] = 'non_commence';
+        // Si un numéro de référence est fourni dans le champ 'reference', l'utiliser pour reference_module
+        if ($request->has('reference') && !empty($request->input('reference'))) {
+            $validated['reference_module'] = $request->input('reference');
+        }
+        
+        // Par défaut, l'état est "non_commence" s'il n'est pas fourni
+        if (!isset($validated['etat'])) {
+            $validated['etat'] = 'non_commence';
+        }
         
         $module = Module::create($validated);
         
@@ -69,8 +80,20 @@ class ModuleController extends Controller
      */
     public function show(Module $module)
     {
-        $module->load(['dalle.produit.chantier.client', 'interventions.diagnostic', 'interventions.reparation']);
-        return view('modules.show', compact('module'));
+        $module->load(['dalle.produit.chantier.client', 'interventions.diagnostic', 'interventions.reparation', 'interventions.technicien']);
+        
+        // Préparer les données des interventions pour éviter l'erreur "Attempt to read property 'name' on null"
+        $interventions = [];
+        foreach($module->interventions as $intervention) {
+            $intervention->technicienName = $intervention->technicien ? $intervention->technicien->name : 'Non assigné';
+            $interventions[] = $intervention;
+        }
+        
+        return view('modules.show', [
+            'module' => $module,
+            'interventions' => $interventions,
+            'technicienErrorFixed' => true, // Flag pour le template
+        ]);
     }
 
     /**
@@ -100,8 +123,16 @@ public function update(Request $request, Module $module)
         'buffer' => 'nullable|string|max:255',
         'etat' => 'required|in:non_commence,en_cours,defaillant,termine',
         'reference_module' => 'nullable|string|max:255',
-        'technicien_id' => 'nullable|exists:users,id', // Ajout du champ technicien_id
+        'technicien_id' => 'nullable|exists:users,id',
+        'position_lettre' => 'nullable|string|max:10',
+        'position_x' => 'nullable|integer|min:0',
+        'position_y' => 'nullable|integer|min:0',
     ]);
+    
+    // Si un numéro de référence est fourni dans le champ 'reference', l'utiliser pour reference_module
+    if ($request->has('reference') && !empty($request->input('reference'))) {
+        $validated['reference_module'] = $request->input('reference');
+    }
     
     // Sauvegarder l'ancien technicien_id pour comparaison
     $oldTechnicienId = $module->technicien_id;

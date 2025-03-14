@@ -45,7 +45,7 @@
                         </div>
                     </div>
                     
-                    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="glassmorphism rounded-lg p-4 border border-gray-700">
                             <h3 class="text-white font-medium mb-4 flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -71,6 +71,22 @@
                             </h3>
                             <p class="text-gray-300 mb-4">Consultez les rapports détaillés sur l'activité et les performances.</p>
                             <a href="{{ route('rapports.index') }}" class="btn-action btn-primary inline-flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                                Accéder
+                            </a>
+                        </div>
+                        
+                        <div class="glassmorphism rounded-lg p-4 border border-gray-700 bg-cyan-900/20">
+                            <h3 class="text-white font-medium mb-4 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                                </svg>
+                                Gestion de la base de données
+                            </h3>
+                            <p class="text-gray-300 mb-4">Sauvegardez, restaurez ou réinitialisez la base de données de l'application.</p>
+                            <a href="{{ route('admin.database.manager') }}" class="btn-action btn-primary inline-flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                 </svg>

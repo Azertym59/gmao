@@ -75,19 +75,23 @@ module.exports = {
           800: '#1F2937',
           900: '#111827',
         },
-        // Legacy colors for backward compatibility
-        'app-bg': '#F9FAFB',        // Changed to light theme
-        'card-bg': '#FFFFFF',       // Changed to light theme
-        'sidebar': '#FFFFFF',       // Changed to light theme
-        'accent-blue': '#2563EB',
+        // Application Theme Colors - Dark Mode
+        'app-bg': '#121212',
+        'card-bg': 'rgba(30, 30, 30, 0.6)',
+        'sidebar': '#181818',
+        'accent-blue': '#3B82F6',
         'accent-green': '#10B981',
         'accent-purple': '#8B5CF6',
         'accent-pink': '#EC4899',
         'accent-yellow': '#F59E0B',
         'accent-red': '#EF4444',
-        'text-primary': '#1F2937',  // Changed to light theme
-        'text-secondary': '#6B7280', // Changed to light theme
-        'border-dark': '#E5E7EB',   // Changed to light theme
+        'text-primary': '#F3F4F6',
+        'text-secondary': '#9CA3AF',
+        'border-dark': 'rgba(75, 85, 99, 0.3)',
+        'success': '#10B981',
+        'warning': '#F59E0B',
+        'error': '#EF4444',
+        'info': '#3B82F6',
       },
       borderRadius: {
         'sm': '0.25rem',

@@ -28,6 +28,19 @@
                             </a>
                         </div>
                     </div>
+                    
+                    <!-- Boutons d'envoi d'email -->
+                    <div class="mt-4 mb-6 flex space-x-2 justify-end">
+                        <x-email-button :chantier="$chantier" type="created" class="bg-blue-600 hover:bg-blue-500 text-white">
+                            Email création
+                        </x-email-button>
+                        <x-email-button :chantier="$chantier" type="started" class="bg-yellow-600 hover:bg-yellow-500 text-white">
+                            Email interventions
+                        </x-email-button>
+                        <x-email-button :chantier="$chantier" type="completed" class="bg-green-600 hover:bg-green-500 text-white">
+                            Email finalisation
+                        </x-email-button>
+                    </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div>
@@ -45,8 +58,8 @@
                                 <div class="mb-2">
                                     <span class="font-semibold">Société:</span> {{ $chantier->client->societe ?? 'Non spécifié' }}
                                 </div>
-                                <div>
-                                    <span class="font-semibold">État:</span> 
+                                <div class="flex items-center">
+                                    <span class="font-semibold mr-2">État:</span> 
                                     @if($chantier->etat == 'non_commence')
                                         <span class="badge badge-info">Non commencé</span>
                                     @elseif($chantier->etat == 'en_cours')
@@ -54,6 +67,42 @@
                                     @else
                                         <span class="badge badge-success">Terminé</span>
                                     @endif
+                                    
+                                    <!-- Boutons de changement d'état rapide -->
+                                    <div class="ml-4 flex space-x-1">
+                                        @if($chantier->etat != 'non_commence')
+                                            <form action="{{ route('chantiers.update.state', $chantier) }}" method="POST" class="inline">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="etat" value="non_commence">
+                                                <button type="submit" class="text-xs px-2 py-1 bg-gray-600 hover:bg-gray-500 text-white rounded">
+                                                    Non commencé
+                                                </button>
+                                            </form>
+                                        @endif
+                                        
+                                        @if($chantier->etat != 'en_cours')
+                                            <form action="{{ route('chantiers.update.state', $chantier) }}" method="POST" class="inline">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="etat" value="en_cours">
+                                                <button type="submit" class="text-xs px-2 py-1 bg-yellow-600 hover:bg-yellow-500 text-white rounded">
+                                                    En cours
+                                                </button>
+                                            </form>
+                                        @endif
+                                        
+                                        @if($chantier->etat != 'termine')
+                                            <form action="{{ route('chantiers.update.state', $chantier) }}" method="POST" class="inline">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="etat" value="termine">
+                                                <button type="submit" class="text-xs px-2 py-1 bg-green-600 hover:bg-green-500 text-white rounded">
+                                                    Terminé
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -154,16 +203,9 @@
                                     <p class="text-gray-300"><span class="font-medium">Date butoir:</span> {{ $chantier->date_butoir->format('d/m/Y') }}</p>
                                     <p class="mt-2 text-gray-300">
                                         <span class="font-medium">Temps restant:</span>
-                                        @php
-                                            $daysLeft = now()->diffInDays($chantier->date_butoir, false);
-                                        @endphp
-                                        @if($daysLeft < 0)
-                                            <span class="text-accent-red font-semibold">Dépassé de {{ abs($daysLeft) }} jour(s)</span>
-                                        @elseif($daysLeft == 0)
-                                            <span class="text-accent-yellow font-semibold">Dernier jour</span>
-                                        @else
-                                            <span class="text-accent-green font-semibold">{{ $daysLeft }} jour(s)</span>
-                                        @endif
+                                        <span class="{{ \App\Helpers\DateHelper::getTimeRemainingClass($chantier->date_butoir) }} font-semibold">
+                                            {{ \App\Helpers\DateHelper::formatTimeRemaining($chantier->date_butoir) }}
+                                        </span>
                                     </p>
                                 </div>
                             </div>
@@ -271,20 +313,89 @@
                                                         <h6 class="font-medium text-white">Dalle #{{ $dalle->id }} - Aperçu des modules</h6>
                                                         <a href="{{ route('dalles.show', $dalle) }}" class="text-xs text-accent-blue hover:text-blue-400">Détails</a>
                                                     </div>
-                                                    <div class="grid grid-cols-5 sm:grid-cols-8 gap-1">
-                                                        @foreach($dalle->modules as $module)
-                                                            <a href="{{ route('modules.show', $module) }}" class="block">
-                                                                <div class="aspect-square 
-                                                                    @if($module->etat == 'termine') bg-accent-green
-                                                                    @elseif($module->etat == 'en_cours') bg-accent-yellow
-                                                                    @elseif($module->etat == 'defaillant') bg-accent-red
-                                                                    @else bg-gray-600
+                                                    @php
+                                                        // Extraire les dimensions depuis disposition_modules
+                                                        $nbColonnes = 2; // Par défaut 2x2
+                                                        $nbLignes = 2;
+                                                        
+                                                        // Récupérer disposition_modules depuis l'objet dalle ou la session
+                                                        $disposition = $dalle->disposition_modules ?? session('disposition_modules_dalle_' . $dalle->id);
+                                                        
+                                                        // Si disposition_modules est définie et au format AxB
+                                                        if (!empty($disposition) && strpos($disposition, 'x') !== false) {
+                                                            $parts = explode('x', $disposition);
+                                                            if (count($parts) == 2) {
+                                                                $nbColonnes = (int)$parts[0];
+                                                                $nbLignes = (int)$parts[1];
+                                                            }
+                                                        } else {
+                                                            // Essayer de calculer la disposition en fonction du nombre de modules
+                                                            $nbModules = $dalle->modules->count();
+                                                            if ($nbModules == 4) {
+                                                                $nbColonnes = 2;
+                                                                $nbLignes = 2;
+                                                            } elseif ($nbModules == 6) {
+                                                                $nbColonnes = 3;
+                                                                $nbLignes = 2;
+                                                            } elseif ($nbModules == 9) {
+                                                                $nbColonnes = 3;
+                                                                $nbLignes = 3;
+                                                            }
+                                                        }
+                                                        
+                                                        // Créer une grille pour les modules
+                                                        $modules = $dalle->modules->all();
+                                                        $grille = [];
+                                                        
+                                                        // Remplir la grille dans l'ordre ligne par ligne
+                                                        $moduleIndex = 0;
+                                                        for ($y = 1; $y <= $nbLignes; $y++) {
+                                                            for ($x = 1; $x <= $nbColonnes; $x++) {
+                                                                if ($moduleIndex < count($modules)) {
+                                                                    $grille[$y][$x] = $modules[$moduleIndex];
+                                                                    $moduleIndex++;
+                                                                } else {
+                                                                    $grille[$y][$x] = null;
+                                                                }
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    
+                                                    <div class="mb-2 text-sm text-gray-400">
+                                                        Disposition: {{ $nbColonnes }}x{{ $nbLignes }} ({{ $dalle->modules->count() }} modules)
+                                                    </div>
+                                                    
+                                                    <div class="flex justify-center">
+                                                        <div class="grid max-w-xs mx-auto" style="grid-template-columns: repeat({{ $nbColonnes }}, minmax(0, 1fr)); gap: 0.15rem;">
+                                                            @for ($y = 1; $y <= $nbLignes; $y++)
+                                                                @for ($x = 1; $x <= $nbColonnes; $x++)
+                                                                    @if (isset($grille[$y][$x]))
+                                                                        @php $module = $grille[$y][$x]; @endphp
+                                                                        <a href="{{ route('modules.show', $module) }}" class="block">
+                                                                            <div class="aspect-square w-8 h-8 
+                                                                                @if($module->etat == 'termine') bg-accent-green
+                                                                                @elseif($module->etat == 'en_cours') bg-accent-yellow
+                                                                                @elseif($module->etat == 'defaillant') bg-accent-red
+                                                                                @else bg-gray-600
+                                                                                @endif
+                                                                                rounded-sm border border-black/10 hover:brightness-110 transition-all hover:shadow-lg duration-150 transform hover:scale-105"
+                                                                                title="Module #{{ $module->id }} - {{ ucfirst($module->etat) }}"
+                                                                            >
+                                                                                <div class="flex items-center justify-center h-full text-xs font-medium text-white/90" style="font-size: 0.65rem;">
+                                                                                    {{ $x }},{{ $y }}
+                                                                                </div>
+                                                                            </div>
+                                                                        </a>
+                                                                    @else
+                                                                        <div class="aspect-square w-8 h-8 bg-gray-800/50 rounded-sm border border-gray-700" title="Emplacement vide">
+                                                                            <div class="flex items-center justify-center h-full text-xs text-gray-600" style="font-size: 0.65rem;">
+                                                                                {{ $x }},{{ $y }}
+                                                                            </div>
+                                                                        </div>
                                                                     @endif
-                                                                    rounded-md hover:opacity-75 transition-opacity hover:scale-110 duration-200"
-                                                                    title="Module #{{ $module->id }} - {{ ucfirst($module->etat) }}"
-                                                                ></div>
-                                                            </a>
-                                                        @endforeach
+                                                                @endfor
+                                                            @endfor
+                                                        </div>
                                                     </div>
                                                 </div>
                                             @endforeach

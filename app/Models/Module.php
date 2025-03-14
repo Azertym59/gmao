@@ -25,7 +25,10 @@ class Module extends Model
         'etat',
         'technicien_id',
         'est_occupe',
-        'reference_module'
+        'reference_module',
+        'position_lettre',
+        'position_x',
+        'position_y'
     ];
 
     /**

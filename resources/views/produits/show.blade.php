@@ -9,15 +9,44 @@
         <div class="max-w-7xl mx-auto">
             <div class="glassmorphism overflow-hidden shadow-lg rounded-xl">
                 <div class="p-6 border-b border-gray-700">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-semibold text-white">{{ $produit->marque }} {{ $produit->modele }}</h3>
-                        <div class="flex space-x-2">
-                            <a href="{{ route('produits.edit', $produit) }}" class="btn-action btn-secondary flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                                {{ __('Modifier') }}
-                            </a>
+                    <!-- En-tête avec infos Chantier/Client -->
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+                        <div>
+                            <h3 class="text-xl font-semibold text-white">{{ $produit->marque }} {{ $produit->modele }}
+                                @if($produit->is_variante && $produit->variante_nom)
+                                    <span class="ml-2 text-sm bg-blue-900/50 text-blue-300 px-2 py-1 rounded-lg">{{ $produit->variante_nom }}</span>
+                                @endif
+                            </h3>
+                            <div class="flex items-center mt-2">
+                                <span class="text-sm text-gray-400 mr-4">Chantier: <a href="{{ route('chantiers.show', $produit->chantier) }}" class="text-accent-blue hover:underline">{{ $produit->chantier->nom }}</a></span>
+                                <span class="text-sm text-gray-400">Client: {{ $produit->chantier->client->nom_complet }}</span>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2 mt-4 md:mt-0">
+                            @if(!$produit->is_variante)
+                                <a href="{{ route('produits.create-variante', $produit) }}" class="btn-action btn-secondary flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                    Ajouter une variante
+                                </a>
+                            @endif
+                            
+                            @if($produit->is_variante)
+                                <a href="{{ route('produits.edit-variante', $produit) }}" class="btn-action btn-secondary flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Modifier la variante
+                                </a>
+                            @else
+                                <a href="{{ route('produits.edit', $produit) }}" class="btn-action btn-secondary flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Modifier
+                                </a>
+                            @endif
                             <a href="{{ route('chantiers.show', $produit->chantier) }}" class="btn-action btn-primary flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />

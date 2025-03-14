@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DateHelper;
 use App\Models\Chantier;
 use App\Models\Client;
 use App\Models\Module;
@@ -65,7 +66,11 @@ class DashboardController extends Controller
             ->take(5)
             ->get()
             ->map(function ($chantier) {
-                // Calculer le nombre de jours restants
+                // Utiliser notre helper pour le temps restant formaté
+                $chantier->temps_restant = \App\Helpers\DateHelper::formatTimeRemaining($chantier->date_butoir);
+                $chantier->temps_restant_class = \App\Helpers\DateHelper::getTimeRemainingClass($chantier->date_butoir);
+                
+                // Stocker aussi la valeur brute des jours restants pour tri ou autres usages
                 $chantier->jours_restants = Carbon::now()->diffInDays(Carbon::parse($chantier->date_butoir), false);
                 
                 // Calculer le pourcentage d'avancement

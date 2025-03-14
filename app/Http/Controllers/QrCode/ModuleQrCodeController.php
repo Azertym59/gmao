@@ -27,13 +27,13 @@ class ModuleQrCodeController extends Controller
      */
     public function show($id)
     {
-        $module = Module::with(['dalle', 'dalle.chantier'])->findOrFail($id);
+        $module = Module::with(['dalle', 'dalle.produit', 'dalle.produit.chantier'])->findOrFail($id);
         
         // Generate QR code data URL
         $url = route('qrcode.module.show', $module->id);
         $qrCodeData = $this->qzTrayService->generateQrCode($url, 300);
         
-        return view('qrcode.module.show', [
+        return view('qrcodes.module.show', [
             'module' => $module,
             'qrCode' => $qrCodeData
         ]);
@@ -48,7 +48,7 @@ class ModuleQrCodeController extends Controller
      */
     public function printLabel($id, Request $request)
     {
-        $module = Module::with(['dalle', 'dalle.chantier'])->findOrFail($id);
+        $module = Module::with(['dalle', 'dalle.produit', 'dalle.produit.chantier'])->findOrFail($id);
         
         try {
             // Get default printer or specified printer
@@ -80,7 +80,7 @@ class ModuleQrCodeController extends Controller
             );
             
             // Return view with label and print script
-            return view('qrcode.module.label', [
+            return view('qrcodes.module.label', [
                 'module' => $module,
                 'printData' => $printData,
                 'qzTrayService' => $this->qzTrayService

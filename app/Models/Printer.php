@@ -17,9 +17,16 @@ class Printer extends Model
     protected $fillable = [
         'name',
         'description',
+        'model',
         'type',
         'is_default',
-        'options'
+        'options',
+        'ip_address',
+        'port',
+        'dpi',
+        'label_width',
+        'label_height',
+        'connection_type'
     ];
 
     /**
@@ -68,5 +75,41 @@ class Printer extends Model
     public function isStandard()
     {
         return $this->type === 'standard';
+    }
+    
+    /**
+     * Obtenir l'imprimante par défaut
+     * 
+     * @return Printer|null L'imprimante par défaut ou null si aucune n'est définie
+     */
+    public static function getDefault()
+    {
+        return self::where('is_default', true)->first();
+    }
+    
+    /**
+     * Vérifier si l'imprimante est disponible
+     * 
+     * @return bool True si l'imprimante est accessible, false sinon
+     */
+    public function isAvailable()
+    {
+        // Si pas d'adresse IP, présumer que c'est une imprimante locale
+        if (empty($this->ip_address)) {
+            return true;
+        }
+        
+        // Tenter de connecter au port si spécifié
+        if (!empty($this->port)) {
+            $fp = @fsockopen($this->ip_address, $this->port, $errno, $errstr, 2);
+            if ($fp) {
+                fclose($fp);
+                return true;
+            }
+        }
+        
+        // Tenter un ping basique
+        exec("ping -c 1 -W 1 " . escapeshellarg($this->ip_address), $output, $status);
+        return $status === 0;
     }
 }
