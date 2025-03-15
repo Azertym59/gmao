@@ -17,9 +17,16 @@ class Dalle extends Model
         'hauteur',
         'nb_modules',
         'alimentation',
-        'carte_reception', // Ajoutez cette ligne
-        'hub', // Ajoutez cette ligne
-        'reference_dalle'
+        'carte_reception',
+        'hub',
+        'reference_dalle',
+        'disposition_modules',
+        'nb_colonnes',
+        'nb_lignes',
+        'disposition_type',
+        'disposition_schema',
+        'mode_emballage',
+        'mode_emballage_detail'
     ];
 
     /**

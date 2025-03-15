@@ -24,6 +24,12 @@
                                 </svg>
                                 {{ __('Retour au module') }}
                             </a>
+                            <a href="{{ route('rapports.intervention', $intervention) }}" class="btn-action bg-green-600 hover:bg-green-500 text-white flex items-center" target="_blank">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                {{ __('Rapport PDF') }}
+                            </a>
                         </div>
                     </div>
 
@@ -35,7 +41,7 @@
                                     <span class="font-semibold text-gray-300">Date:</span> <span class="text-gray-400">{{ $intervention->date_debut->format('d/m/Y H:i') }}</span>
                                 </div>
                                 <div class="mb-2">
-                                    <span class="font-semibold text-gray-300">Technicien:</span> <span class="text-gray-400">{{ $intervention->technicien->name }}</span>
+                                    <span class="font-semibold text-gray-300">Technicien:</span> <span class="text-gray-400">{{ $intervention->technicien ? $intervention->technicien->name : "Non assigné" }}</span>
                                 </div>
                                 <div class="mb-2">
                                     <span class="font-semibold text-gray-300">Durée:</span>
@@ -79,6 +85,9 @@
                                 <div>
                                     <span class="font-semibold text-gray-300">Client:</span>
                                     <span class="text-gray-400">{{ $intervention->module->dalle->produit->chantier->client->nom_complet }}</span>
+                                    @if($intervention->module->dalle->produit->chantier->client->societe)
+                                        <span class="text-gray-500">({{ $intervention->module->dalle->produit->chantier->client->societe }})</span>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -95,6 +104,10 @@
                                 </div>
                                 <div class="mb-2">
                                     <span class="font-semibold text-gray-300">Masques HS:</span> <span class="text-gray-400">{{ $intervention->diagnostic->nb_masques_hs }}</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="font-semibold text-gray-300">Fake PCB nécessaire:</span> 
+                                    <span class="text-gray-400">{{ $intervention->diagnostic->pose_fake_pcb ? 'Oui' : 'Non' }}</span>
                                 </div>
                                 @if($intervention->diagnostic->remarques)
                                 <div>
@@ -118,6 +131,10 @@
                                 </div>
                                 <div class="mb-2">
                                     <span class="font-semibold text-gray-300">Masques remplacés:</span> <span class="text-gray-400">{{ $intervention->reparation->nb_masques_remplaces }}</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="font-semibold text-gray-300">Fake PCB posé:</span> 
+                                    <span class="text-gray-400">{{ $intervention->reparation->fake_pcb_pose ? 'Oui' : 'Non' }}</span>
                                 </div>
                                 @if($intervention->reparation->remarques)
                                 <div>

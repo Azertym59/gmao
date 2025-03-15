@@ -19,7 +19,8 @@ class Intervention extends Model
         'date_reprise',
         'date_pause',
         'temps_total',
-        'is_completed'
+        'is_completed',
+        'etat'
     ];
 
     protected $casts = [

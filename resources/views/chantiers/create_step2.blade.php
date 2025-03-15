@@ -1,218 +1,579 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-white leading-tight">
-            {{ __('Nouveau chantier - Étape 2: Sélection du produit') }}
+            {{ __('Création de chantier - Étape 2/5 : Chantier') }}
         </h2>
     </x-slot>
 
     <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Indicateur de progression -->
+            <div class="mb-6">
+                <div class="flex justify-between mb-2">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-green-500 text-white font-bold">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <span class="ml-2 font-medium text-green-500">Client</span>
+                    </div>
+                    <div class="flex-1 mx-4 border-t-2 border-green-500 self-center"></div>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-accent-blue text-white font-bold">2</div>
+                        <span class="ml-2 font-medium text-white">Chantier</span>
+                    </div>
+                    <div class="flex-1 mx-4 border-t-2 border-gray-600 self-center"></div>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-700 text-gray-400 font-bold">3</div>
+                        <span class="ml-2 font-medium text-gray-400">Produit</span>
+                    </div>
+                    <div class="flex-1 mx-4 border-t-2 border-gray-600 self-center"></div>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-700 text-gray-400 font-bold">4</div>
+                        <span class="ml-2 font-medium text-gray-400">Interventions</span>
+                    </div>
+                    <div class="flex-1 mx-4 border-t-2 border-gray-600 self-center"></div>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-700 text-gray-400 font-bold">5</div>
+                        <span class="ml-2 font-medium text-gray-400">Rapports</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="glassmorphism overflow-hidden shadow-lg rounded-xl">
                 <div class="p-6 border-b border-gray-700">
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-white">Étape 2 sur 3: Choisissez un produit</h3>
-                        <p class="text-gray-400 mt-1">Sélectionnez un produit depuis le catalogue ou créez un nouveau produit.</p>
+                    <div class="mb-6 bg-blue-900/30 border border-blue-500/30 p-4 rounded-xl">
+                        <h3 class="font-medium text-blue-300 mb-2">Client sélectionné</h3>
+                        <p class="text-gray-300"><span class="font-medium">Nom:</span> {{ $client->nom_complet }}</p>
+                        @if($client->societe)
+                            <p class="text-gray-300"><span class="font-medium">Société:</span> {{ $client->societe }}</p>
+                        @endif
+                        @if($client->email)
+                            <p class="text-gray-300"><span class="font-medium">Email:</span> {{ $client->email }}</p>
+                        @endif
                     </div>
 
-                    <!-- Étapes de progression -->
-                    <div class="mb-8">
-                        <div class="flex items-center justify-between">
-                            <div class="w-full bg-gray-700 rounded-full h-2.5">
-                                <div class="bg-indigo-600 h-2.5 rounded-full" style="width: 66%"></div>
+                    <h3 class="text-lg font-semibold text-white mb-4">Informations du chantier</h3>
+
+                    @if ($errors->any())
+                        <div class="mb-4 p-4 bg-red-500/30 border border-red-500/50 text-red-400 rounded-lg">
+                            <ul class="list-disc list-inside">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('chantiers.store.step2') }}">
+                        @csrf
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Nom -->
+                            <div>
+                                <x-input-label for="nom" :value="__('Nom du chantier')" class="text-gray-300" />
+                                <x-text-input id="nom" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="nom" :value="old('nom', $chantierData['nom'] ?? '')" required />
+                                <x-input-error :messages="$errors->get('nom')" class="mt-2" />
                             </div>
-                        </div>
-                        <div class="flex justify-between mt-2 text-xs text-gray-400">
-                            <span>Infos client</span>
-                            <span class="text-indigo-400 font-medium">Produit</span>
-                            <span>Configuration</span>
-                        </div>
-                    </div>
 
-                    <!-- Onglets -->
-                    <div class="mb-6">
-                        <div class="flex border-b border-gray-700">
-                            <button id="tab-catalogue" class="px-4 py-2 font-medium text-white border-b-2 border-indigo-500" onclick="showTab('catalogue')">
-                                Catalogue de produits
-                            </button>
-                            <button id="tab-nouveau" class="px-4 py-2 font-medium text-gray-400" onclick="showTab('nouveau')">
-                                Nouveau produit
-                            </button>
-                        </div>
-                    </div>
+                            <!-- Référence -->
+                            <div>
+                                <x-input-label for="reference" :value="__('Référence')" class="text-gray-300" />
+                                <x-text-input id="reference" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="reference" :value="old('reference', $chantierData['reference'] ?? '')" />
+                                <x-input-error :messages="$errors->get('reference')" class="mt-2" />
+                            </div>
 
-                    <!-- Section catalogue de produits -->
-                    <div id="catalogue-section">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            @forelse ($produitsCatalogue as $produit)
-                                <div class="glassmorphism p-4 rounded-lg border border-gray-700 hover:bg-gray-700/30 transition duration-200">
-                                    <form method="POST" action="{{ route('chantiers.store.step2') }}">
-                                        @csrf
-                                        <input type="hidden" name="from_catalogue" value="1">
-                                        <input type="hidden" name="catalogue_id" value="{{ $produit->id }}">
-                                        <input type="hidden" name="marque" value="{{ $produit->marque }}">
-                                        <input type="hidden" name="modele" value="{{ $produit->modele }}">
-                                        <input type="hidden" name="pitch" value="{{ $produit->pitch }}">
-                                        <input type="hidden" name="utilisation" value="{{ $produit->utilisation }}">
-                                        <input type="hidden" name="electronique" value="{{ $produit->electronique }}">
-                                        <input type="hidden" name="electronique_detail" value="{{ $produit->electronique_detail }}">
-                                        
-                                        <div class="flex justify-between items-start mb-2">
-                                            <h4 class="font-medium text-white">{{ $produit->marque }} {{ $produit->modele }}</h4>
-                                            <span class="badge {{ $produit->utilisation == 'indoor' ? 'badge-info' : 'badge-warning' }}">
-                                                {{ $produit->utilisation == 'indoor' ? 'Indoor' : 'Outdoor' }}
-                                            </span>
-                                        </div>
+                            <!-- Date de réception -->
+                            <div>
+                                <x-input-label for="date_reception" :value="__('Date de réception')" class="text-gray-300" />
+                                <x-text-input id="date_reception" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="date" name="date_reception" :value="old('date_reception', $chantierData['date_reception'] ?? date('Y-m-d'))" required />
+                                <x-input-error :messages="$errors->get('date_reception')" class="mt-2" />
+                            </div>
 
-                                        <div class="text-sm mb-4 text-gray-300">
-                                            <p><span class="font-medium">Pitch:</span> {{ $produit->pitch }} mm</p>
-                                            <p><span class="font-medium">Électronique:</span> 
-                                                @if($produit->electronique == 'autre')
-                                                    {{ $produit->electronique_detail }}
-                                                @else
-                                                    {{ ucfirst($produit->electronique) }}
-                                                @endif
-                                            </p>
-                                        </div>
+                            <!-- Date butoir -->
+                            <div>
+                                <x-input-label for="date_butoir" :value="__('Date butoir')" class="text-gray-300" />
+                                <x-text-input id="date_butoir" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="date" name="date_butoir" :value="old('date_butoir', $chantierData['date_butoir'] ?? date('Y-m-d', strtotime('+1 week')))" required />
+                                <x-input-error :messages="$errors->get('date_butoir')" class="mt-2" />
+                            </div>
 
-                                        <div class="flex justify-end">
-                                            <button type="submit" class="btn-action btn-primary">
-                                                Sélectionner ce produit
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            @empty
-                                <div class="col-span-3 text-center py-8 glassmorphism rounded-lg border border-gray-700">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                    </svg>
-                                    <p class="text-gray-400 mb-4">Aucun produit trouvé dans le catalogue.</p>
-                                    <button onclick="showTab('nouveau')" class="inline-block px-4 py-2 bg-accent-yellow text-white rounded-lg hover:bg-yellow-500 transition duration-150 ease-in-out">
-                                        Créer un nouveau produit
-                                    </button>
-                                </div>
-                            @endforelse
-                        </div>
-                    </div>
-
-                    <!-- Section nouveau produit -->
-                    <div id="nouveau-section" class="hidden">
-                        <form method="POST" action="{{ route('chantiers.store.step2') }}">
-                            @csrf
-                            <input type="hidden" name="from_catalogue" value="0">
+                            <!-- État -->
+                            <div>
+                                <x-input-label for="etat" :value="__('État')" class="text-gray-300" />
+                                <select id="etat" name="etat" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                    <option value="non_commence" {{ old('etat', $chantierData['etat'] ?? '') == 'non_commence' ? 'selected' : '' }}>Non commencé</option>
+                                    <option value="en_cours" {{ old('etat', $chantierData['etat'] ?? '') == 'en_cours' ? 'selected' : '' }}>En cours</option>
+                                    <option value="termine" {{ old('etat', $chantierData['etat'] ?? '') == 'termine' ? 'selected' : '' }}>Terminé</option>
+                                </select>
+                                <x-input-error :messages="$errors->get('etat')" class="mt-2" />
+                            </div>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Marque -->
-                                <div>
-                                    <x-input-label for="marque" :value="__('Marque')" class="text-gray-300" />
-                                    <x-text-input id="marque" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="text" name="marque" :value="old('marque')" required autofocus />
-                                    <x-input-error :messages="$errors->get('marque')" class="mt-2" />
-                                </div>
+                            <!-- Mode d'emballage -->
+                            <div>
+                                <x-input-label for="mode_emballage" :value="__('Mode d\'emballage')" class="text-gray-300" />
+                                <select id="mode_emballage" name="mode_emballage" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                    <option value="flightcase" {{ old('mode_emballage', $chantierData['mode_emballage'] ?? '') == 'flightcase' ? 'selected' : '' }}>Flight case</option>
+                                    <option value="carton" {{ old('mode_emballage', $chantierData['mode_emballage'] ?? '') == 'carton' ? 'selected' : '' }}>Carton</option>
+                                    <option value="palette" {{ old('mode_emballage', $chantierData['mode_emballage'] ?? '') == 'palette' ? 'selected' : '' }}>Palette</option>
+                                    <option value="autre" {{ old('mode_emballage', $chantierData['mode_emballage'] ?? '') == 'autre' ? 'selected' : '' }}>Autre</option>
+                                </select>
+                                <x-input-error :messages="$errors->get('mode_emballage')" class="mt-2" />
+                            </div>
+                            
+                            <!-- Détail du mode d'emballage (si autre) -->
+                            <div id="mode_emballage_detail_container" class="{{ old('mode_emballage', $chantierData['mode_emballage'] ?? '') == 'autre' ? '' : 'hidden' }}">
+                                <x-input-label for="mode_emballage_detail" :value="__('Précisez le mode d\'emballage')" class="text-gray-300" />
+                                <x-text-input id="mode_emballage_detail" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="mode_emballage_detail" :value="old('mode_emballage_detail', $chantierData['mode_emballage_detail'] ?? '')" />
+                                <x-input-error :messages="$errors->get('mode_emballage_detail')" class="mt-2" />
+                            </div>
 
-                                <!-- Modèle -->
-                                <div>
-                                    <x-input-label for="modele" :value="__('Modèle')" class="text-gray-300" />
-                                    <x-text-input id="modele" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="text" name="modele" :value="old('modele')" required />
-                                    <x-input-error :messages="$errors->get('modele')" class="mt-2" />
-                                </div>
-
-                                <!-- Pitch -->
-                                <div>
-                                    <x-input-label for="pitch" :value="__('Pitch (mm)')" class="text-gray-300" />
-                                    <x-text-input id="pitch" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="pitch" :value="old('pitch')" step="0.01" min="0.1" required />
-                                    <x-input-error :messages="$errors->get('pitch')" class="mt-2" />
-                                </div>
-
-                                <!-- Utilisation -->
-                                <div>
-                                    <x-input-label for="utilisation" :value="__('Utilisation')" class="text-gray-300" />
-                                    <select id="utilisation" name="utilisation" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" required>
-                                        <option value="indoor" {{ old('utilisation') == 'indoor' ? 'selected' : '' }}>Indoor</option>
-                                        <option value="outdoor" {{ old('utilisation') == 'outdoor' ? 'selected' : '' }}>Outdoor</option>
-                                    </select>
-                                    <x-input-error :messages="$errors->get('utilisation')" class="mt-2" />
-                                </div>
-
-                                <!-- Électronique -->
-                                <div>
-                                    <x-input-label for="electronique" :value="__('Électronique')" class="text-gray-300" />
-                                    <select id="electronique" name="electronique" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" required onchange="toggleElectroniqueDetail()">
-                                        <option value="nova" {{ old('electronique') == 'nova' ? 'selected' : '' }}>Nova</option>
-                                        <option value="linsn" {{ old('electronique') == 'linsn' ? 'selected' : '' }}>Linsn</option>
-                                        <option value="dbstar" {{ old('electronique') == 'dbstar' ? 'selected' : '' }}>DBStar</option>
-                                        <option value="brompton" {{ old('electronique') == 'brompton' ? 'selected' : '' }}>Brompton</option>
-                                        <option value="autre" {{ old('electronique') == 'autre' ? 'selected' : '' }}>Autre</option>
-                                    </select>
-                                    <x-input-error :messages="$errors->get('electronique')" class="mt-2" />
-                                </div>
-
-                                <!-- Électronique Détail (conditionnel) -->
-                                <div id="electronique_detail_container" class="{{ old('electronique') == 'autre' ? '' : 'hidden' }}">
-                                    <x-input-label for="electronique_detail" :value="__('Précisez l\'électronique')" class="text-gray-300" />
-                                    <x-text-input id="electronique_detail" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="text" name="electronique_detail" :value="old('electronique_detail')" />
-                                    <x-input-error :messages="$errors->get('electronique_detail')" class="mt-2" />
-                                </div>
-
-                                <!-- Option pour ajouter au catalogue -->
-                                <div class="md:col-span-2">
-                                    <div class="flex items-center">
-                                        <input id="add_to_catalogue" name="add_to_catalogue" type="checkbox" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500">
-                                        <label for="add_to_catalogue" class="ml-2 block text-sm text-gray-300">
-                                            Ajouter ce produit au catalogue pour une utilisation future
-                                        </label>
+                            <!-- Configuration des modules -->
+                            <div>
+                                <x-input-label for="nb_pixels_largeur" :value="__('Pixels en largeur')" class="text-gray-300" />
+                                <x-text-input id="nb_pixels_largeur" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="nb_pixels_largeur" :value="old('nb_pixels_largeur', 64)" min="1" required />
+                                <x-input-error :messages="$errors->get('nb_pixels_largeur')" class="mt-2" />
+                            </div>
+                            
+                            <div>
+                                <x-input-label for="nb_pixels_hauteur" :value="__('Pixels en hauteur')" class="text-gray-300" />
+                                <x-text-input id="nb_pixels_hauteur" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="nb_pixels_hauteur" :value="old('nb_pixels_hauteur', 64)" min="1" required />
+                                <x-input-error :messages="$errors->get('nb_pixels_hauteur')" class="mt-2" />
+                            </div>
+                            
+                            <!-- Disposition des modules -->
+                            <div>
+                                <x-input-label for="disposition" :value="__('Disposition des modules')" class="text-gray-300" />
+                                <select id="disposition" name="disposition" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                    <option value="grid" {{ old('disposition') == 'grid' ? 'selected' : '' }}>Grille standard</option>
+                                    <option value="zigzag" {{ old('disposition') == 'zigzag' ? 'selected' : '' }}>Zigzag</option>
+                                    <option value="custom" {{ old('disposition') == 'custom' ? 'selected' : '' }}>Personnalisée</option>
+                                </select>
+                                <x-input-error :messages="$errors->get('disposition')" class="mt-2" />
+                            </div>
+                            
+                            <!-- Disposition personnalisée des modules (cachée par défaut) -->
+                            <div id="disposition_custom_container" class="hidden md:col-span-2 p-4 border border-gray-500 rounded-xl bg-gray-800/50 mb-4">
+                                <h4 class="font-medium text-white mb-2">Configuration personnalisée</h4>
+                                <div class="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <x-input-label for="disposition_description" :value="__('Description de la disposition')" class="text-gray-300" />
+                                        <textarea id="disposition_description" name="disposition_description" rows="3" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">{{ old('disposition_description') }}</textarea>
+                                        <p class="text-xs text-gray-400 mt-1">Décrivez comment les modules sont agencés (sera utilisé pour la documentation)</p>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="flex items-center justify-between mt-6">
-                                <a href="{{ route('chantiers.create.step1') }}" class="btn-action btn-secondary flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                    {{ __('Retour') }}
-                                </a>
-                                <x-primary-button class="bg-indigo-600 hover:bg-indigo-700">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                    </svg>
-                                    {{ __('Continuer') }}
-                                </x-primary-button>
+                            
+                            <!-- Electronique -->
+                            <div class="md:col-span-2 p-4 border border-gray-700 rounded-xl bg-gray-800/20 mb-4">
+                                <h4 class="font-medium text-white mb-2">Configuration électronique</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <x-input-label for="driver" :value="__('Driver (IC de commande)')" class="text-gray-300" />
+                                        <x-text-input id="driver" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="driver" :value="old('driver')" />
+                                        <x-input-error :messages="$errors->get('driver')" class="mt-2" />
+                                    </div>
+                                    
+                                    <div>
+                                        <x-input-label for="shift_register" :value="__('Shift Register')" class="text-gray-300" />
+                                        <x-text-input id="shift_register" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="shift_register" :value="old('shift_register')" />
+                                        <x-input-error :messages="$errors->get('shift_register')" class="mt-2" />
+                                    </div>
+                                    
+                                    <div>
+                                        <x-input-label for="buffer" :value="__('Buffer')" class="text-gray-300" />
+                                        <x-text-input id="buffer" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="buffer" :value="old('buffer')" />
+                                        <x-input-error :messages="$errors->get('buffer')" class="mt-2" />
+                                    </div>
+                                </div>
                             </div>
-                        </form>
-                    </div>
+                            
+                            <!-- Datasheet LED -->
+                            <div class="md:col-span-2 p-4 border border-gray-700 rounded-xl bg-gray-800/20">
+                                <h4 class="font-medium text-white mb-2">Configuration des LEDs</h4>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <div>
+                                        <x-input-label for="led_type" :value="__('Type de LED')" class="text-gray-300" />
+                                        <select id="led_type" name="led_type" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                            <option value="SMD" {{ old('led_type') == 'SMD' ? 'selected' : '' }}>SMD</option>
+                                            <option value="DIP" {{ old('led_type') == 'DIP' ? 'selected' : '' }}>DIP</option>
+                                            <option value="COB" {{ old('led_type') == 'COB' ? 'selected' : '' }}>COB</option>
+                                            <option value="GOB" {{ old('led_type') == 'GOB' ? 'selected' : '' }}>GOB</option>
+                                            <option value="HOB" {{ old('led_type') == 'HOB' ? 'selected' : '' }}>HOB</option>
+                                            <option value="MiniLED" {{ old('led_type') == 'MiniLED' ? 'selected' : '' }}>MiniLED</option>
+                                        </select>
+                                        <x-input-error :messages="$errors->get('led_type')" class="mt-2" />
+                                    </div>
+                                    
+                                    <div>
+                                        <x-input-label for="led_size" :value="__('Taille de la LED')" class="text-gray-300" />
+                                        <select id="led_size" name="led_size" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                            <option value="1010" {{ old('led_size') == '1010' ? 'selected' : '' }}>1010</option>
+                                            <option value="1515" {{ old('led_size') == '1515' ? 'selected' : '' }}>1515</option>
+                                            <option value="2020" {{ old('led_size') == '2020' ? 'selected' : '' }}>2020</option>
+                                            <option value="2121" {{ old('led_size') == '2121' ? 'selected' : '' }}>2121</option>
+                                            <option value="2727" {{ old('led_size') == '2727' ? 'selected' : '' }}>2727</option>
+                                            <option value="3030" {{ old('led_size') == '3030' ? 'selected' : '' }}>3030</option>
+                                            <option value="3535" {{ old('led_size') == '3535' ? 'selected' : '' }}>3535</option>
+                                            <option value="5050" {{ old('led_size') == '5050' ? 'selected' : '' }}>5050</option>
+                                        </select>
+                                        <x-input-error :messages="$errors->get('led_size')" class="mt-2" />
+                                    </div>
+                                    
+                                    <div>
+                                        <x-input-label for="led_pads" :value="__('Nombre de pads')" class="text-gray-300" />
+                                        <select id="led_pads" name="led_pads" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                            <option value="2" {{ old('led_pads') == '2' ? 'selected' : '' }}>2</option>
+                                            <option value="4" {{ old('led_pads') == '4' ? 'selected' : '' }}>4</option>
+                                            <option value="6" {{ old('led_pads') == '6' ? 'selected' : '' }}>6</option>
+                                            <option value="8" {{ old('led_pads') == '8' ? 'selected' : '' }}>8</option>
+                                        </select>
+                                        <x-input-error :messages="$errors->get('led_pads')" class="mt-2" />
+                                    </div>
+                                </div>
+                                
+                                <!-- Configuration des pads -->
+                                <div id="pads_container" class="mb-4">
+                                    <h5 class="text-gray-300 font-medium mb-2">Configuration des pads</h5>
+                                
+                                    <!-- Configuration pour 2 pads -->
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pad-configs" id="pad-config-2">
+                                        <!-- Pad configs for 2 pads -->
+                                        <div>
+                                            <x-input-label for="pad_1" :value="__('Pad 1')" class="text-gray-300" />
+                                            <select id="pad_1" name="pad_1" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R" {{ old('pad_1') == 'R' ? 'selected' : '' }}>Rouge (R)</option>
+                                                <option value="G" {{ old('pad_1') == 'G' ? 'selected' : '' }}>Vert (G)</option>
+                                                <option value="B" {{ old('pad_1') == 'B' ? 'selected' : '' }}>Bleu (B)</option>
+                                                <option value="+" {{ old('pad_1') == '+' ? 'selected' : '' }}>Commun (+)</option>
+                                                <option value="-" {{ old('pad_1') == '-' ? 'selected' : '' }}>Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <x-input-label for="pad_2" :value="__('Pad 2')" class="text-gray-300" />
+                                            <select id="pad_2" name="pad_2" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R" {{ old('pad_2') == 'R' ? 'selected' : '' }}>Rouge (R)</option>
+                                                <option value="G" {{ old('pad_2') == 'G' ? 'selected' : '' }}>Vert (G)</option>
+                                                <option value="B" {{ old('pad_2') == 'B' ? 'selected' : '' }}>Bleu (B)</option>
+                                                <option value="+" {{ old('pad_2') == '+' ? 'selected' : '' }}>Commun (+)</option>
+                                                <option value="-" {{ old('pad_2') == '-' ? 'selected' : '' }}>Commun (-)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Configuration pour 4 pads -->
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pad-configs hidden" id="pad-config-4">
+                                        <!-- Pad configs for 4 pads -->
+                                        <div>
+                                            <x-input-label for="pad_1_4" :value="__('Pad 1')" class="text-gray-300" />
+                                            <select id="pad_1_4" name="pad_1_4" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R" {{ old('pad_1_4') == 'R' ? 'selected' : '' }}>Rouge (R)</option>
+                                                <option value="G" {{ old('pad_1_4') == 'G' ? 'selected' : '' }}>Vert (G)</option>
+                                                <option value="B" {{ old('pad_1_4') == 'B' ? 'selected' : '' }}>Bleu (B)</option>
+                                                <option value="+" {{ old('pad_1_4') == '+' ? 'selected' : '' }}>Commun (+)</option>
+                                                <option value="-" {{ old('pad_1_4') == '-' ? 'selected' : '' }}>Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <x-input-label for="pad_2_4" :value="__('Pad 2')" class="text-gray-300" />
+                                            <select id="pad_2_4" name="pad_2_4" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R" {{ old('pad_2_4') == 'R' ? 'selected' : '' }}>Rouge (R)</option>
+                                                <option value="G" {{ old('pad_2_4') == 'G' ? 'selected' : '' }}>Vert (G)</option>
+                                                <option value="B" {{ old('pad_2_4') == 'B' ? 'selected' : '' }}>Bleu (B)</option>
+                                                <option value="+" {{ old('pad_2_4') == '+' ? 'selected' : '' }}>Commun (+)</option>
+                                                <option value="-" {{ old('pad_2_4') == '-' ? 'selected' : '' }}>Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <x-input-label for="pad_3_4" :value="__('Pad 3')" class="text-gray-300" />
+                                            <select id="pad_3_4" name="pad_3_4" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R" {{ old('pad_3_4') == 'R' ? 'selected' : '' }}>Rouge (R)</option>
+                                                <option value="G" {{ old('pad_3_4') == 'G' ? 'selected' : '' }}>Vert (G)</option>
+                                                <option value="B" {{ old('pad_3_4') == 'B' ? 'selected' : '' }}>Bleu (B)</option>
+                                                <option value="+" {{ old('pad_3_4') == '+' ? 'selected' : '' }}>Commun (+)</option>
+                                                <option value="-" {{ old('pad_3_4') == '-' ? 'selected' : '' }}>Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <x-input-label for="pad_4_4" :value="__('Pad 4')" class="text-gray-300" />
+                                            <select id="pad_4_4" name="pad_4_4" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R" {{ old('pad_4_4') == 'R' ? 'selected' : '' }}>Rouge (R)</option>
+                                                <option value="G" {{ old('pad_4_4') == 'G' ? 'selected' : '' }}>Vert (G)</option>
+                                                <option value="B" {{ old('pad_4_4') == 'B' ? 'selected' : '' }}>Bleu (B)</option>
+                                                <option value="+" {{ old('pad_4_4') == '+' ? 'selected' : '' }}>Commun (+)</option>
+                                                <option value="-" {{ old('pad_4_4') == '-' ? 'selected' : '' }}>Commun (-)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Similaire pour 6 et 8 pads -->
+                                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 pad-configs hidden" id="pad-config-6">
+                                        <!-- 6 pads config -->
+                                        <div>
+                                            <x-input-label for="pad_1_6" :value="__('Pad 1')" class="text-gray-300" />
+                                            <select id="pad_1_6" name="pad_1_6" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+">Commun (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <!-- Répéter pour les pads 2-6 -->
+                                        <div>
+                                            <x-input-label for="pad_2_6" :value="__('Pad 2')" class="text-gray-300" />
+                                            <select id="pad_2_6" name="pad_2_6" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+">Commun (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <x-input-label for="pad_3_6" :value="__('Pad 3')" class="text-gray-300" />
+                                            <select id="pad_3_6" name="pad_3_6" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+">Commun (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <x-input-label for="pad_4_6" :value="__('Pad 4')" class="text-gray-300" />
+                                            <select id="pad_4_6" name="pad_4_6" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+">Commun (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <x-input-label for="pad_5_6" :value="__('Pad 5')" class="text-gray-300" />
+                                            <select id="pad_5_6" name="pad_5_6" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+">Commun (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <x-input-label for="pad_6_6" :value="__('Pad 6')" class="text-gray-300" />
+                                            <select id="pad_6_6" name="pad_6_6" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+">Commun (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 gap-4 pad-configs hidden" id="pad-config-8">
+                                        <!-- 8 pads config -->
+                                        <div>
+                                            <x-input-label for="pad_1_8" :value="__('Pad 1')" class="text-gray-300" />
+                                            <select id="pad_1_8" name="pad_1_8" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+1">Commun 1 (+)</option>
+                                                <option value="+2">Commun 2 (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <!-- Répéter pour les pads 2-8 -->
+                                        <div>
+                                            <x-input-label for="pad_2_8" :value="__('Pad 2')" class="text-gray-300" />
+                                            <select id="pad_2_8" name="pad_2_8" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+1">Commun 1 (+)</option>
+                                                <option value="+2">Commun 2 (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <!-- Continuer pour les autres pads -->
+                                        <div>
+                                            <x-input-label for="pad_3_8" :value="__('Pad 3')" class="text-gray-300" />
+                                            <select id="pad_3_8" name="pad_3_8" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+1">Commun 1 (+)</option>
+                                                <option value="+2">Commun 2 (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <x-input-label for="pad_4_8" :value="__('Pad 4')" class="text-gray-300" />
+                                            <select id="pad_4_8" name="pad_4_8" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+1">Commun 1 (+)</option>
+                                                <option value="+2">Commun 2 (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <x-input-label for="pad_5_8" :value="__('Pad 5')" class="text-gray-300" />
+                                            <select id="pad_5_8" name="pad_5_8" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+1">Commun 1 (+)</option>
+                                                <option value="+2">Commun 2 (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <x-input-label for="pad_6_8" :value="__('Pad 6')" class="text-gray-300" />
+                                            <select id="pad_6_8" name="pad_6_8" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+1">Commun 1 (+)</option>
+                                                <option value="+2">Commun 2 (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <x-input-label for="pad_7_8" :value="__('Pad 7')" class="text-gray-300" />
+                                            <select id="pad_7_8" name="pad_7_8" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+1">Commun 1 (+)</option>
+                                                <option value="+2">Commun 2 (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <x-input-label for="pad_8_8" :value="__('Pad 8')" class="text-gray-300" />
+                                            <select id="pad_8_8" name="pad_8_8" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                <option value="R1">Rouge 1 (R1)</option>
+                                                <option value="G1">Vert 1 (G1)</option>
+                                                <option value="B1">Bleu 1 (B1)</option>
+                                                <option value="R2">Rouge 2 (R2)</option>
+                                                <option value="G2">Vert 2 (G2)</option>
+                                                <option value="B2">Bleu 2 (B2)</option>
+                                                <option value="+1">Commun 1 (+)</option>
+                                                <option value="+2">Commun 2 (+)</option>
+                                                <option value="-">Commun (-)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Rotation de la LED -->
+                                <div class="mb-4">
+                                    <x-input-label for="led_rotation" :value="__('Rotation de la LED')" class="text-gray-300" />
+                                    <select id="led_rotation" name="led_rotation" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                        <option value="0" {{ old('led_rotation') == '0' ? 'selected' : '' }}>0° (Normal)</option>
+                                        <option value="90" {{ old('led_rotation') == '90' ? 'selected' : '' }}>90°</option>
+                                        <option value="180" {{ old('led_rotation') == '180' ? 'selected' : '' }}>180°</option>
+                                        <option value="270" {{ old('led_rotation') == '270' ? 'selected' : '' }}>270°</option>
+                                    </select>
+                                    <x-input-error :messages="$errors->get('led_rotation')" class="mt-2" />
+                                </div>
+                                
+                                <!-- Prévisualisation de la LED -->
+                                <div class="bg-gray-900/50 p-4 rounded-xl mb-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h5 class="text-white font-medium">Prévisualisation</h5>
+                                        <div class="text-gray-300 text-sm" id="led_name_preview">SMD1515RGB+0</div>
+                                    </div>
+                                    
+                                    <div class="flex justify-center">
+                                        <!-- Canvas pour le dessin de la LED -->
+                                        <div class="relative">
+                                            <canvas id="led_preview" width="200" height="200" class="border border-gray-600 rounded bg-gray-800"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <button type="button" id="generate_datasheet" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                        Générer le datasheet
+                                    </button>
+                                    <input type="hidden" id="led_datasheet_name" name="led_datasheet_name" value="">
+                                    <input type="hidden" id="led_datasheet_image" name="led_datasheet_image" value="">
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="md:col-span-2">
+                                <x-input-label for="description" :value="__('Description')" class="text-gray-300" />
+                                <textarea id="description" name="description" rows="4" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">{{ old('description', $chantierData['description'] ?? '') }}</textarea>
+                                <x-input-error :messages="$errors->get('description')" class="mt-2" />
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-6">
+                            <a href="{{ route('chantiers.create.step1') }}" class="btn-action btn-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                                </svg>
+                                {{ __('Retour') }}
+                            </a>
+                            <button type="submit" class="btn-action btn-primary">
+                                {{ __('Continuer') }}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        function showTab(tab) {
-            if (tab === 'catalogue') {
-                document.getElementById('catalogue-section').classList.remove('hidden');
-                document.getElementById('nouveau-section').classList.add('hidden');
-                document.getElementById('tab-catalogue').classList.add('text-white', 'border-b-2', 'border-indigo-500');
-                document.getElementById('tab-catalogue').classList.remove('text-gray-400');
-                document.getElementById('tab-nouveau').classList.remove('text-white', 'border-b-2', 'border-indigo-500');
-                document.getElementById('tab-nouveau').classList.add('text-gray-400');
-            } else {
-                document.getElementById('catalogue-section').classList.add('hidden');
-                document.getElementById('nouveau-section').classList.remove('hidden');
-                document.getElementById('tab-nouveau').classList.add('text-white', 'border-b-2', 'border-indigo-500');
-                document.getElementById('tab-nouveau').classList.remove('text-gray-400');
-                document.getElementById('tab-catalogue').classList.remove('text-white', 'border-b-2', 'border-indigo-500');
-                document.getElementById('tab-catalogue').classList.add('text-gray-400');
-            }
-        }
-
-        function toggleElectroniqueDetail() {
-            const electronique = document.getElementById('electronique');
-            const electronique_detail_container = document.getElementById('electronique_detail_container');
-            
-            if (electronique.value === 'autre') {
-                electronique_detail_container.classList.remove('hidden');
-            } else {
-                electronique_detail_container.classList.add('hidden');
-            }
-        }
-    </script>
+    <!-- Script externe pour la page de création de chantier - étape 2 -->
+    <script src="{{ asset('js/pages/chantier-create-step2.js') }}"></script>
 </x-app-layout>

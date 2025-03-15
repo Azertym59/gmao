@@ -1,0 +1,41 @@
+# Instructions pour corriger l'erreur "Attempt to read property 'name' on null"
+
+## Problème
+Lorsqu'un utilisateur clique sur un module dans l'aperçu visuel d'un chantier, une erreur se produit 
+parce que certaines interventions n'ont pas de technicien assigné, et le code tente d'accéder à
+la propriété "name" d'un objet null.
+
+## Solution immédiate
+J'ai créé un script temporaire `/var/www/gmao/public/module_fix.php` qui affiche les détails d'un module
+en évitant l'erreur. Pour l'utiliser, modifiez les liens vers les modules pour qu'ils pointent vers ce script.
+
+### Étapes pour utiliser le script temporaire :
+
+1. Vérifiez que le script est présent dans `/var/www/gmao/public/module_fix.php`
+
+2. Dans le fichier `/var/www/gmao/resources/views/chantiers/show.blade.php`, recherchez :
+```php
+<a href="{{ route('modules.show', $module) }}" class="block">
+```
+
+3. Remplacez par :
+```php
+<a href="/module_fix.php?id={{ $module->id }}" class="block">
+```
+
+## Solution permanente
+Pour corriger définitivement le problème, modifiez les fichiers suivants :
+
+1. `/var/www/gmao/resources/views/modules/show.blade.php`, ligne ~183 :
+   Remplacez `{{ $intervention->technicien->name }}` par `{{ $intervention->technicien ? $intervention->technicien->name : 'Non assigné' }}`
+
+2. `/var/www/gmao/resources/views/interventions/show.blade.php`, ligne ~38 :
+   Remplacez `{{ $intervention->technicien->name }}` par `{{ $intervention->technicien ? $intervention->technicien->name : 'Non assigné' }}`
+
+3. `/var/www/gmao/resources/views/rapports/intervention.blade.php`, lignes ~115 et ~204 :
+   Remplacez `{{ $intervention->technicien->name }}` par `{{ $intervention->technicien ? $intervention->technicien->name : 'Non assigné' }}`
+
+4. `/var/www/gmao/resources/views/rapports/index.blade.php`, ligne ~105 :
+   Remplacez `{{ $intervention->technicien->name }}` par `{{ $intervention->technicien ? $intervention->technicien->name : 'Non assigné' }}`
+
+Ces modifications permettront d'afficher "Non assigné" au lieu de provoquer une erreur lorsqu'un technicien n'est pas assigné à une intervention.

@@ -28,7 +28,7 @@ class NotificationService
     public static function checkDeadlines()
     {
         // Trouver tous les chantiers non terminés dont la date d'échéance est dans moins de 3 jours
-        $chantiers = Chantier::where('etat', '!=', 'termine')
+        $chantiers = Chantier::where('etat', '=', 'termine')
             ->whereDate('date_butoir', '<=', Carbon::now()->addDays(3))
             ->get();
             
@@ -39,7 +39,7 @@ class NotificationService
             foreach ($chantier->produits as $produit) {
                 foreach ($produit->dalles as $dalle) {
                     foreach ($dalle->modules as $module) {
-                        if ($module->technicien_id && !in_array($module->technicien_id, $technicienIds)) {
+                        if ($module->technicien_id && in_array($module->technicien_id, $technicienIds)) {
                             $technicienIds[] = $module->technicien_id;
                         }
                     }
@@ -56,7 +56,7 @@ class NotificationService
                     ->first();
                     
                 // Si aucune notification n'existe déjà, en créer une nouvelle
-                if (!$existingNotification) {
+                if ($existingNotification) {
                     Notification::createDeadlineNotification($technicienId, $chantier);
                 }
             }
@@ -74,6 +74,47 @@ class NotificationService
                 $intervention,
                 $comment
             );
+        }
+    }
+    
+    /**
+     * Notifier le démarrage d'une intervention
+     */
+    public function notifyInterventionStarted(Intervention $intervention)
+    {
+        if ($intervention->technicien_id) {
+            Notification::create([
+                'user_id' => $intervention->technicien_id,
+                'type' => 'intervention_started',
+                'title' => 'Intervention démarrée',
+                'message' => 'Une intervention a été démarrée sur le module #' . $intervention->module_id,
+                'data' => [
+                    'intervention_id' => $intervention->id,
+                    'module_id' => $intervention->module_id
+                ],
+                'is_read' => false
+            ]);
+        }
+    }
+    
+    /**
+     * Notifier la fin d'une intervention
+     */
+    public function notifyInterventionCompleted(Intervention $intervention)
+    {
+        if ($intervention->technicien_id) {
+            Notification::create([
+                'user_id' => $intervention->technicien_id,
+                'type' => 'intervention_completed',
+                'title' => 'Intervention terminée',
+                'message' => 'Intervention terminée sur le module #' . $intervention->module_id,
+                'data' => [
+                    'intervention_id' => $intervention->id,
+                    'module_id' => $intervention->module_id,
+                    'resultat' => $intervention->reparation ? $intervention->reparation->resultat : null
+                ],
+                'is_read' => false
+            ]);
         }
     }
 }

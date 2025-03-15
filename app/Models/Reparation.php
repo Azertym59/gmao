@@ -15,7 +15,12 @@ class Reparation extends Model
         'nb_leds_remplacees',
         'nb_ic_remplaces',
         'nb_masques_remplaces',
-        'remarques'
+        'remarques',
+        'description',
+        'actions',
+        'pieces_remplacees',
+        'resultat',
+        'fake_pcb_pose'
     ];
 
     /**

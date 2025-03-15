@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-white leading-tight">
-            {{ __('Créer un chantier - Étape 3/3') }}
+            {{ __('Créer un chantier - Étape 3/5 : Produit et composition') }}
         </h2>
     </x-slot>
 
@@ -11,30 +11,52 @@
             <div class="mb-8">
                 <div class="flex items-center justify-between">
                     <div class="w-full flex items-center">
-                        <div class="relative flex flex-col items-center text-accent-blue">
-                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 bg-accent-blue border-accent-blue text-white font-bold flex items-center justify-center">
-                                ✓
+                        <div class="relative flex flex-col items-center text-green-500">
+                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 bg-green-500 border-green-500 text-white font-bold flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
                             </div>
-                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-accent-blue">
-                                <span class="font-bold">Informations</span>
-                            </div>
-                        </div>
-                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-accent-blue"></div>
-                        <div class="relative flex flex-col items-center text-accent-blue">
-                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 bg-accent-blue border-accent-blue text-white font-bold flex items-center justify-center">
-                                ✓
-                            </div>
-                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-accent-blue">
-                                <span class="font-bold">Produit</span>
+                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-green-500">
+                                <span class="font-bold">Client</span>
                             </div>
                         </div>
-                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-accent-blue"></div>
+                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-green-500"></div>
+                        <div class="relative flex flex-col items-center text-green-500">
+                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 bg-green-500 border-green-500 text-white font-bold flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-green-500">
+                                <span class="font-bold">Chantier</span>
+                            </div>
+                        </div>
+                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-green-500"></div>
                         <div class="relative flex flex-col items-center text-accent-blue">
                             <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 bg-accent-blue border-accent-blue text-white font-bold flex items-center justify-center">
                                 3
                             </div>
                             <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-accent-blue">
-                                <span class="font-bold">Composition</span>
+                                <span class="font-bold">Produit</span>
+                            </div>
+                        </div>
+                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-gray-700"></div>
+                        <div class="relative flex flex-col items-center text-gray-500">
+                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 border-gray-700 text-gray-400 font-bold flex items-center justify-center">
+                                4
+                            </div>
+                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-gray-500">
+                                <span>Interventions</span>
+                            </div>
+                        </div>
+                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-gray-700"></div>
+                        <div class="relative flex flex-col items-center text-gray-500">
+                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 border-gray-700 text-gray-400 font-bold flex items-center justify-center">
+                                5
+                            </div>
+                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-gray-500">
+                                <span>Rapports</span>
                             </div>
                         </div>
                     </div>
@@ -124,7 +146,14 @@
                                 
                                 <div>
                                     <x-input-label for="nb_modules_par_dalle" :value="__('Modules par Dalle')" class="text-gray-300" />
-                                    <x-text-input id="nb_modules_par_dalle" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="nb_modules_par_dalle" :value="old('nb_modules_par_dalle', 4)" min="1" required />
+                                    <div class="relative">
+                                        <x-text-input id="nb_modules_par_dalle" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="nb_modules_par_dalle" :value="old('nb_modules_par_dalle', isset($produitData['disposition_modules']) ? 
+                                        (preg_match('/^(\d+)x(\d+)$/', $produitData['disposition_modules'], $matches) ? ($matches[1] * $matches[2]) : 4) : 4)" min="1" readonly />
+                                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                            <span class="text-xs text-gray-400">Auto</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-1">Basé sur la disposition {{isset($produitData['disposition_modules']) ? $produitData['disposition_modules'] : '2x2'}} sélectionnée à l'étape précédente</p>
                                     <x-input-error :messages="$errors->get('nb_modules_par_dalle')" class="mt-2" />
                                 </div>
                             </div>
@@ -145,91 +174,6 @@
                             </div>
                         </div>
                         
-                        <!-- Configuration commune des dalles -->
-                        <div class="mb-6 p-4 border border-gray-700 rounded-xl bg-gray-800/30">
-                            <h3 class="text-lg font-medium text-white mb-4">Configuration des dalles</h3>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <x-input-label for="largeur_dalle" :value="__('Largeur dalle (mm)')" class="text-gray-300" />
-                                    <x-text-input id="largeur_dalle" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="largeur_dalle" :value="old('largeur_dalle', 500)" step="0.1" min="1" required />
-                                    <x-input-error :messages="$errors->get('largeur_dalle')" class="mt-2" />
-                                </div>
-                                
-                                <div>
-                                    <x-input-label for="hauteur_dalle" :value="__('Hauteur dalle (mm)')" class="text-gray-300" />
-                                    <x-text-input id="hauteur_dalle" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="hauteur_dalle" :value="old('hauteur_dalle', 500)" step="0.1" min="1" required />
-                                    <x-input-error :messages="$errors->get('hauteur_dalle')" class="mt-2" />
-                                </div>
-                                
-                                <div>
-                                    <x-input-label for="alimentation_dalle" :value="__('Alimentation')" class="text-gray-300" />
-                                    <x-text-input id="alimentation_dalle" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="alimentation_dalle" :value="old('alimentation_dalle', 'Standard 5V')" required />
-                                    <x-input-error :messages="$errors->get('alimentation_dalle')" class="mt-2" />
-                                </div>
-                                
-                                <div>
-                                    <x-input-label for="carte_reception" :value="__('Carte de réception')" class="text-gray-300" />
-                                    <x-text-input id="carte_reception" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="carte_reception" :value="old('carte_reception')" />
-                                    <x-input-error :messages="$errors->get('carte_reception')" class="mt-2" />
-                                </div>
-                                
-                                <div>
-                                    <x-input-label for="hub" :value="__('Hub')" class="text-gray-300" />
-                                    <x-text-input id="hub" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="hub" :value="old('hub')" />
-                                    <x-input-error :messages="$errors->get('hub')" class="mt-2" />
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Configuration commune des modules -->
-                        <div class="mb-6 p-4 border border-gray-700 rounded-xl bg-gray-800/30">
-                            <h3 class="text-lg font-medium text-white mb-4">Configuration des modules</h3>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div>
-                                    <x-input-label for="largeur_module" :value="__('Largeur module (mm)')" class="text-gray-300" />
-                                    <x-text-input id="largeur_module" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="largeur_module" :value="old('largeur_module', 250)" step="0.1" min="1" required />
-                                    <x-input-error :messages="$errors->get('largeur_module')" class="mt-2" />
-                                </div>
-                                
-                                <div>
-                                    <x-input-label for="hauteur_module" :value="__('Hauteur module (mm)')" class="text-gray-300" />
-                                    <x-text-input id="hauteur_module" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="hauteur_module" :value="old('hauteur_module', 250)" step="0.1" min="1" required />
-                                    <x-input-error :messages="$errors->get('hauteur_module')" class="mt-2" />
-                                </div>
-                                
-                                <div>
-                                    <x-input-label for="nb_pixels_largeur" :value="__('Pixels en largeur')" class="text-gray-300" />
-                                    <x-text-input id="nb_pixels_largeur" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="nb_pixels_largeur" :value="old('nb_pixels_largeur', 64)" min="1" required />
-                                    <x-input-error :messages="$errors->get('nb_pixels_largeur')" class="mt-2" />
-                                </div>
-                                
-                                <div>
-                                    <x-input-label for="nb_pixels_hauteur" :value="__('Pixels en hauteur')" class="text-gray-300" />
-                                    <x-text-input id="nb_pixels_hauteur" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="nb_pixels_hauteur" :value="old('nb_pixels_hauteur', 64)" min="1" required />
-                                    <x-input-error :messages="$errors->get('nb_pixels_hauteur')" class="mt-2" />
-                                </div>
-                                
-                                <div>
-                                    <x-input-label for="driver" :value="__('Driver (IC de commande)')" class="text-gray-300" />
-                                    <x-text-input id="driver" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="driver" :value="old('driver')" />
-                                    <x-input-error :messages="$errors->get('driver')" class="mt-2" />
-                                </div>
-                                
-                                <div>
-                                    <x-input-label for="shift_register" :value="__('Shift Register')" class="text-gray-300" />
-                                    <x-text-input id="shift_register" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="shift_register" :value="old('shift_register')" />
-                                    <x-input-error :messages="$errors->get('shift_register')" class="mt-2" />
-                                </div>
-                                
-                                <div>
-                                    <x-input-label for="buffer" :value="__('Buffer')" class="text-gray-300" />
-                                    <x-text-input id="buffer" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="buffer" :value="old('buffer')" />
-                                    <x-input-error :messages="$errors->get('buffer')" class="mt-2" />
-                                </div>
-                            </div>
-                        </div>
                         
                         <div class="flex items-center justify-between mt-6">
                             <div>
@@ -247,9 +191,9 @@
                                 </a>
                                 <button type="submit" id="submitBtn" class="btn-action btn-primary flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                     </svg>
-                                    {{ __('Créer le chantier') }}
+                                    {{ __('Continuer') }}
                                 </button>
                             </div>
                         </div>
@@ -278,12 +222,23 @@
             // Champ pour le mode individuel
             const nbModulesTotal = document.getElementById('nb_modules_total');
             
+            // Récupérer la disposition des modules depuis les données du produit
+            const dispositionModules = "{{ isset($produitData['disposition_modules']) ? $produitData['disposition_modules'] : '2x2' }}";
+            let calculatedModulesPerDalle = 4; // Par défaut 2x2 = 4 modules
+            
+            // Calcul du nombre de modules par dalle en fonction de la disposition
+            if (dispositionModules.match(/^(\d+)x(\d+)$/)) {
+                const matches = dispositionModules.match(/^(\d+)x(\d+)$/);
+                calculatedModulesPerDalle = parseInt(matches[1]) * parseInt(matches[2]);
+            }
+            
             // Fonction pour calculer et mettre à jour le total des modules
             function updateTotalModules() {
                 let totalModules = 0;
                 
                 if (modeFlightcaseRadio.checked) {
-                    totalModules = nbFlightcases.value * nbDallesParFlightcase.value * nbModulesParDalle.value;
+                    // nbModulesParDalle est maintenant en lecture seule, donc on utilise la valeur calculée
+                    totalModules = nbFlightcases.value * nbDallesParFlightcase.value * calculatedModulesPerDalle;
                     totalModulesFc.textContent = totalModules;
                 } else {
                     totalModules = parseInt(nbModulesTotal.value);
@@ -316,7 +271,6 @@
             // Gestionnaires d'événements pour les champs de saisie
             nbFlightcases.addEventListener('input', updateTotalModules);
             nbDallesParFlightcase.addEventListener('input', updateTotalModules);
-            nbModulesParDalle.addEventListener('input', updateTotalModules);
             nbModulesTotal.addEventListener('input', updateTotalModules);
             
             // Initialisation

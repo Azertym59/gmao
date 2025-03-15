@@ -20,6 +20,9 @@ class ProduitCatalogue extends Model
         'electronique_detail',
         'image_url',
         'description',
+        'cartes_reception_disponibles',
+        'hubs_disponibles',
+        'bains_couleur_disponibles',
     ];
 
     /**
@@ -48,5 +51,73 @@ class ProduitCatalogue extends Model
     public function getUtilisationFormattedAttribute()
     {
         return $this->utilisation === 'indoor' ? 'Indoor' : 'Outdoor';
+    }
+    
+    /**
+     * Obtenir les options de cartes de réception sous forme de tableau
+     */
+    public function getCartesReceptionAttribute(): array
+    {
+        if (empty($this->cartes_reception_disponibles)) {
+            return [];
+        }
+        
+        return json_decode($this->cartes_reception_disponibles, true) ?: [];
+    }
+    
+    /**
+     * Obtenir les options de hubs sous forme de tableau
+     */
+    public function getHubsAttribute(): array
+    {
+        if (empty($this->hubs_disponibles)) {
+            return [];
+        }
+        
+        return json_decode($this->hubs_disponibles, true) ?: [];
+    }
+    
+    /**
+     * Obtenir les options de bains de couleur sous forme de tableau
+     */
+    public function getBainsCouleurAttribute(): array
+    {
+        if (empty($this->bains_couleur_disponibles)) {
+            return [];
+        }
+        
+        return json_decode($this->bains_couleur_disponibles, true) ?: [];
+    }
+    
+    /**
+     * Obtenir les spécifications détaillées sous forme de tableau
+     */
+    public function getSpecificationsAttribute(): array
+    {
+        $specs = [
+            'Marque' => $this->marque,
+            'Modèle' => $this->modele,
+            'Pitch' => $this->pitch . ' mm',
+            'Utilisation' => $this->utilisation === 'indoor' ? 'Indoor' : 'Outdoor',
+            'Électronique' => $this->electronique === 'autre' ? $this->electronique_detail : ucfirst($this->electronique),
+        ];
+        
+        // Ajouter les options disponibles s'il y en a
+        $cartes = $this->cartes_reception;
+        if (!empty($cartes)) {
+            $specs['Cartes de réception disponibles'] = implode(', ', $cartes);
+        }
+        
+        $hubs = $this->hubs;
+        if (!empty($hubs)) {
+            $specs['Hubs disponibles'] = implode(', ', $hubs);
+        }
+        
+        $bains = $this->bains_couleur;
+        if (!empty($bains)) {
+            $specs['Bains de couleur disponibles'] = implode(', ', $bains);
+        }
+        
+        return $specs;
     }
 }

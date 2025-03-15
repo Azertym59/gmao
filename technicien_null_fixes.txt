@@ -1,0 +1,65 @@
+# Correctifs pour les accès à technicien->name sans vérification
+
+Voici les modifications à apporter pour éviter les erreurs "Attempt to read property 'name' on null" :
+
+## 1. /var/www/gmao/resources/views/modules/show.blade.php (ligne 183)
+
+Remplacer :
+```blade
+{{ $intervention->technicien->name }}
+```
+
+Par :
+```blade
+{{ $intervention->technicien ? $intervention->technicien->name : 'Non assigné' }}
+```
+
+## 2. /var/www/gmao/resources/views/interventions/show.blade.php (ligne 38)
+
+Remplacer :
+```blade
+{{ $intervention->technicien->name }}
+```
+
+Par :
+```blade
+{{ $intervention->technicien ? $intervention->technicien->name : 'Non assigné' }}
+```
+
+## 3. /var/www/gmao/resources/views/rapports/intervention.blade.php (ligne 115 et 204)
+
+Remplacer ligne 115 :
+```blade
+{{ $intervention->technicien->name }}
+```
+
+Par :
+```blade
+{{ $intervention->technicien ? $intervention->technicien->name : 'Non assigné' }}
+```
+
+Remplacer ligne 204 :
+```blade
+{{ $intervention->technicien->name }}
+```
+
+Par :
+```blade
+{{ $intervention->technicien ? $intervention->technicien->name : 'Non assigné' }}
+```
+
+## 4. /var/www/gmao/resources/views/rapports/index.blade.php (ligne 105)
+
+Remplacer :
+```blade
+{{ $intervention->technicien->name }}
+```
+
+Par :
+```blade
+{{ $intervention->technicien ? $intervention->technicien->name : 'Non assigné' }}
+```
+
+Note : La ligne dans dashboard/index.blade.php (ligne 254) est déjà sécurisée avec un opérateur de coalescence nulle (??) et ne nécessite pas de modification.
+
+Ces corrections permettront d'éviter les erreurs lorsqu'un module n'a pas de technicien assigné.

@@ -4,9 +4,51 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ClientController extends Controller
 {
+    /**
+     * Formater les données du client pour une présentation homogène
+     * 
+     * @param array $data Les données à formater
+     * @return array Données formatées
+     */
+    private function formatClientData(array $data): array
+    {
+        // Nom en majuscules
+        if (isset($data['nom'])) {
+            $data['nom'] = Str::upper($data['nom']);
+        }
+        
+        // Prénom avec première lettre en majuscule
+        if (isset($data['prenom'])) {
+            $data['prenom'] = Str::ucfirst(Str::lower($data['prenom']));
+        }
+        
+        // Société en majuscules (si non vide)
+        if (isset($data['societe']) && !empty($data['societe'])) {
+            $data['societe'] = Str::upper($data['societe']);
+        }
+        
+        // Ville en majuscules
+        if (isset($data['ville'])) {
+            $data['ville'] = Str::upper($data['ville']);
+        }
+        
+        // Code postal sans espaces
+        if (isset($data['code_postal'])) {
+            $data['code_postal'] = str_replace(' ', '', $data['code_postal']);
+        }
+        
+        // Email en minuscules
+        if (isset($data['email'])) {
+            $data['email'] = Str::lower($data['email']);
+        }
+        
+        return $data;
+    }
+
     /**
      * Afficher la liste des clients
      */
@@ -41,6 +83,9 @@ class ClientController extends Controller
             'telephone' => 'required|string|max:20',
             'notes' => 'nullable|string',
         ]);
+
+        // Formater les données
+        $validated = $this->formatClientData($validated);
 
         Client::create($validated);
 
@@ -82,10 +127,13 @@ class ClientController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        // Formater les données
+        $validated = $this->formatClientData($validated);
+
         $client->update($validated);
 
         return redirect()->route('clients.show', $client)
-            ->with('success', 'Client modifié avec succès.');
+            ->with('success', 'Client mis à jour avec succès.');
     }
 
     /**

@@ -102,7 +102,7 @@
                                         @foreach($interventions as $intervention)
                                             <tr>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $intervention->date_debut->format('d/m/Y H:i') }}</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $intervention->technicien->name }}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $intervention->technicien ? $intervention->technicien->name : "Non assigné" }}</td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     Module #{{ $intervention->module->id }}
                                                     <span class="text-xs text-gray-500 block">

@@ -19,8 +19,8 @@ class CheckForAdminSetup
         // Vérifier si la base de données est configurée
         try {
             if (Schema::hasTable('users')) {
-                // Vérifier si au moins un admin existe
-                if (User::where('role', 'admin')->count() === 0) {
+                // Vérifier si des utilisateurs existent
+                if (User::count() === 0) {
                     return redirect()->route('setup.admin');
                 }
             }

@@ -9,6 +9,12 @@
             Veuillez créer le premier compte administrateur pour commencer.
         </p>
 
+        @if(session('error'))
+        <div class="bg-red-500/30 border border-red-500/50 text-red-300 p-3 rounded-lg mb-6">
+            {{ session('error') }}
+        </div>
+        @endif
+
         <form method="POST" action="{{ route('setup.admin.store') }}">
             @csrf
 
