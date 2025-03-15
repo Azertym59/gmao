@@ -69,6 +69,18 @@ export function marqueAutocomplete() {
       }
     },
     
+    // Cette méthode s'assure que la valeur est enregistrée quand on quitte le champ
+    onBlur() {
+      // Si l'utilisateur a saisi directement une valeur sans sélectionner dans l'autocomplétion
+      if (this.query && this.query.trim() !== '') {
+        const marqueField = document.getElementById('marque');
+        if (marqueField) {
+          marqueField.value = this.query;
+          marqueField.dispatchEvent(new Event('change'));
+        }
+      }
+    },
+    
     // Réinitialiser la sélection
     resetSelection() {
       this.selectedMarque = null;
@@ -181,6 +193,18 @@ export function modeleAutocomplete() {
         } 
       });
       window.dispatchEvent(event);
+    },
+    
+    // Cette méthode s'assure que la valeur est enregistrée quand on quitte le champ
+    onBlur() {
+      // Si l'utilisateur a saisi directement une valeur sans sélectionner dans l'autocomplétion
+      if (this.query && this.query.trim() !== '') {
+        const modeleField = document.getElementById('modele');
+        if (modeleField) {
+          modeleField.value = this.query;
+          modeleField.dispatchEvent(new Event('change'));
+        }
+      }
     },
     
     // Réinitialiser la sélection

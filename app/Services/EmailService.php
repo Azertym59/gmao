@@ -22,6 +22,14 @@ class EmailService
         $nomClient = $client->nom_complet;
         $produits = $chantier->produits;
         
+        // S'assurer que le chantier a un token de suivi
+        if (empty($chantier->token_suivi)) {
+            $chantier->token_suivi = $chantier->genererTokenSuivi();
+        }
+        
+        // Générer le lien de suivi
+        $lienSuivi = url('/suivi/' . $chantier->token_suivi);
+        
         // Calculer le nombre total de modules et corriger les valeurs INCONNU
         $totalModules = 0;
         foreach ($produits as $produit) {
@@ -43,7 +51,8 @@ class EmailService
             'chantier' => $chantier, 
             'client' => $client,
             'produits' => $produits,
-            'totalModules' => $totalModules
+            'totalModules' => $totalModules,
+            'lienSuivi' => $lienSuivi
         ], function ($message) use ($email, $nomClient, $chantier) {
             $message->to($email, $nomClient)
                 ->subject('Votre chantier de réparation #' . $chantier->reference . ' a été créé');
@@ -61,6 +70,14 @@ class EmailService
         $client = $chantier->client;
         $email = $client->email;
         $nomClient = $client->nom_complet;
+        
+        // S'assurer que le chantier a un token de suivi
+        if (empty($chantier->token_suivi)) {
+            $chantier->token_suivi = $chantier->genererTokenSuivi();
+        }
+        
+        // Générer le lien de suivi
+        $lienSuivi = url('/suivi/' . $chantier->token_suivi);
         
         // Compter les interventions démarrées
         $interventionsStarted = 0;
@@ -90,7 +107,8 @@ class EmailService
             'chantier' => $chantier, 
             'client' => $client,
             'interventionsStarted' => $interventionsStarted,
-            'totalModules' => $totalModules
+            'totalModules' => $totalModules,
+            'lienSuivi' => $lienSuivi
         ], function ($message) use ($email, $nomClient, $chantier) {
             $message->to($email, $nomClient)
                 ->subject('Les réparations ont commencé sur votre chantier #' . $chantier->reference);
@@ -108,6 +126,14 @@ class EmailService
         $client = $chantier->client;
         $email = $client->email;
         $nomClient = $client->nom_complet;
+        
+        // S'assurer que le chantier a un token de suivi
+        if (empty($chantier->token_suivi)) {
+            $chantier->token_suivi = $chantier->genererTokenSuivi();
+        }
+        
+        // Générer le lien de suivi
+        $lienSuivi = url('/suivi/' . $chantier->token_suivi);
         
         // Calcul des statistiques pour le PDF (même logique que dans RapportController)
         $totalModules = 0;
@@ -174,7 +200,8 @@ class EmailService
             'client' => $client,
             'totalModules' => $totalModules,
             'modulesTermines' => $modulesTermines,
-            'tempsFormate' => $tempsFormate
+            'tempsFormate' => $tempsFormate,
+            'lienSuivi' => $lienSuivi
         ], function ($message) use ($email, $nomClient, $chantier, $pdfContent, $filename) {
             $message->to($email, $nomClient)
                 ->subject('Votre chantier #' . $chantier->reference . ' est terminé')

@@ -11,6 +11,7 @@
             type="text" 
             x-model="query"
             id="marque-search"
+            @blur="onBlur()"
             placeholder="{{ $placeholder }}" 
             class="block w-full rounded-md bg-gray-700 border-gray-600 text-white uppercase focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
             {{ $required ? 'required' : '' }}

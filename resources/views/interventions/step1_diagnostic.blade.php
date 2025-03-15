@@ -63,7 +63,7 @@
 
                     <!-- Informations du module -->
                     <div class="mb-6 bg-indigo-900/30 p-4 rounded-lg border border-indigo-500/30">
-                        <h3 class="font-medium text-indigo-300 mb-2">Module #{{ $module->id }}</h3>
+                        <h3 class="font-medium text-indigo-300 mb-2">Module #{{ $module->id }} - {{ $module->reference_module }}</h3>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <p class="text-gray-300"><span class="font-semibold">Dimensions:</span> {{ $module->largeur }}×{{ $module->hauteur }} mm</p>
@@ -76,6 +76,19 @@
                             <div>
                                 <p class="text-gray-300"><span class="font-semibold">Chantier:</span> {{ $module->dalle->produit->chantier->nom }}</p>
                                 <p class="text-gray-300"><span class="font-semibold">Client:</span> {{ $module->dalle->produit->chantier->client->nom_complet }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 pt-4 border-t border-indigo-500/30">
+                            <div class="flex items-center">
+                                <h4 class="font-medium text-indigo-300 mb-2">Numéro de série / ID Usine</h4>
+                                <span class="ml-2 text-sm text-gray-400">(si disponible sur le module)</span>
+                            </div>
+                            <div class="grid grid-cols-1 gap-4">
+                                <input type="text" id="numero_serie" name="numero_serie" 
+                                    class="block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" 
+                                    value="{{ old('numero_serie', $module->numero_serie) }}" 
+                                    placeholder="Ex: SN12345678 ou IDUSINE-9876">
                             </div>
                         </div>
                     </div>
@@ -112,19 +125,19 @@
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                         <div>
                                             <x-input-label for="diagnostic_nb_leds_hs" :value="__('Nombre de LEDs HS')" class="text-gray-300" />
-                                            <input id="diagnostic_nb_leds_hs" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="diagnostic_nb_leds_hs" value="{{ old('diagnostic_nb_leds_hs', 0) }}" min="0" required />
+                                            <input id="diagnostic_nb_leds_hs" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="diagnostic_nb_leds_hs" value="{{ old('diagnostic_nb_leds_hs', $intervention->diagnostic->nb_leds_hs ?? 0) }}" min="0" required />
                                             <x-input-error :messages="$errors->get('diagnostic_nb_leds_hs')" class="mt-2" />
                                         </div>
 
                                         <div>
                                             <x-input-label for="diagnostic_nb_ic_hs" :value="__('Nombre d\'ICs HS')" class="text-gray-300" />
-                                            <input id="diagnostic_nb_ic_hs" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="diagnostic_nb_ic_hs" value="{{ old('diagnostic_nb_ic_hs', 0) }}" min="0" required />
+                                            <input id="diagnostic_nb_ic_hs" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="diagnostic_nb_ic_hs" value="{{ old('diagnostic_nb_ic_hs', $intervention->diagnostic->nb_ic_hs ?? 0) }}" min="0" required />
                                             <x-input-error :messages="$errors->get('diagnostic_nb_ic_hs')" class="mt-2" />
                                         </div>
 
                                         <div>
                                             <x-input-label for="diagnostic_nb_masques_hs" :value="__('Nombre de masques HS')" class="text-gray-300" />
-                                            <input id="diagnostic_nb_masques_hs" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="diagnostic_nb_masques_hs" value="{{ old('diagnostic_nb_masques_hs', 0) }}" min="0" required />
+                                            <input id="diagnostic_nb_masques_hs" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="diagnostic_nb_masques_hs" value="{{ old('diagnostic_nb_masques_hs', $intervention->diagnostic->nb_masques_hs ?? 0) }}" min="0" required />
                                             <x-input-error :messages="$errors->get('diagnostic_nb_masques_hs')" class="mt-2" />
                                         </div>
                                     </div>
@@ -132,17 +145,55 @@
                                     <div class="mb-4">
                                         <label class="inline-flex items-center text-gray-300">
                                             <input type="checkbox" id="diagnostic_pose_fake_pcb" name="diagnostic_pose_fake_pcb" value="1" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" 
-                                                {{ old('diagnostic_pose_fake_pcb') ? 'checked' : '' }}>
+                                                {{ old('diagnostic_pose_fake_pcb', $intervention->diagnostic->pose_fake_pcb ?? false) ? 'checked' : '' }}>
                                             <span class="ml-2">Pose de Fake PCB nécessaire</span>
                                         </label>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <x-input-label for="diagnostic_cause" :value="__('Cause du problème')" class="text-gray-300 mb-2" />
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <label class="flex items-center p-3 border border-gray-600 rounded-lg hover:bg-gray-700/50 cursor-pointer">
+                                                <input type="radio" name="diagnostic_cause" value="usure_normale" class="text-indigo-600 focus:ring-indigo-500 bg-gray-700 border-gray-600"
+                                                    {{ old('diagnostic_cause', $intervention->diagnostic->cause ?? '') == 'usure_normale' ? 'checked' : '' }}>
+                                                <div class="ml-2">
+                                                    <span class="font-medium text-white">Usure normale</span>
+                                                    <p class="text-xs text-gray-400">Vieillissement naturel des composants</p>
+                                                </div>
+                                            </label>
+                                            <label class="flex items-center p-3 border border-gray-600 rounded-lg hover:bg-gray-700/50 cursor-pointer">
+                                                <input type="radio" name="diagnostic_cause" value="choc" class="text-indigo-600 focus:ring-indigo-500 bg-gray-700 border-gray-600"
+                                                    {{ old('diagnostic_cause', $intervention->diagnostic->cause ?? '') == 'choc' ? 'checked' : '' }}>
+                                                <div class="ml-2">
+                                                    <span class="font-medium text-white">Dommage physique</span>
+                                                    <p class="text-xs text-gray-400">Chocs, impacts ou contraintes mécaniques</p>
+                                                </div>
+                                            </label>
+                                            <label class="flex items-center p-3 border border-gray-600 rounded-lg hover:bg-gray-700/50 cursor-pointer">
+                                                <input type="radio" name="diagnostic_cause" value="defaut_usine" class="text-indigo-600 focus:ring-indigo-500 bg-gray-700 border-gray-600"
+                                                    {{ old('diagnostic_cause', $intervention->diagnostic->cause ?? '') == 'defaut_usine' ? 'checked' : '' }}>
+                                                <div class="ml-2">
+                                                    <span class="font-medium text-white">Défaut de fabrication</span>
+                                                    <p class="text-xs text-gray-400">Problème de qualité d'origine</p>
+                                                </div>
+                                            </label>
+                                            <label class="flex items-center p-3 border border-gray-600 rounded-lg hover:bg-gray-700/50 cursor-pointer">
+                                                <input type="radio" name="diagnostic_cause" value="autre" class="text-indigo-600 focus:ring-indigo-500 bg-gray-700 border-gray-600"
+                                                    {{ old('diagnostic_cause', $intervention->diagnostic->cause ?? '') == 'autre' ? 'checked' : '' }}>
+                                                <div class="ml-2">
+                                                    <span class="font-medium text-white">Autre cause</span>
+                                                    <p class="text-xs text-gray-400">Préciser dans les remarques</p>
+                                                </div>
+                                            </label>
+                                        </div>
+                                        <x-input-error :messages="$errors->get('diagnostic_cause')" class="mt-2" />
                                     </div>
 
                                     <div>
                                         <x-input-label for="diagnostic_remarques" :value="__('Remarques (description du problème)')" class="text-gray-300" />
-                                        <textarea id="diagnostic_remarques" name="diagnostic_remarques" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" rows="3">{{ old('diagnostic_remarques') }}</textarea>
+                                        <textarea id="diagnostic_remarques" name="diagnostic_remarques" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" rows="3">{{ old('diagnostic_remarques', $intervention->diagnostic->remarques ?? '') }}</textarea>
                                         <x-input-error :messages="$errors->get('diagnostic_remarques')" class="mt-2" />
                                     </div>
-                                    <!-- Champs supprimés car non existants dans la base de données -->
                                 </div>
                             </div>
 
@@ -257,8 +308,25 @@
             demarrerChronometre();
             
             // S'assurer que le temps total est à jour lors de la soumission du formulaire
-            document.getElementById('diagnostic-form').addEventListener('submit', function() {
+            document.getElementById('diagnostic-form').addEventListener('submit', function(e) {
+                // Assurer que le temps total est à jour
                 tempsTotal.value = secondes;
+                
+                // Forcer la conversion des champs numériques en nombres entiers
+                const nbLedsHs = document.getElementById('diagnostic_nb_leds_hs');
+                const nbIcHs = document.getElementById('diagnostic_nb_ic_hs');
+                const nbMasquesHs = document.getElementById('diagnostic_nb_masques_hs');
+                
+                // Assurer que les valeurs sont des nombres positifs
+                nbLedsHs.value = Math.max(0, parseInt(nbLedsHs.value) || 0);
+                nbIcHs.value = Math.max(0, parseInt(nbIcHs.value) || 0);
+                nbMasquesHs.value = Math.max(0, parseInt(nbMasquesHs.value) || 0);
+                
+                // Debugger avec console
+                console.log('Soumission du formulaire avec valeurs:');
+                console.log('LEDs HS:', nbLedsHs.value);
+                console.log('ICs HS:', nbIcHs.value);
+                console.log('Masques HS:', nbMasquesHs.value);
             });
         });
     </script>

@@ -139,19 +139,19 @@
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                         <div>
                                             <x-input-label for="reparation_nb_leds_remplacees" :value="__('Nombre de LEDs remplacées')" class="text-gray-300" />
-                                            <input id="reparation_nb_leds_remplacees" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="reparation_nb_leds_remplacees" value="{{ old('reparation_nb_leds_remplacees', 0) }}" min="0" required />
+                                            <input id="reparation_nb_leds_remplacees" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="reparation_nb_leds_remplacees" value="{{ old('reparation_nb_leds_remplacees', $intervention->reparation->nb_leds_remplacees ?? $diagnostic->nb_leds_hs ?? 0) }}" min="0" required />
                                             <x-input-error :messages="$errors->get('reparation_nb_leds_remplacees')" class="mt-2" />
                                         </div>
 
                                         <div>
                                             <x-input-label for="reparation_nb_ic_remplaces" :value="__('Nombre d\'ICs remplacés')" class="text-gray-300" />
-                                            <input id="reparation_nb_ic_remplaces" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="reparation_nb_ic_remplaces" value="{{ old('reparation_nb_ic_remplaces', 0) }}" min="0" required />
+                                            <input id="reparation_nb_ic_remplaces" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="reparation_nb_ic_remplaces" value="{{ old('reparation_nb_ic_remplaces', $intervention->reparation->nb_ic_remplaces ?? $diagnostic->nb_ic_hs ?? 0) }}" min="0" required />
                                             <x-input-error :messages="$errors->get('reparation_nb_ic_remplaces')" class="mt-2" />
                                         </div>
 
                                         <div>
                                             <x-input-label for="reparation_nb_masques_remplaces" :value="__('Nombre de masques remplacés')" class="text-gray-300" />
-                                            <input id="reparation_nb_masques_remplaces" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="reparation_nb_masques_remplaces" value="{{ old('reparation_nb_masques_remplaces', 0) }}" min="0" required />
+                                            <input id="reparation_nb_masques_remplaces" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="reparation_nb_masques_remplaces" value="{{ old('reparation_nb_masques_remplaces', $intervention->reparation->nb_masques_remplaces ?? $diagnostic->nb_masques_hs ?? 0) }}" min="0" required />
                                             <x-input-error :messages="$errors->get('reparation_nb_masques_remplaces')" class="mt-2" />
                                         </div>
                                     </div>
@@ -159,15 +159,14 @@
                                     <div class="mb-4">
                                         <label class="inline-flex items-center text-gray-300">
                                             <input type="checkbox" id="reparation_fake_pcb_pose" name="reparation_fake_pcb_pose" value="1" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" 
-                                                {{ old('reparation_fake_pcb_pose') ? 'checked' : '' }}
-                                                {{ $diagnostic->pose_fake_pcb ? 'checked' : '' }}>
+                                                {{ old('reparation_fake_pcb_pose', $intervention->reparation->fake_pcb_pose ?? $diagnostic->pose_fake_pcb ?? false) ? 'checked' : '' }}>
                                             <span class="ml-2">Fake PCB posé</span>
                                         </label>
                                     </div>
 
                                     <div>
                                         <x-input-label for="reparation_remarques" :value="__('Remarques (actions effectuées)')" class="text-gray-300" />
-                                        <textarea id="reparation_remarques" name="reparation_remarques" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" rows="3">{{ old('reparation_remarques') }}</textarea>
+                                        <textarea id="reparation_remarques" name="reparation_remarques" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" rows="3">{{ old('reparation_remarques', $intervention->reparation->remarques ?? '') }}</textarea>
                                         <x-input-error :messages="$errors->get('reparation_remarques')" class="mt-2" />
                                     </div>
                                 </div>
@@ -285,8 +284,25 @@
             demarrerChronometre();
             
             // S'assurer que le temps total est à jour lors de la soumission du formulaire
-            document.getElementById('reparation-form').addEventListener('submit', function() {
+            document.getElementById('reparation-form').addEventListener('submit', function(e) {
+                // Assurer que le temps total est à jour
                 tempsTotal.value = secondes;
+                
+                // Forcer la conversion des champs numériques en nombres entiers
+                const nbLedsRemplacees = document.getElementById('reparation_nb_leds_remplacees');
+                const nbIcRemplaces = document.getElementById('reparation_nb_ic_remplaces');
+                const nbMasquesRemplaces = document.getElementById('reparation_nb_masques_remplaces');
+                
+                // Assurer que les valeurs sont des nombres positifs
+                nbLedsRemplacees.value = Math.max(0, parseInt(nbLedsRemplacees.value) || 0);
+                nbIcRemplaces.value = Math.max(0, parseInt(nbIcRemplaces.value) || 0);
+                nbMasquesRemplaces.value = Math.max(0, parseInt(nbMasquesRemplaces.value) || 0);
+                
+                // Debugger avec console
+                console.log('Soumission du formulaire de réparation avec valeurs:');
+                console.log('LEDs remplacées:', nbLedsRemplacees.value);
+                console.log('ICs remplacés:', nbIcRemplaces.value);
+                console.log('Masques remplacés:', nbMasquesRemplaces.value);
             });
         });
     </script>

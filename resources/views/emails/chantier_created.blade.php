@@ -99,6 +99,12 @@
         
         <p>Nous allons procéder à l'analyse de vos équipements et vous tiendrons informé de l'avancement des réparations. Vous recevrez des notifications par email lorsque les interventions débuteront et lorsque le chantier sera terminé.</p>
         
+        <p style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <strong>Vous pouvez suivre l'avancement de votre chantier en temps réel avec ce lien :</strong><br>
+            <a href="{{ $lienSuivi }}" style="display: inline-block; background-color: #3a3f44; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">Suivre mon chantier</a>
+            <br><small style="display: block; margin-top: 10px;">Ce lien est unique à votre chantier et vous permet de suivre en temps réel l'état des réparations.</small>
+        </p>
+        
         <p>Si vous avez des questions concernant ce chantier, n'hésitez pas à nous contacter.</p>
         
         <p>Cordialement,<br>

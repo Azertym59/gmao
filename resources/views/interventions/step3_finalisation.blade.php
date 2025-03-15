@@ -150,6 +150,20 @@
                         @csrf
                         <input type="hidden" name="intervention_id" value="{{ $intervention->id }}">
                         <input type="hidden" id="temps_total" name="temps_total" value="{{ $intervention->temps_total }}">
+                        
+                        <!-- Champs cachés pour le diagnostic -->
+                        <input type="hidden" name="diagnostic_nb_leds_hs" value="{{ $diagnostic->nb_leds_hs }}">
+                        <input type="hidden" name="diagnostic_nb_ic_hs" value="{{ $diagnostic->nb_ic_hs }}">
+                        <input type="hidden" name="diagnostic_nb_masques_hs" value="{{ $diagnostic->nb_masques_hs }}">
+                        <input type="hidden" name="diagnostic_remarques" value="{{ $diagnostic->remarques }}">
+                        <input type="hidden" name="diagnostic_pose_fake_pcb" value="{{ $diagnostic->pose_fake_pcb ? 1 : 0 }}">
+                        
+                        <!-- Champs cachés pour la réparation -->
+                        <input type="hidden" name="reparation_nb_leds_remplacees" value="{{ $reparation->nb_leds_remplacees }}">
+                        <input type="hidden" name="reparation_nb_ic_remplaces" value="{{ $reparation->nb_ic_remplaces }}">
+                        <input type="hidden" name="reparation_nb_masques_remplaces" value="{{ $reparation->nb_masques_remplaces }}">
+                        <input type="hidden" name="reparation_remarques" value="{{ $reparation->remarques }}">
+                        <input type="hidden" name="reparation_fake_pcb_pose" value="{{ $reparation->fake_pcb_pose ? 1 : 0 }}">
 
                         <div class="grid grid-cols-1 gap-6 mb-6">
                             <div>
@@ -189,4 +203,24 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vérifier que les champs diagnostic et réparation sont bien présents
+            const form = document.getElementById('finalisation-form');
+            
+            form.addEventListener('submit', function(e) {
+                // Logs pour débogage (visibles dans la console du navigateur)
+                console.log('Soumission du formulaire de finalisation:');
+                console.log('diagnostic_nb_leds_hs:', form.querySelector('[name="diagnostic_nb_leds_hs"]').value);
+                console.log('diagnostic_nb_ic_hs:', form.querySelector('[name="diagnostic_nb_ic_hs"]').value);
+                console.log('diagnostic_nb_masques_hs:', form.querySelector('[name="diagnostic_nb_masques_hs"]').value);
+                console.log('reparation_nb_leds_remplacees:', form.querySelector('[name="reparation_nb_leds_remplacees"]').value);
+                console.log('reparation_nb_ic_remplaces:', form.querySelector('[name="reparation_nb_ic_remplaces"]').value);
+                console.log('reparation_nb_masques_remplaces:', form.querySelector('[name="reparation_nb_masques_remplaces"]').value);
+                
+                // On pourrait ajouter une validation ici si nécessaire
+            });
+        });
+    </script>
 </x-app-layout>

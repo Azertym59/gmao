@@ -57,6 +57,14 @@
                                 <p class="text-xs text-gray-400 mt-1">Numéro inscrit sur le module (si présent)</p>
                                 <x-input-error :messages="$errors->get('reference_module')" class="mt-2" />
                             </div>
+                            
+                            <!-- Numéro de série / ID Usine -->
+                            <div>
+                                <x-input-label for="numero_serie" :value="__('Numéro de série / ID Usine')" class="text-gray-300 mb-1" />
+                                <x-text-input id="numero_serie" class="block w-full bg-gray-700 border-gray-600 text-white" type="text" name="numero_serie" :value="old('numero_serie', $module->numero_serie)" />
+                                <p class="text-xs text-gray-400 mt-1">Identifiant d'usine ou numéro de série sur le PCB</p>
+                                <x-input-error :messages="$errors->get('numero_serie')" class="mt-2" />
+                            </div>
 
                             <!-- État -->
                             <div>

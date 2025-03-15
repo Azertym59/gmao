@@ -74,6 +74,28 @@
                                 </div>
                             </div>
                             
+                            <div class="mt-4 bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                                <div class="flex items-center mb-2">
+                                    <input type="checkbox" id="flightcase_partiel" name="flightcase_partiel" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                    <label for="flightcase_partiel" class="ml-2 font-bold text-yellow-800">FlightCase partiel / Dalles manquantes</label>
+                                </div>
+                                <p class="text-sm text-yellow-700 mb-2">Cochez cette option si certaines dalles sont manquantes dans un ou plusieurs FlightCases.</p>
+                            </div>
+                            
+                            <div id="dalles_manquantes_container" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg" style="display: none;">
+                                <h4 class="font-medium text-blue-800 mb-2">Sélection des dalles présentes</h4>
+                                <p class="mb-3 text-blue-700">Sélectionnez uniquement les dalles qui sont présentes (celles non sélectionnées seront ignorées)</p>
+                                
+                                <div id="dalles_selection_container" class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
+                                    <!-- Ce div sera rempli dynamiquement par JavaScript -->
+                                </div>
+                                
+                                <div class="mt-3 text-sm text-blue-600 flex justify-end">
+                                    <button type="button" id="select_all_dalles" class="bg-blue-500 text-white px-3 py-1 rounded mr-2 hover:bg-blue-600">Tout sélectionner</button>
+                                    <button type="button" id="deselect_all_dalles" class="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600">Tout désélectionner</button>
+                                </div>
+                            </div>
+                            
                             <div class="mt-4 p-2 bg-gray-50 rounded">
                                 <p class="text-sm text-gray-700"><span id="total_modules_fc">32</span> modules seront créés au total.</p>
                             </div>
@@ -216,18 +238,64 @@
             // Champ pour le mode individuel
             const nbModulesTotal = document.getElementById('nb_modules_total');
             
+            // Champs pour la gestion des FlightCases partiels
+            const flightcasePartielCheckbox = document.getElementById('flightcase_partiel');
+            const dallesManquantesContainer = document.getElementById('dalles_manquantes_container');
+            const dallesSelectionContainer = document.getElementById('dalles_selection_container');
+            const selectAllDallesBtn = document.getElementById('select_all_dalles');
+            const deselectAllDallesBtn = document.getElementById('deselect_all_dalles');
+            
             // Fonction pour calculer et mettre à jour le total des modules
             function updateTotalModules() {
                 let totalModules = 0;
                 
                 if (modeFlightcaseRadio.checked) {
-                    totalModules = nbFlightcases.value * nbDallesParFlightcase.value * nbModulesParDalle.value;
+                    if (flightcasePartielCheckbox && flightcasePartielCheckbox.checked) {
+                        // Compter uniquement les dalles sélectionnées
+                        const dallesSelectionnees = document.querySelectorAll('.dalle-checkbox:checked').length;
+                        totalModules = dallesSelectionnees * parseInt(nbModulesParDalle.value || 4);
+                    } else {
+                        // Compter toutes les dalles
+                        totalModules = nbFlightcases.value * nbDallesParFlightcase.value * nbModulesParDalle.value;
+                    }
                     totalModulesFc.textContent = totalModules;
                 } else {
                     totalModules = parseInt(nbModulesTotal.value);
                 }
                 
                 totalModulesMessage.textContent = totalModules + ' modules seront créés au total';
+            }
+            
+            // Mettre à jour la liste des dalles selon les entrées du formulaire
+            function updateDallesSelection() {
+                if (!flightcasePartielCheckbox || !flightcasePartielCheckbox.checked) return;
+                
+                const nbFlightcasesValue = parseInt(nbFlightcases.value) || 1;
+                const nbDallesParFlightcaseValue = parseInt(nbDallesParFlightcase.value) || 8;
+                
+                dallesSelectionContainer.innerHTML = ''; // Vider le conteneur
+                
+                // Générer les cases à cocher pour chaque dalle
+                for (let f = 1; f <= nbFlightcasesValue; f++) {
+                    // Ajouter un titre pour chaque flight case
+                    const fcTitle = document.createElement('div');
+                    fcTitle.className = 'col-span-full mt-2 mb-1 font-medium text-gray-800';
+                    fcTitle.textContent = `Flight Case ${f}`;
+                    dallesSelectionContainer.appendChild(fcTitle);
+                    
+                    for (let d = 1; d <= nbDallesParFlightcaseValue; d++) {
+                        const dalleId = `FC${f}-D${d}`;
+                        
+                        const checkbox = document.createElement('div');
+                        checkbox.className = 'flex items-center';
+                        checkbox.innerHTML = `
+                            <input type="checkbox" id="dalle_${dalleId}" name="dalles_presentes[]" value="${dalleId}" class="dalle-checkbox rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-200" checked>
+                            <label for="dalle_${dalleId}" class="ml-2 text-sm text-gray-700">${dalleId}</label>
+                        `;
+                        
+                        dallesSelectionContainer.appendChild(checkbox);
+                    }
+                }
             }
             
             // Gestionnaires d'événements pour le changement de mode
@@ -251,9 +319,51 @@
                 }
             });
             
+            // Afficher/masquer les options de dalles manquantes
+            if (flightcasePartielCheckbox) {
+                flightcasePartielCheckbox.addEventListener('change', function() {
+                    dallesManquantesContainer.style.display = this.checked ? 'block' : 'none';
+                    updateDallesSelection();
+                    updateTotalModules(); // Mettre à jour le total des modules
+                });
+            }
+            
+            // Sélectionner toutes les dalles
+            if (selectAllDallesBtn) {
+                selectAllDallesBtn.addEventListener('click', function() {
+                    const checkboxes = document.querySelectorAll('.dalle-checkbox');
+                    checkboxes.forEach(cb => cb.checked = true);
+                    updateTotalModules();
+                });
+            }
+            
+            // Désélectionner toutes les dalles
+            if (deselectAllDallesBtn) {
+                deselectAllDallesBtn.addEventListener('click', function() {
+                    const checkboxes = document.querySelectorAll('.dalle-checkbox');
+                    checkboxes.forEach(cb => cb.checked = false);
+                    updateTotalModules();
+                });
+            }
+            
+            // Mettre à jour le total des modules quand une dalle est cochée/décochée
+            if (dallesSelectionContainer) {
+                dallesSelectionContainer.addEventListener('change', function(e) {
+                    if (e.target.classList.contains('dalle-checkbox')) {
+                        updateTotalModules();
+                    }
+                });
+            }
+            
             // Gestionnaires d'événements pour les champs de saisie
-            nbFlightcases.addEventListener('input', updateTotalModules);
-            nbDallesParFlightcase.addEventListener('input', updateTotalModules);
+            nbFlightcases.addEventListener('input', function() {
+                updateDallesSelection();
+                updateTotalModules();
+            });
+            nbDallesParFlightcase.addEventListener('input', function() {
+                updateDallesSelection();
+                updateTotalModules();
+            });
             nbModulesParDalle.addEventListener('input', updateTotalModules);
             nbModulesTotal.addEventListener('input', updateTotalModules);
             
@@ -264,6 +374,7 @@
                 individuelContainer.classList.add('border-blue-500', 'bg-blue-50');
             }
             
+            updateDallesSelection();
             updateTotalModules();
         });
     </script>

@@ -564,7 +564,25 @@ class ChantierController extends Controller
             'nb_dalles_par_flightcase' => 'required_if:mode,flightcase|integer|min:1',
             'nb_modules_par_dalle' => 'required_if:mode,flightcase|integer|min:1',
             'nb_modules_total' => 'required_if:mode,individuel|integer|min:1',
+            'fc_partiel' => 'nullable|array',
+            'fc_partiel.*' => 'nullable|boolean',
+            'fc_nb_dalles' => 'nullable|array',
+            'fc_nb_dalles.*' => 'nullable|integer|min:1',
         ]);
+
+        // Traiter les détails des FlightCases
+        $validated['flightcases_details'] = [];
+        if ($validated['mode'] == 'flightcase' && isset($request->fc_partiel)) {
+            foreach ($request->fc_partiel as $fcIndex => $isPartial) {
+                if ($isPartial) {
+                    $nbDalles = $request->fc_nb_dalles[$fcIndex] ?? $validated['nb_dalles_par_flightcase'];
+                    $validated['flightcases_details'][$fcIndex] = [
+                        'is_partial' => true,
+                        'nb_dalles' => $nbDalles
+                    ];
+                }
+            }
+        }
 
         // Stocker les données validées en session pour l'étape 3
         session(['chantier_data_step3' => $validated]);
@@ -669,6 +687,7 @@ class ChantierController extends Controller
             'date_butoir' => $step1Data['date_butoir'],
             'etat' => $step1Data['etat'],
             'reference' => Chantier::genererReference(),
+            'token_suivi' => md5(uniqid() . time()),
         ]);
 
         // Créer le produit
@@ -684,10 +703,14 @@ class ChantierController extends Controller
             ]);
             
             // Créer le produit sans les champs problématiques avec valeurs par défaut
+            // Utiliser des valeurs par défaut significatives au lieu de INCONNU
+            $defaultMarque = $client->societe ? strtoupper($client->societe) : 'Écran LED';
+            $defaultModele = 'Réparation ' . date('Y');
+            
             $produit = Produit::create([
                 'chantier_id' => $chantier->id,
-                'marque' => $produitRef->marque ?? 'INCONNU',
-                'modele' => $produitRef->modele ?? 'INCONNU',
+                'marque' => $produitRef->marque ?? $defaultMarque,
+                'modele' => $produitRef->modele ?? $defaultModele,
                 'pitch' => $produitRef->pitch ?? 3.0,
                 'utilisation' => $produitRef->utilisation ?? 'indoor',
                 'electronique' => $produitRef->electronique ?? 'autre',
@@ -727,10 +750,14 @@ class ChantierController extends Controller
             ]);
             
             // Créer le produit avec valeurs par défaut si nécessaire
+            // Utiliser des valeurs par défaut significatives au lieu de INCONNU
+            $defaultMarque = $client->societe ? strtoupper($client->societe) : 'Écran LED';
+            $defaultModele = 'Réparation ' . date('Y');
+            
             $produit = Produit::create([
                 'chantier_id' => $chantier->id,
-                'marque' => $step2Data['marque'] ?? 'INCONNU',
-                'modele' => $step2Data['modele'] ?? 'INCONNU',
+                'marque' => $step2Data['marque'] ?? $defaultMarque,
+                'modele' => $step2Data['modele'] ?? $defaultModele,
                 'pitch' => $step2Data['pitch'] ?? 3.0,
                 'utilisation' => $step2Data['utilisation'] ?? 'indoor',
                 'electronique' => $step2Data['electronique'] ?? 'autre',
@@ -776,8 +803,27 @@ class ChantierController extends Controller
         $modulesHauteur = $step2Data['modules_hauteur'] ?? 2;
         
         if ($step3Data['mode'] == 'flightcase') {
+            // Obtenir les détails des FlightCases
+            $flightcasesDetails = $step3Data['flightcases_details'] ?? [];
+            
+            // Ajouter un log pour le débogage
+            \Log::info('Traitement FlightCase:', [
+                'flightcases_details' => $flightcasesDetails,
+            ]);
+            
             for ($f = 1; $f <= $step3Data['nb_flightcases']; $f++) {
-                for ($d = 1; $d <= $step3Data['nb_dalles_par_flightcase']; $d++) {
+                // Déterminer combien de dalles à créer pour ce FlightCase
+                $nbDallesForThisFC = $step3Data['nb_dalles_par_flightcase'];
+                $fcDetails = $flightcasesDetails[$f] ?? null;
+                
+                if ($fcDetails && isset($fcDetails['is_partial']) && $fcDetails['is_partial']) {
+                    $nbDallesForThisFC = $fcDetails['nb_dalles'];
+                    \Log::info("FlightCase {$f} est partiel, création de {$nbDallesForThisFC} dalles au lieu de {$step3Data['nb_dalles_par_flightcase']}");
+                }
+                
+                for ($d = 1; $d <= $nbDallesForThisFC; $d++) {
+                    $dalleId = "FC{$f}-D{$d}";
+                    
                     // Créer la dalle sans le champ disposition_modules problématique
                     $dalle = Dalle::create([
                         'produit_id' => $produit->id,
@@ -787,7 +833,7 @@ class ChantierController extends Controller
                         'alimentation' => $alimentation,
                         'carte_reception' => $step3Data['carte_reception'] ?? $step2Data['carte_reception'] ?? null,
                         'hub' => $step3Data['hub'] ?? $step2Data['hub'] ?? null,
-                        'reference_dalle' => "FC{$f}-D{$d}"
+                        'reference_dalle' => $dalleId
                     ]);
                     
                     // Stocker la disposition des modules comme métadonnées dans la session

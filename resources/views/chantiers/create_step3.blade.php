@@ -158,6 +158,14 @@
                                 </div>
                             </div>
                             
+                            <!-- Configuration détaillée des FlightCases -->
+                            <div class="mt-6 bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl">
+                                <h4 class="font-medium text-blue-300 mb-3">Configuration détaillée des FlightCases</h4>
+                                <div id="flightcases_detail_container" class="space-y-4">
+                                    <!-- Ce div sera rempli dynamiquement par JavaScript -->
+                                </div>
+                            </div>
+                            
                             <div class="mt-4 p-2 bg-gray-700/50 rounded-lg">
                                 <p class="text-sm text-gray-300"><span id="total_modules_fc">32</span> modules seront créés au total.</p>
                             </div>
@@ -222,6 +230,9 @@
             // Champ pour le mode individuel
             const nbModulesTotal = document.getElementById('nb_modules_total');
             
+            // Champs pour la gestion des FlightCases détaillés
+            const flightcasesDetailContainer = document.getElementById('flightcases_detail_container');
+            
             // Récupérer la disposition des modules depuis les données du produit
             const dispositionModules = "{{ isset($produitData['disposition_modules']) ? $produitData['disposition_modules'] : '2x2' }}";
             let calculatedModulesPerDalle = 4; // Par défaut 2x2 = 4 modules
@@ -232,16 +243,113 @@
                 calculatedModulesPerDalle = parseInt(matches[1]) * parseInt(matches[2]);
             }
             
+            // Fonction pour générer les contrôles de chaque FlightCase
+            function generateFlightCaseControls() {
+                const nbFlightcasesValue = parseInt(nbFlightcases.value) || 1;
+                const nbDallesParFlightcaseValue = parseInt(nbDallesParFlightcase.value) || 8;
+                const modulesParDalleValue = calculatedModulesPerDalle;
+                
+                // Vider le conteneur
+                flightcasesDetailContainer.innerHTML = '';
+                
+                // Générer les contrôles pour chaque FlightCase
+                for (let f = 1; f <= nbFlightcasesValue; f++) {
+                    const fcContainer = document.createElement('div');
+                    fcContainer.className = 'grid grid-cols-8 gap-4 p-3 bg-gray-800/30 rounded-lg border border-gray-700';
+                    
+                    // Informations du FlightCase
+                    const fcInfo = document.createElement('div');
+                    fcInfo.className = 'col-span-3 flex items-center';
+                    fcInfo.innerHTML = `
+                        <div class="bg-blue-500/20 p-2 rounded-lg mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-medium text-white">FlightCase ${f}</p>
+                            <p class="text-sm text-gray-400">Standard: ${nbDallesParFlightcaseValue} dalles</p>
+                        </div>
+                    `;
+                    
+                    // Case à cocher pour FlightCase partiel
+                    const fcPartialCheck = document.createElement('div');
+                    fcPartialCheck.className = 'col-span-2 flex items-center';
+                    fcPartialCheck.innerHTML = `
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="fc_partiel_${f}" name="fc_partiel[${f}]" value="1" 
+                                class="fc-partiel-checkbox rounded bg-gray-700 border-gray-600 text-accent-blue focus:ring-accent-blue focus:ring-opacity-50">
+                            <span class="ml-2 text-amber-300">FlightCase partiel</span>
+                        </label>
+                    `;
+                    
+                    // Contrôle du nombre de dalles (caché par défaut)
+                    const fcDallesControl = document.createElement('div');
+                    fcDallesControl.className = 'col-span-3 flex items-center';
+                    fcDallesControl.id = `fc_dalles_control_${f}`;
+                    fcDallesControl.style.display = 'none';
+                    fcDallesControl.innerHTML = `
+                        <div class="w-full">
+                            <label class="block text-sm font-medium text-blue-300 mb-1">Nombre de dalles présentes</label>
+                            <div class="flex items-center">
+                                <input type="number" id="fc_nb_dalles_${f}" name="fc_nb_dalles[${f}]" value="${nbDallesParFlightcaseValue}"
+                                    min="1" max="${nbDallesParFlightcaseValue}" 
+                                    class="fc-nb-dalles w-24 rounded-lg bg-gray-700 border-gray-600 text-white focus:border-accent-blue focus:ring focus:ring-accent-blue focus:ring-opacity-50">
+                                <span class="ml-2 text-gray-400">sur ${nbDallesParFlightcaseValue}</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Ajouter les éléments au conteneur du FlightCase
+                    fcContainer.appendChild(fcInfo);
+                    fcContainer.appendChild(fcPartialCheck);
+                    fcContainer.appendChild(fcDallesControl);
+                    
+                    // Ajouter le conteneur du FlightCase au conteneur principal
+                    flightcasesDetailContainer.appendChild(fcContainer);
+                    
+                    // Ajouter les événements pour la case à cocher
+                    const checkbox = document.getElementById(`fc_partiel_${f}`);
+                    const dallesControl = document.getElementById(`fc_dalles_control_${f}`);
+                    const nbDallesInput = document.getElementById(`fc_nb_dalles_${f}`);
+                    
+                    checkbox.addEventListener('change', function() {
+                        dallesControl.style.display = this.checked ? 'flex' : 'none';
+                        updateTotalModules();
+                    });
+                    
+                    if (nbDallesInput) {
+                        nbDallesInput.addEventListener('input', updateTotalModules);
+                    }
+                }
+            }
+            
             // Fonction pour calculer et mettre à jour le total des modules
             function updateTotalModules() {
                 let totalModules = 0;
                 
                 if (modeFlightcaseRadio.checked) {
-                    // nbModulesParDalle est maintenant en lecture seule, donc on utilise la valeur calculée
-                    totalModules = nbFlightcases.value * nbDallesParFlightcase.value * calculatedModulesPerDalle;
+                    const nbFlightcasesValue = parseInt(nbFlightcases.value) || 1;
+                    const nbDallesParFlightcaseValue = parseInt(nbDallesParFlightcase.value) || 8;
+                    
+                    // Parcourir chaque FlightCase et compter ses dalles
+                    for (let f = 1; f <= nbFlightcasesValue; f++) {
+                        const fcPartielCheckbox = document.getElementById(`fc_partiel_${f}`);
+                        
+                        if (fcPartielCheckbox && fcPartielCheckbox.checked) {
+                            // FlightCase partiel: utiliser le nombre de dalles spécifié
+                            const nbDallesInput = document.getElementById(`fc_nb_dalles_${f}`);
+                            const nbDalles = parseInt(nbDallesInput.value) || 0;
+                            totalModules += nbDalles * calculatedModulesPerDalle;
+                        } else {
+                            // FlightCase complet: utiliser le nombre standard de dalles
+                            totalModules += nbDallesParFlightcaseValue * calculatedModulesPerDalle;
+                        }
+                    }
+                    
                     totalModulesFc.textContent = totalModules;
                 } else {
-                    totalModules = parseInt(nbModulesTotal.value);
+                    totalModules = parseInt(nbModulesTotal.value) || 0;
                 }
                 
                 totalModulesMessage.textContent = totalModules + ' modules seront créés au total';
@@ -269,13 +377,20 @@
             });
             
             // Gestionnaires d'événements pour les champs de saisie
-            nbFlightcases.addEventListener('input', updateTotalModules);
-            nbDallesParFlightcase.addEventListener('input', updateTotalModules);
+            nbFlightcases.addEventListener('input', function() {
+                generateFlightCaseControls();
+                updateTotalModules();
+            });
+            nbDallesParFlightcase.addEventListener('input', function() {
+                generateFlightCaseControls();
+                updateTotalModules();
+            });
             nbModulesTotal.addEventListener('input', updateTotalModules);
             
             // Initialisation
             if (modeFlightcaseRadio.checked) {
                 flightcaseContainer.classList.add('border-accent-blue', 'bg-gray-800/50');
+                generateFlightCaseControls();
             } else {
                 individuelContainer.classList.add('border-accent-blue', 'bg-gray-800/50');
             }

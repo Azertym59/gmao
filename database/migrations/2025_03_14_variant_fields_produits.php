@@ -13,22 +13,43 @@ return new class extends Migration
     {
         // Ajouter les colonnes à la table produits
         Schema::table('produits', function (Blueprint $table) {
-            $table->string('carte_reception')->nullable()->after('electronique_detail');
-            $table->string('hub')->nullable()->after('carte_reception');
-            $table->string('bain_couleur')->nullable()->after('hub');
-            $table->unsignedBigInteger('variante_id')->nullable()->after('bain_couleur');
-            $table->boolean('is_variante')->default(false)->after('variante_id');
-            $table->string('variante_nom')->nullable()->after('is_variante');
+            // Vérifier si les colonnes existent déjà avant de les ajouter
+            if (!Schema::hasColumn('produits', 'carte_reception')) {
+                $table->string('carte_reception')->nullable()->after('electronique_detail');
+            }
+            if (!Schema::hasColumn('produits', 'hub')) {
+                $table->string('hub')->nullable()->after('carte_reception');
+            }
+            if (!Schema::hasColumn('produits', 'bain_couleur')) {
+                $table->string('bain_couleur')->nullable()->after('hub');
+            }
+            if (!Schema::hasColumn('produits', 'variante_id')) {
+                $table->unsignedBigInteger('variante_id')->nullable()->after('bain_couleur');
+            }
+            if (!Schema::hasColumn('produits', 'is_variante')) {
+                $table->boolean('is_variante')->default(false)->after('variante_id');
+            }
+            if (!Schema::hasColumn('produits', 'variante_nom')) {
+                $table->string('variante_nom')->nullable()->after('is_variante');
+            }
             
-            // Ajouter une clé étrangère pour les variantes
-            $table->foreign('variante_id')->references('id')->on('produits')->onDelete('cascade');
+            // Ajouter une clé étrangère pour les variantes si elle n'existe pas déjà
+            if (!Schema::hasColumn('produits', 'variante_id')) {
+                $table->foreign('variante_id')->references('id')->on('produits')->onDelete('cascade');
+            }
         });
         
         // Ajouter les colonnes à la table produits_catalogue
         Schema::table('produits_catalogue', function (Blueprint $table) {
-            $table->json('cartes_reception_disponibles')->nullable()->after('description');
-            $table->json('hubs_disponibles')->nullable()->after('cartes_reception_disponibles');
-            $table->json('bains_couleur_disponibles')->nullable()->after('hubs_disponibles');
+            if (!Schema::hasColumn('produits_catalogue', 'cartes_reception_disponibles')) {
+                $table->json('cartes_reception_disponibles')->nullable()->after('description');
+            }
+            if (!Schema::hasColumn('produits_catalogue', 'hubs_disponibles')) {
+                $table->json('hubs_disponibles')->nullable()->after('cartes_reception_disponibles');
+            }
+            if (!Schema::hasColumn('produits_catalogue', 'bains_couleur_disponibles')) {
+                $table->json('bains_couleur_disponibles')->nullable()->after('hubs_disponibles');
+            }
         });
     }
 

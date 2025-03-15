@@ -13,8 +13,39 @@ class ProduitController extends Controller
      */
     public function index()
     {
+        // Mettre à jour tous les produits qui ont INCONNU comme marque ou modèle
+        $this->fixUnknownProducts();
+        
         $produits = Produit::with('chantier.client')->get();
         return view('produits.index', compact('produits'));
+    }
+    
+    /**
+     * Méthode pour corriger tous les produits avec valeurs INCONNU
+     */
+    private function fixUnknownProducts()
+    {
+        $produits = Produit::where('marque', 'INCONNU')->orWhere('modele', 'INCONNU')->get();
+        
+        foreach($produits as $produit) {
+            $chantier = $produit->chantier;
+            $client = $chantier->client;
+            
+            // Définir des valeurs par défaut significatives
+            $defaultMarque = $client->societe ? strtoupper($client->societe) : 'Écran LED';
+            $defaultModele = 'Réparation ' . date('Y');
+            
+            // Mettre à jour uniquement les champs nécessaires
+            if ($produit->marque === 'INCONNU') {
+                $produit->marque = $defaultMarque;
+            }
+            
+            if ($produit->modele === 'INCONNU') {
+                $produit->modele = $defaultModele;
+            }
+            
+            $produit->save();
+        }
     }
 
     /**

@@ -57,6 +57,14 @@ Route::get('/direct-dashboard', function () {
     return redirect('/dashboard');
 });
 
+// Routes de suivi public de chantier
+Route::get('/suivi/{token}', [App\Http\Controllers\SuiviController::class, 'show'])
+    ->name('suivi.chantier');
+Route::get('/suivi/{token}/module/{moduleId}', [App\Http\Controllers\SuiviController::class, 'showModule'])
+    ->name('suivi.module');
+Route::get('/generate-tokens', [App\Http\Controllers\SuiviController::class, 'generateTokensForAll'])
+    ->name('suivi.generate-tokens');
+
 Route::get('/', function () {
     return view('welcome');
 });

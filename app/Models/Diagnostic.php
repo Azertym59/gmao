@@ -19,7 +19,8 @@ class Diagnostic extends Model
         'description',
         'conclusion',
         'composant_defectueux',
-        'pose_fake_pcb'
+        'pose_fake_pcb',
+        'cause'
     ];
 
     /**

@@ -14,7 +14,7 @@ class Chantier extends Model
 
     protected $fillable = [
         'client_id', 'nom', 'description', 'date_reception', 
-        'date_butoir', 'etat', 'reference'
+        'date_butoir', 'etat', 'reference', 'token_suivi', 'token_suivi_last_used_at'
     ];
 
     protected $casts = [
@@ -48,5 +48,49 @@ class Chantier extends Model
         $count = self::whereDate('created_at', today())->count() + 1;
         
         return $prefix . $date . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+    }
+    
+    /**
+     * Générer un token de suivi unique pour ce chantier
+     */
+    public function genererTokenSuivi(): string
+    {
+        $token = md5($this->id . $this->reference . $this->created_at . uniqid());
+        $this->token_suivi = $token;
+        $this->save();
+        return $token;
+    }
+    
+    /**
+     * Obtenir ou générer un token de suivi
+     */
+    public function getTokenSuivi(): string
+    {
+        if (empty($this->token_suivi)) {
+            return $this->genererTokenSuivi();
+        }
+        return $this->token_suivi;
+    }
+    
+    /**
+     * Obtenir le pourcentage de complétion du chantier
+     */
+    public function getCompletionPercentage(): int
+    {
+        $totalModules = 0;
+        $modulesTermines = 0;
+        
+        foreach ($this->produits as $produit) {
+            foreach ($produit->dalles as $dalle) {
+                $totalModules += $dalle->modules->count();
+                $modulesTermines += $dalle->modules->where('etat', 'termine')->count();
+            }
+        }
+        
+        if ($totalModules === 0) {
+            return 0;
+        }
+        
+        return round(($modulesTermines / $totalModules) * 100);
     }
 }

@@ -123,6 +123,7 @@ public function update(Request $request, Module $module)
         'buffer' => 'nullable|string|max:255',
         'etat' => 'required|in:non_commence,en_cours,defaillant,termine',
         'reference_module' => 'nullable|string|max:255',
+        'numero_serie' => 'nullable|string|max:255',
         'technicien_id' => 'nullable|exists:users,id',
         'position_lettre' => 'nullable|string|max:10',
         'position_x' => 'nullable|integer|min:0',
@@ -185,6 +186,9 @@ public function processMassCreate(Request $request, Produit $produit)
         'nb_dalles_par_flightcase' => 'required_if:mode,flightcase|integer|min:1',
         'nb_modules_par_dalle' => 'required_if:mode,flightcase|integer|min:1',
         'nb_modules_total' => 'required_if:mode,individuel|integer|min:1',
+        'flightcase_partiel' => 'nullable|boolean',
+        'dalles_presentes' => 'nullable|array',
+        'dalles_presentes.*' => 'nullable|string',
         // Caractéristiques communes des dalles
         'largeur_dalle' => 'required|numeric|min:1',
         'hauteur_dalle' => 'required|numeric|min:1',
@@ -204,9 +208,21 @@ public function processMassCreate(Request $request, Produit $produit)
     $count = 0;
     
     if ($validated['mode'] == 'flightcase') {
+        // Vérifier si on est en mode flightcase partiel
+        $isPartial = isset($request->flightcase_partiel) && $request->flightcase_partiel == "on";
+        $dallesPresentes = $isPartial ? $request->input('dalles_presentes', []) : [];
+        
         // Création structurée Flight case > Dalle > Module
         for ($f = 1; $f <= $validated['nb_flightcases']; $f++) {
             for ($d = 1; $d <= $validated['nb_dalles_par_flightcase']; $d++) {
+                $dalleId = "FC{$f}-D{$d}";
+                
+                // Si on est en mode partiel, vérifier si cette dalle est présente
+                if ($isPartial && !in_array($dalleId, $dallesPresentes)) {
+                    // Dalle non présente, passer à la suivante
+                    continue;
+                }
+                
                 // Créer la dalle
                 $dalle = Dalle::create([
                     'produit_id' => $produit->id,
@@ -216,7 +232,7 @@ public function processMassCreate(Request $request, Produit $produit)
                     'alimentation' => $validated['alimentation_dalle'],
                     'carte_reception' => $validated['carte_reception'], // Nouveau champ
                     'hub' => $validated['hub'], // Nouveau champ
-                    'reference_dalle' => "FC{$f}-D{$d}" // Reference automatique
+                    'reference_dalle' => $dalleId // Reference automatique
                 ]);
 
                 // Créer les modules pour cette dalle
@@ -231,7 +247,7 @@ public function processMassCreate(Request $request, Produit $produit)
                         'shift_register' => $validated['shift_register'],
                         'buffer' => $validated['buffer'],
                         'etat' => 'non_commence',
-                        'reference_module' => "FC{$f}-D{$d}-M{$m}"
+                        'reference_module' => "{$dalleId}-M{$m}"
                     ]);
                     $count++;
                 }

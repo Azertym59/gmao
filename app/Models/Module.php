@@ -26,6 +26,7 @@ class Module extends Model
         'technicien_id',
         'est_occupe',
         'reference_module',
+        'numero_serie',
         'position_lettre',
         'position_x',
         'position_y'

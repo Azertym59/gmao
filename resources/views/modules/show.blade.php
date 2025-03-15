@@ -50,6 +50,10 @@
                                     <span class="font-semibold text-white">Numéro du module:</span> 
                                     <span class="text-gray-300">{{ $module->reference_module ?? 'Non renseigné' }}</span>
                                 </div>
+                                <div class="mb-2">
+                                    <span class="font-semibold text-white">Numéro de série / ID Usine:</span> 
+                                    <span class="text-gray-300">{{ $module->numero_serie ?? 'Non renseigné' }}</span>
+                                </div>
                                 <div>
                                     <span class="font-semibold text-white">État:</span>
                                     @if($module->etat == 'non_commence')
@@ -192,9 +196,9 @@
                                                 </td>
                                                 <td class="py-3 px-4">
                                                     @if($intervention->diagnostic)
-                                                        {{ $intervention->diagnostic->nb_leds_hs ?? 0 }} LEDs HS,
-                                                        {{ $intervention->diagnostic->nb_ic_hs ?? 0 }} ICs HS,
-                                                        {{ $intervention->diagnostic->nb_masques_hs ?? 0 }} masques HS
+                                                        {{ (int)($intervention->diagnostic->nb_leds_hs) }} LEDs HS,
+                                                        {{ (int)($intervention->diagnostic->nb_ic_hs) }} ICs HS,
+                                                        {{ (int)($intervention->diagnostic->nb_masques_hs) }} masques HS
                                                         @if($intervention->diagnostic->pose_fake_pcb)
                                                             <br><span class="text-green-500">Fake PCB nécessaire</span>
                                                         @endif
@@ -204,9 +208,9 @@
                                                 </td>
                                                 <td class="py-3 px-4">
                                                     @if($intervention->reparation)
-                                                        {{ $intervention->reparation->nb_leds_remplacees ?? 0 }} LEDs,
-                                                        {{ $intervention->reparation->nb_ic_remplaces ?? 0 }} ICs,
-                                                        {{ $intervention->reparation->nb_masques_remplaces ?? 0 }} masques
+                                                        {{ (int)($intervention->reparation->nb_leds_remplacees) }} LEDs,
+                                                        {{ (int)($intervention->reparation->nb_ic_remplaces) }} ICs,
+                                                        {{ (int)($intervention->reparation->nb_masques_remplaces) }} masques
                                                         @if($intervention->reparation->fake_pcb_pose)
                                                             <br><span class="text-green-500">Fake PCB posé</span>
                                                         @endif

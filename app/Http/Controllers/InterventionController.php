@@ -140,23 +140,39 @@ class InterventionController extends Controller
             
             // Mise à jour du diagnostic avec les champs du formulaire
             $diagnostic = $intervention->diagnostic;
-            $diagnostic->update([
-                'nb_leds_hs' => $request->input('diagnostic_nb_leds_hs', 0),
-                'nb_ic_hs' => $request->input('diagnostic_nb_ic_hs', 0),
-                'nb_masques_hs' => $request->input('diagnostic_nb_masques_hs', 0),
-                'remarques' => $request->input('diagnostic_remarques', '')
-                // Ne pas utiliser description et conclusion car ils n'existent pas dans la table
-            ]);
+            if ($diagnostic) {
+                $diagnostic->nb_leds_hs = (int) $request->input('diagnostic_nb_leds_hs', 0);
+                $diagnostic->nb_ic_hs = (int) $request->input('diagnostic_nb_ic_hs', 0);
+                $diagnostic->nb_masques_hs = (int) $request->input('diagnostic_nb_masques_hs', 0);
+                $diagnostic->remarques = $request->input('diagnostic_remarques', '');
+                $diagnostic->pose_fake_pcb = $request->has('diagnostic_pose_fake_pcb') ? true : false;
+                $diagnostic->save();
+                
+                // Log pour déboguer
+                \Illuminate\Support\Facades\Log::info('Mise à jour finale du diagnostic avec valeurs: ', [
+                    'nb_leds_hs' => $diagnostic->nb_leds_hs,
+                    'nb_ic_hs' => $diagnostic->nb_ic_hs,
+                    'nb_masques_hs' => $diagnostic->nb_masques_hs
+                ]);
+            }
             
             // Mise à jour de la réparation avec les champs du formulaire
             $reparation = $intervention->reparation;
-            $reparation->update([
-                'nb_leds_remplacees' => $request->input('reparation_nb_leds_remplacees', 0),
-                'nb_ic_remplaces' => $request->input('reparation_nb_ic_remplaces', 0),
-                'nb_masques_remplaces' => $request->input('reparation_nb_masques_remplaces', 0),
-                'remarques' => $request->input('reparation_remarques', '')
-                // Ne pas utiliser description, actions et resultat car ils n'existent pas dans la table
-            ]);
+            if ($reparation) {
+                $reparation->nb_leds_remplacees = (int) $request->input('reparation_nb_leds_remplacees', 0);
+                $reparation->nb_ic_remplaces = (int) $request->input('reparation_nb_ic_remplaces', 0);
+                $reparation->nb_masques_remplaces = (int) $request->input('reparation_nb_masques_remplaces', 0);
+                $reparation->remarques = $request->input('reparation_remarques', '');
+                $reparation->fake_pcb_pose = $request->has('reparation_fake_pcb_pose') ? true : false;
+                $reparation->save();
+                
+                // Log pour déboguer
+                \Illuminate\Support\Facades\Log::info('Mise à jour finale de la réparation avec valeurs: ', [
+                    'nb_leds_remplacees' => $reparation->nb_leds_remplacees,
+                    'nb_ic_remplaces' => $reparation->nb_ic_remplaces,
+                    'nb_masques_remplaces' => $reparation->nb_masques_remplaces
+                ]);
+            }
             
             // Finaliser l'intervention
             $intervention->date_fin = now();
@@ -225,38 +241,121 @@ class InterventionController extends Controller
      */
     public function storeDiagnostic(Request $request, Intervention $intervention)
     {
+        // Log toutes les données du formulaire pour le débogage
+        \Illuminate\Support\Facades\Log::info('Données reçues dans storeDiagnostic:', [
+            'all_request_data' => $request->all(),
+            'diagnostic_nb_leds_hs' => $request->input('diagnostic_nb_leds_hs'),
+            'diagnostic_nb_ic_hs' => $request->input('diagnostic_nb_ic_hs'),
+            'diagnostic_nb_masques_hs' => $request->input('diagnostic_nb_masques_hs'),
+            'intervention_id' => $intervention->id
+        ]);
+        
         $validated = $request->validate([
             'diagnostic_nb_leds_hs' => 'required|integer|min:0',
             'diagnostic_nb_ic_hs' => 'required|integer|min:0',
             'diagnostic_nb_masques_hs' => 'required|integer|min:0',
             'diagnostic_remarques' => 'nullable|string',
             'diagnostic_pose_fake_pcb' => 'nullable|boolean',
+            'diagnostic_cause' => 'nullable|string|in:usure_normale,choc,defaut_usine,autre',
+            'numero_serie' => 'nullable|string|max:255',
             'temps_total' => 'required|integer|min:0',
         ]);
         
+        \Illuminate\Support\Facades\Log::info('Données validées dans storeDiagnostic:', $validated);
+        
         try {
+            // Mettre à jour le numéro de série du module si fourni
+            if ($request->filled('numero_serie')) {
+                $module = $intervention->module;
+                $module->update([
+                    'numero_serie' => $request->input('numero_serie')
+                ]);
+            }
+            
             // Créer ou mettre à jour le diagnostic
             $diagnostic = $intervention->diagnostic;
             
+            // Créer un diagnostic directement en SQL
+            $nbLedsHs = max(0, (int) $request->input('diagnostic_nb_leds_hs', 0));
+            $nbIcHs = max(0, (int) $request->input('diagnostic_nb_ic_hs', 0));
+            $nbMasquesHs = max(0, (int) $request->input('diagnostic_nb_masques_hs', 0));
+            $remarques = $request->input('diagnostic_remarques', '');
+            $poseFakePcb = $request->has('diagnostic_pose_fake_pcb') ? 1 : 0;
+            $cause = $request->input('diagnostic_cause');
+            
+            \Illuminate\Support\Facades\Log::info('Préparation des valeurs pour le diagnostic:', [
+                'diagnostic_exists' => $diagnostic ? 'oui' : 'non',
+                'nb_leds_hs' => $nbLedsHs,
+                'nb_ic_hs' => $nbIcHs, 
+                'nb_masques_hs' => $nbMasquesHs,
+                'pose_fake_pcb' => $poseFakePcb,
+                'cause' => $cause
+            ]);
+            
             if (!$diagnostic) {
-                $diagnostic = new \App\Models\Diagnostic([
-                    'intervention_id' => $intervention->id,
-                    'nb_leds_hs' => (int) $request->input('diagnostic_nb_leds_hs', 0),
-                    'nb_ic_hs' => (int) $request->input('diagnostic_nb_ic_hs', 0),
-                    'nb_masques_hs' => (int) $request->input('diagnostic_nb_masques_hs', 0),
-                    'remarques' => $request->input('diagnostic_remarques', ''),
-                    'pose_fake_pcb' => $request->input('diagnostic_pose_fake_pcb') ? true : false
+                // Insertion directe en SQL
+                \Illuminate\Support\Facades\DB::statement("
+                    INSERT INTO diagnostics (intervention_id, nb_leds_hs, nb_ic_hs, nb_masques_hs, remarques, pose_fake_pcb, cause, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ", [
+                    $intervention->id,
+                    $nbLedsHs,
+                    $nbIcHs,
+                    $nbMasquesHs,
+                    $remarques,
+                    $poseFakePcb,
+                    $cause,
+                    now(),
+                    now()
                 ]);
-                $diagnostic->save();
+                
+                // Récupérer le diagnostic qui vient d'être créé
+                $diagnostic = \Illuminate\Support\Facades\DB::table('diagnostics')
+                    ->where('intervention_id', $intervention->id)
+                    ->latest('id')
+                    ->first();
+                
+                \Illuminate\Support\Facades\Log::info('Diagnostic créé avec SQL:', (array) $diagnostic);
             } else {
-                $diagnostic->update([
-                    'nb_leds_hs' => (int) $request->input('diagnostic_nb_leds_hs', 0),
-                    'nb_ic_hs' => (int) $request->input('diagnostic_nb_ic_hs', 0),
-                    'nb_masques_hs' => (int) $request->input('diagnostic_nb_masques_hs', 0),
-                    'remarques' => $request->input('diagnostic_remarques', ''),
-                    'pose_fake_pcb' => $request->input('diagnostic_pose_fake_pcb') ? true : false
+                // Mise à jour directe en SQL
+                \Illuminate\Support\Facades\DB::statement("
+                    UPDATE diagnostics
+                    SET nb_leds_hs = ?,
+                        nb_ic_hs = ?,
+                        nb_masques_hs = ?,
+                        remarques = ?,
+                        pose_fake_pcb = ?,
+                        cause = ?,
+                        updated_at = ?
+                    WHERE id = ?
+                ", [
+                    $nbLedsHs,
+                    $nbIcHs,
+                    $nbMasquesHs,
+                    $remarques,
+                    $poseFakePcb,
+                    $cause,
+                    now(),
+                    $diagnostic->id
                 ]);
+                
+                // Récupérer le diagnostic mis à jour
+                $diagnostic = \Illuminate\Support\Facades\DB::table('diagnostics')
+                    ->where('id', $diagnostic->id)
+                    ->first();
+                
+                \Illuminate\Support\Facades\Log::info('Diagnostic mis à jour avec SQL:', (array) $diagnostic);
             }
+            
+            // Vérifier que les données sont bien dans la base de données
+            $diagnosticVerif = \Illuminate\Support\Facades\DB::table('diagnostics')
+                ->where('intervention_id', $intervention->id)
+                ->latest('id')
+                ->first();
+                
+            \Illuminate\Support\Facades\Log::info('Vérification après enregistrement:', [
+                'diagnosticVerif' => (array) $diagnosticVerif
+            ]);
             
             // Mettre à jour le temps total
             $intervention->temps_total = $request->input('temps_total', 0);
@@ -274,6 +373,15 @@ class InterventionController extends Controller
      */
     public function storeReparation(Request $request, Intervention $intervention)
     {
+        // Log toutes les données du formulaire pour le débogage
+        \Illuminate\Support\Facades\Log::info('Données reçues dans storeReparation:', [
+            'all_request_data' => $request->all(),
+            'reparation_nb_leds_remplacees' => $request->input('reparation_nb_leds_remplacees'),
+            'reparation_nb_ic_remplaces' => $request->input('reparation_nb_ic_remplaces'),
+            'reparation_nb_masques_remplaces' => $request->input('reparation_nb_masques_remplaces'),
+            'intervention_id' => $intervention->id
+        ]);
+        
         $validated = $request->validate([
             'reparation_nb_leds_remplacees' => 'required|integer|min:0',
             'reparation_nb_ic_remplaces' => 'required|integer|min:0',
@@ -283,29 +391,88 @@ class InterventionController extends Controller
             'temps_total' => 'required|integer|min:0',
         ]);
         
+        \Illuminate\Support\Facades\Log::info('Données validées dans storeReparation:', $validated);
+        
         try {
             // Créer ou mettre à jour la réparation
             $reparation = $intervention->reparation;
             
+            // Créer une réparation directement en SQL
+            $nbLedsRemplacees = max(0, (int) $request->input('reparation_nb_leds_remplacees', 0));
+            $nbIcRemplaces = max(0, (int) $request->input('reparation_nb_ic_remplaces', 0));
+            $nbMasquesRemplaces = max(0, (int) $request->input('reparation_nb_masques_remplaces', 0));
+            $remarques = $request->input('reparation_remarques', '');
+            $fakePcbPose = $request->has('reparation_fake_pcb_pose') ? 1 : 0;
+            
+            \Illuminate\Support\Facades\Log::info('Préparation des valeurs pour la réparation:', [
+                'reparation_exists' => $reparation ? 'oui' : 'non',
+                'nb_leds_remplacees' => $nbLedsRemplacees,
+                'nb_ic_remplaces' => $nbIcRemplaces, 
+                'nb_masques_remplaces' => $nbMasquesRemplaces,
+                'fake_pcb_pose' => $fakePcbPose
+            ]);
+            
             if (!$reparation) {
-                $reparation = new \App\Models\Reparation([
-                    'intervention_id' => $intervention->id,
-                    'nb_leds_remplacees' => (int) $request->input('reparation_nb_leds_remplacees', 0),
-                    'nb_ic_remplaces' => (int) $request->input('reparation_nb_ic_remplaces', 0),
-                    'nb_masques_remplaces' => (int) $request->input('reparation_nb_masques_remplaces', 0),
-                    'remarques' => $request->input('reparation_remarques', ''),
-                    'fake_pcb_pose' => $request->input('reparation_fake_pcb_pose') ? true : false
+                // Insertion directe en SQL
+                \Illuminate\Support\Facades\DB::statement("
+                    INSERT INTO reparations (intervention_id, nb_leds_remplacees, nb_ic_remplaces, nb_masques_remplaces, remarques, fake_pcb_pose, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ", [
+                    $intervention->id,
+                    $nbLedsRemplacees,
+                    $nbIcRemplaces,
+                    $nbMasquesRemplaces,
+                    $remarques,
+                    $fakePcbPose,
+                    now(),
+                    now()
                 ]);
-                $reparation->save();
+                
+                // Récupérer la réparation qui vient d'être créée
+                $reparation = \Illuminate\Support\Facades\DB::table('reparations')
+                    ->where('intervention_id', $intervention->id)
+                    ->latest('id')
+                    ->first();
+                
+                \Illuminate\Support\Facades\Log::info('Réparation créée avec SQL:', (array) $reparation);
             } else {
-                $reparation->update([
-                    'nb_leds_remplacees' => (int) $request->input('reparation_nb_leds_remplacees', 0),
-                    'nb_ic_remplaces' => (int) $request->input('reparation_nb_ic_remplaces', 0),
-                    'nb_masques_remplaces' => (int) $request->input('reparation_nb_masques_remplaces', 0),
-                    'remarques' => $request->input('reparation_remarques', ''),
-                    'fake_pcb_pose' => $request->input('reparation_fake_pcb_pose') ? true : false
+                // Mise à jour directe en SQL
+                \Illuminate\Support\Facades\DB::statement("
+                    UPDATE reparations
+                    SET nb_leds_remplacees = ?,
+                        nb_ic_remplaces = ?,
+                        nb_masques_remplaces = ?,
+                        remarques = ?,
+                        fake_pcb_pose = ?,
+                        updated_at = ?
+                    WHERE id = ?
+                ", [
+                    $nbLedsRemplacees,
+                    $nbIcRemplaces,
+                    $nbMasquesRemplaces,
+                    $remarques,
+                    $fakePcbPose,
+                    now(),
+                    $reparation->id
                 ]);
+                
+                // Récupérer la réparation mise à jour
+                $reparation = \Illuminate\Support\Facades\DB::table('reparations')
+                    ->where('id', $reparation->id)
+                    ->first();
+                
+                \Illuminate\Support\Facades\Log::info('Réparation mise à jour avec SQL:', (array) $reparation);
             }
+            
+            // Vérifier que les données sont bien dans la base de données
+            $reparationVerif = \Illuminate\Support\Facades\DB::table('reparations')
+                ->where('intervention_id', $intervention->id)
+                ->latest('id')
+                ->first();
+                
+            \Illuminate\Support\Facades\Log::info('Vérification après enregistrement de réparation:', [
+                'reparationVerif' => (array) $reparationVerif
+            ]);
             
             // Mettre à jour le temps total
             $intervention->temps_total = $request->input('temps_total', 0);
@@ -401,21 +568,37 @@ class InterventionController extends Controller
             
             // Mise à jour du diagnostic
             if ($diagnostic) {
-                $diagnostic->update([
-                    'nb_leds_hs' => $request->input('diagnostic_nb_leds_hs', 0),
-                    'nb_ic_hs' => $request->input('diagnostic_nb_ic_hs', 0),
-                    'nb_masques_hs' => $request->input('diagnostic_nb_masques_hs', 0),
-                    'remarques' => $request->input('diagnostic_remarques', ''),
+                $diagnostic->nb_leds_hs = (int) $request->input('diagnostic_nb_leds_hs', 0);
+                $diagnostic->nb_ic_hs = (int) $request->input('diagnostic_nb_ic_hs', 0);
+                $diagnostic->nb_masques_hs = (int) $request->input('diagnostic_nb_masques_hs', 0);
+                $diagnostic->remarques = $request->input('diagnostic_remarques', '');
+                $diagnostic->pose_fake_pcb = $request->has('diagnostic_pose_fake_pcb') ? true : false;
+                $diagnostic->save();
+                
+                // Log pour déboguer
+                \Illuminate\Support\Facades\Log::info('Update - Diagnostic mis à jour: ', [
+                    'diagnostic_id' => $diagnostic->id,
+                    'nb_leds_hs' => $diagnostic->nb_leds_hs,
+                    'nb_ic_hs' => $diagnostic->nb_ic_hs,
+                    'nb_masques_hs' => $diagnostic->nb_masques_hs
                 ]);
             }
             
             // Mise à jour de la réparation
             if ($reparation) {
-                $reparation->update([
-                    'nb_leds_remplacees' => $request->input('reparation_nb_leds_remplacees', 0),
-                    'nb_ic_remplaces' => $request->input('reparation_nb_ic_remplaces', 0),
-                    'nb_masques_remplaces' => $request->input('reparation_nb_masques_remplaces', 0),
-                    'remarques' => $request->input('reparation_remarques', ''),
+                $reparation->nb_leds_remplacees = (int) $request->input('reparation_nb_leds_remplacees', 0);
+                $reparation->nb_ic_remplaces = (int) $request->input('reparation_nb_ic_remplaces', 0);
+                $reparation->nb_masques_remplaces = (int) $request->input('reparation_nb_masques_remplaces', 0);
+                $reparation->remarques = $request->input('reparation_remarques', '');
+                $reparation->fake_pcb_pose = $request->has('reparation_fake_pcb_pose') ? true : false;
+                $reparation->save();
+                
+                // Log pour déboguer
+                \Illuminate\Support\Facades\Log::info('Update - Réparation mise à jour: ', [
+                    'reparation_id' => $reparation->id,
+                    'nb_leds_remplacees' => $reparation->nb_leds_remplacees,
+                    'nb_ic_remplaces' => $reparation->nb_ic_remplaces,
+                    'nb_masques_remplaces' => $reparation->nb_masques_remplaces
                 ]);
             }
             
