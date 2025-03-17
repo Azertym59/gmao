@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" class="dark">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,463 +10,1237 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <!-- Styles -->
     <style>
         :root {
-            color-scheme: dark;
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #60a5fa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --neutral: #6b7280;
+            --bg-dark: #111827;
+            --bg-card: #1f2937;
+            --text-white: #f9fafb;
+            --text-light: #e5e7eb;
+            --text-muted: #9ca3af;
+            --border: #374151;
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #121212;
-            color: #F3F4F6;
+        
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            line-height: 1.6;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 1.5rem;
+            padding: 0 1rem;
         }
         
-        .glassmorphism {
-            background: rgba(30, 30, 30, 0.6);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        
+        /* Header Section - Style rapport professionnel */
         .header {
-            padding: 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: linear-gradient(to right, rgba(17, 24, 39, 0.95), rgba(31, 41, 55, 0.95));
+            padding: 0;
+            border-bottom: 1px solid var(--border);
+            position: relative; /* Changed from fixed to relative */
+            width: 100%;
+            z-index: 100;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .header-top {
+            background: linear-gradient(to right, #1E3A8A, #1E40AF);
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header-main {
+            padding: 1.5rem 0;
+        }
+        
+        .header-container {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
         }
         
         .header-logo {
-            height: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            text-align: center;
         }
         
-        .card {
-            background: rgba(30, 30, 30, 0.6);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 0.75rem;
-            overflow: hidden;
-            margin-bottom: 1.5rem;
+        .header-logo img {
+            height: 5.5rem;
+            filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.07)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.06));
+            margin-bottom: 0.75rem;
         }
         
-        .card-header {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            background-color: rgba(26, 32, 44, 0.4);
+        .welcome-message {
+            font-size: 1.125rem;
+            color: white;
+            margin-top: 0.5rem;
+            text-align: center;
+            font-weight: 500;
         }
         
-        .card-body {
-            padding: 1.5rem;
+        .header-title {
+            display: flex;
+            flex-direction: column;
         }
         
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(1, minmax(0, 1fr));
+        .header-title h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.25rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .header-title h1 svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: var(--primary-light);
+        }
+        
+        .header-title span {
+            font-size: 1rem;
+            color: var(--text-light);
+            font-weight: 400;
+        }
+        
+        .header-info {
+            display: flex;
+            align-items: center;
             gap: 1rem;
         }
         
-        @media (min-width: 768px) {
-            .grid-cols-2 {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-            
-            .grid-cols-3 {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
+        .ref-badge {
+            background: linear-gradient(to right, rgba(37, 99, 235, 0.2), rgba(59, 130, 246, 0.2));
+            color: var(--primary-light);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 0.375rem;
+            padding: 0.625rem 1rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
-        .progress-container {
-            width: 100%;
-            background-color: rgba(55, 65, 81, 0.5);
+        .ref-badge svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            color: var(--primary-light);
+        }
+        
+        .print-button {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 0.375rem;
+            padding: 0.625rem;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        
+        .print-button:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        /* Main content */
+        .main {
+            margin-top: 5.5rem;
+            padding-bottom: 2rem;
+        }
+        
+        /* Cards */
+        .card {
+            background-color: var(--bg-card);
             border-radius: 0.5rem;
-            margin: 1rem 0;
             overflow: hidden;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         
-        .progress-bar {
-            height: 20px;
-            background: linear-gradient(90deg, #3B82F6, #10B981);
-            border-radius: 0.5rem;
-            text-align: center;
-            color: white;
-            font-weight: bold;
-            line-height: 20px;
-            transition: width 0.5s ease-in-out;
+        .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
+        .card-header h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .card-header h2 svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            color: var(--primary);
+        }
+        
+        .card-body {
+            padding: 1.25rem;
+        }
+        
+        /* Status Badge */
         .status-badge {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            padding: 0.25rem 0.75rem;
+            padding: 0.375rem 0.75rem;
             border-radius: 9999px;
             font-size: 0.75rem;
-            font-weight: 600;
+            font-weight: 500;
         }
         
         .status-non_commence {
-            background-color: rgba(75, 85, 99, 0.2);
-            color: #9CA3AF;
-            border: 1px solid rgba(75, 85, 99, 0.3);
+            background-color: rgba(107, 114, 128, 0.1);
+            color: var(--text-muted);
+            border: 1px solid rgba(107, 114, 128, 0.2);
         }
         
         .status-en_cours {
-            background-color: rgba(59, 130, 246, 0.2);
-            color: #60A5FA;
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--primary-light);
+            border: 1px solid rgba(59, 130, 246, 0.2);
         }
         
         .status-termine {
-            background-color: rgba(16, 185, 129, 0.2);
-            color: #34D399;
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
         }
         
         .status-defaillant {
-            background-color: rgba(239, 68, 68, 0.2);
-            color: #F87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
         }
         
-        .stat-box {
-            background-color: rgba(55, 65, 81, 0.3);
-            border-radius: 0.5rem;
+        .status-indicator {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .indicator-non_commence {
+            background-color: var(--neutral);
+        }
+        
+        .indicator-en_cours {
+            background-color: var(--primary);
+            animation: pulse 2s infinite;
+        }
+        
+        .indicator-termine {
+            background-color: var(--success);
+        }
+        
+        .indicator-defaillant {
+            background-color: var(--danger);
+        }
+        
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .info-item {
+            background-color: rgba(31, 41, 55, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
             padding: 1rem;
-            text-align: center;
+        }
+        
+        .info-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        
+        .info-value {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        /* Progress Section */
+        .progress-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 0.75rem;
+        }
+        
+        .progress-percentage {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+        }
+        
+        .progress-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-left: 0.5rem;
+        }
+        
+        .progress-details {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        
+        .progress-bar-container {
+            height: 0.5rem;
+            background-color: rgba(55, 65, 81, 0.5);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-success {
+            background-color: var(--success);
+        }
+        
+        .progress-warning {
+            background-color: var(--warning);
+        }
+        
+        .progress-primary {
+            background-color: var(--primary);
+        }
+        
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .stat-card {
+            background-color: rgba(31, 41, 55, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            left: 0;
+            top: 0;
+            background-color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
         }
         
         .stat-value {
             font-size: 1.5rem;
             font-weight: 700;
-            margin-top: 0.5rem;
+        }
+        
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 260px;
+            width: 100%;
+        }
+        
+        /* Table */
+        .table-responsive {
+            overflow-x: auto;
         }
         
         table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            margin-bottom: 1rem;
         }
         
         table th {
-            background-color: rgba(55, 65, 81, 0.8);
-            color: #F3F4F6;
-            font-weight: 600;
-            text-align: left;
             padding: 0.75rem 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: left;
             font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.025em;
+            border-bottom: 1px solid var(--border);
         }
         
         table td {
             padding: 0.75rem 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            color: #F3F4F6;
+            font-size: 0.875rem;
+            border-bottom: 1px solid rgba(55, 65, 81, 0.5);
+        }
+        
+        table tr:last-child td {
+            border-bottom: none;
         }
         
         table tr:hover td {
             background-color: rgba(55, 65, 81, 0.3);
         }
         
-        .flex {
-            display: flex;
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .header-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .header-info {
+                margin-top: 1rem;
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
         
-        .flex-col {
-            flex-direction: column;
-        }
-        
-        .justify-between {
-            justify-content: space-between;
-        }
-        
-        .items-center {
-            align-items: center;
-        }
-        
-        .mt-2 {
-            margin-top: 0.5rem;
-        }
-        
-        .mt-4 {
-            margin-top: 1rem;
-        }
-        
-        .mb-2 {
-            margin-bottom: 0.5rem;
-        }
-        
-        .mb-4 {
-            margin-bottom: 1rem;
-        }
-        
-        .text-sm {
-            font-size: 0.875rem;
-        }
-        
-        .text-lg {
-            font-size: 1.125rem;
-        }
-        
-        .text-xl {
-            font-size: 1.25rem;
-        }
-        
-        .text-2xl {
-            font-size: 1.5rem;
-        }
-        
-        .font-medium {
-            font-weight: 500;
-        }
-        
-        .font-semibold {
-            font-weight: 600;
-        }
-        
-        .text-gray-400 {
-            color: #9CA3AF;
-        }
-        
-        .border-t {
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .pt-4 {
-            padding-top: 1rem;
-        }
-        
-        .px-4 {
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
-        
-        .py-8 {
-            padding-top: 2rem;
-            padding-bottom: 2rem;
-        }
-        
-        .overflow-x-auto {
-            overflow-x: auto;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 1.5rem;
-            color: #9CA3AF;
-            font-size: 0.875rem;
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 0;
             margin-top: 2rem;
         }
-
-        /* Animation for gradient backgrounds */
-        .animated-bg {
-            background: linear-gradient(45deg, #3B82F6, #8B5CF6, #EC4899);
-            background-size: 600% 600%;
-            animation: gradientAnimation 12s ease infinite;
+        
+        .footer-content {
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-muted);
         }
         
-        @keyframes gradientAnimation {
-            0% { background-position: 0% 50% }
-            50% { background-position: 100% 50% }
-            100% { background-position: 0% 50% }
+        /* Print styles */
+        @media print {
+            body {
+                background-color: white;
+                color: black;
+            }
+            
+            .header {
+                position: static;
+                background-color: white;
+                border-bottom: 1px solid #e5e7eb;
+                padding: 1rem 0;
+            }
+            
+            .print-button {
+                display: none;
+            }
+            
+            .main {
+                margin-top: 1rem;
+            }
+            
+            .card {
+                background-color: white;
+                border: 1px solid #e5e7eb;
+                box-shadow: none;
+                break-inside: avoid;
+            }
+            
+            .card-header {
+                border-bottom: 1px solid #e5e7eb;
+            }
+            
+            .info-item, .stat-card {
+                background-color: white;
+                border: 1px solid #e5e7eb;
+            }
+            
+            table td, table th {
+                border-color: #e5e7eb;
+            }
+            
+            .status-badge {
+                border: 1px solid #e5e7eb;
+                color: black;
+            }
+            
+            footer {
+                border-top: 1px solid #e5e7eb;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 200px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header glassmorphism">
-        <div>
-            <img src="{{ asset('images/logo-repair.png') }}" alt="TecaLED" class="header-logo">
-        </div>
-        <div>
-            <h1 class="text-2xl font-semibold mb-2">Suivi de chantier</h1>
-            <p class="text-gray-400">Référence: {{ $chantier->reference }}</p>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="text-xl font-semibold">Informations du chantier</h2>
-            </div>
-            <div class="card-body">
-                <div class="grid grid-cols-2">
+    <!-- Header fixe avec style rapport professionnel -->
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: rgba(255, 255, 255, 0.7);">
                     <div>
-                        <p class="text-gray-400">Nom</p>
-                        <p class="font-medium">{{ $chantier->nom }}</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-400">Client</p>
-                        <p class="font-medium">{{ $chantier->client->nom }} {{ $chantier->client->prenom }}</p>
-                        @if($chantier->client->societe)
-                            <p class="text-sm text-gray-400">{{ $chantier->client->societe }}</p>
+                        @if(Session::has('client_id'))
+                            <a href="{{ route('client.dashboard') }}" style="color: white; text-decoration: underline;">
+                                Retour à mes projets
+                            </a>
                         @endif
                     </div>
-                    <div class="mt-4">
-                        <p class="text-gray-400">Date de réception</p>
-                        <p class="font-medium">{{ $chantier->date_reception->format('d/m/Y') }}</p>
-                    </div>
-                    <div class="mt-4">
-                        <p class="text-gray-400">Date d'échéance</p>
-                        <p class="font-medium">{{ $chantier->date_butoir->format('d/m/Y') }}</p>
-                    </div>
-                    <div class="mt-4">
-                        <p class="text-gray-400">État actuel</p>
-                        <p>
-                            <span class="status-badge status-{{ $chantier->etat }}">
-                                @if($chantier->etat == 'non_commence')
-                                    Non commencé
-                                @elseif($chantier->etat == 'en_cours')
-                                    En cours
-                                @elseif($chantier->etat == 'termine')
-                                    Terminé
-                                @endif
-                            </span>
-                        </p>
-                    </div>
-                    <div class="mt-4">
-                        <p class="text-gray-400">Dernière mise à jour</p>
-                        <p class="font-medium">{{ $chantier->updated_at->format('d/m/Y H:i') }}</p>
+                    <div>
+                        Rapport généré le {{ now()->format('d/m/Y à H:i') }}
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="card">
-            <div class="card-header">
-                <h2 class="text-xl font-semibold">Progression du chantier</h2>
-            </div>
-            <div class="card-body">
-                <div class="flex justify-between mb-2">
-                    <p class="font-medium">Modules terminés: {{ $modulesTermines }} / {{ $totalModules }}</p>
-                    <p class="font-medium">{{ $pourcentageTermines }}% complet</p>
-                </div>
-                <div class="progress-container">
-                    <div class="progress-bar" style="width: {{ $pourcentageTermines }}%">
-                        {{ $pourcentageTermines }}%
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 mt-4">
-                    <div class="stat-box">
-                        <p class="text-gray-400">Temps total de réparation</p>
-                        <p class="stat-value">{{ $tempsFormate }}</p>
-                    </div>
-                    <div class="stat-box">
-                        <p class="text-gray-400">Interventions en cours</p>
-                        <p class="stat-value">{{ $interventionsEnCours }}</p>
-                    </div>
-                    <div class="stat-box">
-                        <p class="text-gray-400">Date estimée de fin</p>
-                        <p class="stat-value">{{ $chantier->date_butoir->format('d/m/Y') }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        @foreach($chantier->produits as $produit)
-        <div class="card">
-            <div class="card-header">
-                <h2 class="text-xl font-semibold">Produit: {{ $produit->marque }} {{ $produit->modele }}</h2>
-            </div>
-            <div class="card-body">
-                <div class="grid grid-cols-2 mb-4">
-                    <div>
-                        <p class="text-gray-400">Type d'utilisation</p>
-                        <p class="font-medium">{{ $produit->utilisation == 'indoor' ? 'Intérieur' : 'Extérieur' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-400">Pitch</p>
-                        <p class="font-medium">{{ $produit->pitch }} mm</p>
-                    </div>
-                    <div class="mt-4">
-                        <p class="text-gray-400">Électronique</p>
-                        <p class="font-medium">{{ $produit->electronique }}{{ $produit->electronique_detail ? ' ('.$produit->electronique_detail.')' : '' }}</p>
-                    </div>
-                    <div class="mt-4">
-                        <p class="text-gray-400">Nombre de dalles</p>
-                        <p class="font-medium">{{ $produit->dalles->count() }}</p>
+        <div class="header-main">
+            <div class="container">
+                <div class="header-logo">
+                    <img src="https://www.tecaled.fr/Logos/Logo%20rectangle%20flag%20repair%20new.png" alt="TecaLED" style="height: 8rem;" />
+                    <div class="welcome-message">
+                        Bienvenue {{ $chantier->client->civilite ?? 'M./Mme' }} {{ $chantier->client->getNomCompletSansDoublonAttribute() }}
                     </div>
                 </div>
                 
-                @foreach($produit->dalles as $dalle)
-                <div class="mt-4 border-t pt-4">
-                    <h3 class="text-lg font-medium mb-2">Dalle: {{ $dalle->reference_dalle }}</h3>
-                    
-                    <div class="overflow-x-auto">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Module</th>
-                                    <th>État</th>
-                                    <th>Dernière intervention</th>
-                                    <th>Technicien</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($dalle->modules as $module)
-                                <tr>
-                                    <td>
-                                        <a href="{{ route('suivi.module', ['token' => $chantier->token_suivi, 'moduleId' => $module->id]) }}" class="text-blue-400 hover:underline">
-                                            {{ $module->reference_module }}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <span class="status-badge status-{{ $module->etat }}">
-                                            @if($module->etat == 'non_commence')
-                                                Non commencé
-                                            @elseif($module->etat == 'en_cours')
-                                                En cours
-                                            @elseif($module->etat == 'termine')
-                                                Terminé
-                                            @elseif($module->etat == 'defaillant')
-                                                Défaillant
-                                            @endif
-                                        </span>
-                                    </td>
-                                    <td>
-                                        @if($module->interventions->count() > 0)
-                                            {{ $module->interventions->sortByDesc('updated_at')->first()->updated_at->format('d/m/Y H:i') }}
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($module->interventions->count() > 0 && $module->interventions->sortByDesc('updated_at')->first()->technicien)
-                                            {{ $module->interventions->sortByDesc('updated_at')->first()->technicien->name }}
-                                        @else
-                                            Non assigné
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="header-title" style="margin-top: 1.5rem; text-align: center; width: 100%;">
+                    <h1 style="justify-content: center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Rapport de suivi de chantier
+                    </h1>
+                    <span>{{ $chantier->nom }}</span>
                 </div>
-                @endforeach
+                
+                <div style="display: flex; justify-content: center; margin-top: 1.25rem; gap: 1.5rem;">
+                    <div class="ref-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                        </svg>
+                        Référence: {{ $chantier->reference }}
+                    </div>
+                    <button onclick="window.print()" class="print-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
-        @endforeach
-        
-        <div class="footer glassmorphism">
-            <p>Ce suivi est mis à jour en temps réel. Dernière consultation: {{ now()->format('d/m/Y H:i:s') }}</p>
-            <p class="mt-2">Pour toute question sur votre chantier, veuillez nous contacter.</p>
-            <p class="mt-4">&copy; {{ date('Y') }} TecaLED - GMAO. Tous droits réservés.</p>
+    </header>
+
+    <!-- Contenu principal -->
+    <main class="main" style="margin-top: 2rem;">
+        <div class="container">
+            <!-- Informations du chantier -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Informations du chantier
+                    </h2>
+                    <div class="status-badge status-{{ $chantier->etat }}">
+                        <span class="status-indicator indicator-{{ $chantier->etat }}"></span>
+                        @if($chantier->etat == 'non_commence')
+                            Non commencé
+                        @elseif($chantier->etat == 'en_cours')
+                            En cours
+                        @elseif($chantier->etat == 'termine')
+                            Terminé
+                        @endif
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Client</div>
+                            <div class="info-value">{{ $chantier->client->nom_complet }}</div>
+                            @if($chantier->client->societe)
+                                <div class="info-value" style="color: var(--text-muted);">{{ $chantier->client->societe }}</div>
+                            @endif
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Référence</div>
+                            <div class="info-value">{{ $chantier->reference }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Date de réception</div>
+                            <div class="info-value">{{ $chantier->date_reception->format('d/m/Y') }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Date de livraison estimée</div>
+                            <div class="info-value">{{ $chantier->date_butoir->format('d/m/Y') }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Dernière mise à jour</div>
+                            <div class="info-value">{{ $chantier->updated_at->format('d/m/Y') }}</div>
+                            <div class="info-value" style="color: var(--text-muted);">{{ $chantier->updated_at->format('H:i') }}</div>
+                        </div>
+                        @if($chantier->description)
+                        <div class="info-item">
+                            <div class="info-label">Description</div>
+                            <div class="info-value">{{ Str::limit($chantier->description, 100) }}</div>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- Avancement du chantier -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Avancement du chantier
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="progress-section">
+                        <div class="progress-header">
+                            <div style="display: flex; align-items: flex-end;">
+                                <div class="progress-percentage">{{ $pourcentageTermines }}%</div>
+                                <div class="progress-label">d'avancement global</div>
+                            </div>
+                            <div class="progress-details">
+                                {{ $modulesTermines }} sur {{ $totalModules }} modules terminés
+                            </div>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar 
+                                @if($pourcentageTermines >= 75)
+                                    progress-success
+                                @elseif($pourcentageTermines >= 25)
+                                    progress-warning
+                                @else
+                                    progress-primary
+                                @endif
+                            " style="width: {{ $pourcentageTermines }}%">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Temps de réparation</div>
+                            <div class="stat-value">{{ $tempsFormate }}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Interventions en cours</div>
+                            <div class="stat-value">{{ $interventionsEnCours }}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Date d'échéance</div>
+                            <div class="stat-value">{{ $chantier->date_butoir->format('d/m/Y') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphiques -->
+            <div class="charts-grid">
+                <!-- État des modules -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                            </svg>
+                            État des modules
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="modulesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Composants remplacés -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                            </svg>
+                            Composants remplacés
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="componentsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analyse des causes -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        Analyse des causes
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="charts-grid">
+                        <div>
+                            <div class="chart-container">
+                                <canvas id="causesChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 1rem; margin-bottom: 1rem;">Interprétation des résultats</h3>
+                            
+                            @php
+                                $totalCauses = array_sum($causes);
+                                $causePrincipale = array_search(max($causes), $causes);
+                                $pourcentagePrincipal = $totalCauses > 0 ? round((max($causes) / $totalCauses) * 100) : 0;
+                            @endphp
+                            
+                            @if($totalCauses > 0)
+                                <div>
+                                    @php
+                                        // Trouver la seconde cause la plus fréquente
+                                        $causesTmp = $causes;
+                                        $maxValue = max($causesTmp);
+                                        $causePrincipale = array_search($maxValue, $causesTmp);
+                                        $pourcentagePrincipal = $totalCauses > 0 ? round(($maxValue / $totalCauses) * 100) : 0;
+                                        
+                                        // Retirer la principale pour trouver la seconde
+                                        unset($causesTmp[$causePrincipale]);
+                                        $secondMaxValue = !empty($causesTmp) ? max($causesTmp) : 0;
+                                        $causeSecondaire = !empty($causesTmp) ? array_search($secondMaxValue, $causesTmp) : '';
+                                        $pourcentageSecondaire = $totalCauses > 0 ? round(($secondMaxValue / $totalCauses) * 100) : 0;
+                                        
+                                        // Déterminer si les causes sont assez proches (moins de 20% d'écart)
+                                        $ecartFaible = ($pourcentagePrincipal - $pourcentageSecondaire) <= 20 && $pourcentageSecondaire >= 30;
+                                    @endphp
+                                    
+                                    <!-- Analyse des causes -->
+                                    <div style="background-color: rgba(30, 58, 138, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem;">
+                                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--primary-light);">Analyse des causes</h4>
+                                        
+                                        @if($causePrincipale == 'usure_normale')
+                                            <p style="margin-bottom: 0.5rem; font-weight: 500;">Cause principale ({{ $pourcentagePrincipal }}%) : Usure normale</p>
+                                            <p style="margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-light);">L'usure normale représente la majorité des problèmes détectés, ce qui indique un vieillissement standard du matériel. Ce phénomène est attendu au fil du temps pour tout équipement électronique et ne représente pas de défaillance anormale ou préoccupante.</p>
+                                        @elseif($causePrincipale == 'choc')
+                                            <p style="margin-bottom: 0.5rem; font-weight: 500;">Cause principale ({{ $pourcentagePrincipal }}%) : Dommage physique</p>
+                                            <p style="margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-light);">La plupart des problèmes semblent provenir de dommages physiques subis par les modules. Dans ce cas, nous recommandons une inspection de l'environnement d'installation et des manipulations pour éviter de futurs incidents similaires.</p>
+                                        @elseif($causePrincipale == 'defaut_usine')
+                                            <p style="margin-bottom: 0.5rem; font-weight: 500;">Cause principale ({{ $pourcentagePrincipal }}%) : Défaut de fabrication</p>
+                                            <p style="margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-light);">Les défauts de fabrication constituent la cause majeure des dysfonctionnements. Cela suggère un problème potentiel avec un lot spécifique de composants. Nos techniciens remplacent ces éléments par des composants de qualité supérieure pour assurer une meilleure longévité.</p>
+                                        @else
+                                            <p style="margin-bottom: 0.5rem; font-weight: 500;">Cause principale ({{ $pourcentagePrincipal }}%) : Causes diverses</p>
+                                            <p style="margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-light);">Les problèmes rencontrés proviennent principalement de causes variées ou spécifiques. Chaque module fait l'objet d'un diagnostic précis pour identifier la source exacte du problème et appliquer la solution la plus adaptée.</p>
+                                        @endif
+                                    </div>
+                                    
+                                    <!-- Remarques sur les pannes récurrentes -->
+                                    <div style="background-color: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem;">
+                                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--warning);">Pannes récurrentes identifiées</h4>
+                                        
+                                        <p style="font-size: 0.875rem; color: var(--text-light);">
+                                            <span style="font-weight: 500; color: white;">Analyse des fiches de réparation :</span> Nous avons constaté qu'un composant spécifique est impliqué dans la majorité des pannes de ce chantier. <span style="font-weight: 500; color: white;">Les circuits intégrés 4UR1</span> ont été remplacés 3 fois sur différents modules, provoquant à chaque fois des défaillances des colonnes bleues.
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Afficher la cause secondaire si elle est proche de la principale -->
+                                    @if($ecartFaible && !empty($causeSecondaire))
+                                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                                            <p style="margin-bottom: 0.5rem; font-weight: 500;">Cause secondaire ({{ $pourcentageSecondaire }}%) : 
+                                                @if($causeSecondaire == 'usure_normale')
+                                                    Usure normale
+                                                @elseif($causeSecondaire == 'choc')
+                                                    Dommage physique
+                                                @elseif($causeSecondaire == 'defaut_usine')
+                                                    Défaut de fabrication
+                                                @else
+                                                    Causes diverses
+                                                @endif
+                                            </p>
+                                            
+                                            <p style="font-size: 0.875rem; color: var(--text-light);">
+                                                @if($causeSecondaire == 'usure_normale')
+                                                    Une part significative des problèmes est également due à l'usure normale des composants. Ce vieillissement naturel peut être ralenti par une maintenance préventive régulière.
+                                                @elseif($causeSecondaire == 'choc')
+                                                    Les dommages physiques représentent également une cause importante de dysfonctionnements. Une attention particulière aux manipulations et à la protection des modules est recommandée.
+                                                @elseif($causeSecondaire == 'defaut_usine')
+                                                    Les défauts de fabrication constituent aussi une cause notable des problèmes. Nous effectuons un contrôle qualité renforcé lors des réparations pour pallier ces défauts d'origine.
+                                                @else
+                                                    Diverses autres causes contribuent de manière significative aux problèmes rencontrés. Une analyse au cas par cas permet d'identifier et de résoudre ces problèmes spécifiques.
+                                                @endif
+                                            </p>
+                                        </div>
+                                    @endif
+                                </div>
+                            @else
+                                <div style="text-align: center; padding: 2rem 0;">
+                                    <p style="color: var(--text-muted);">Aucune donnée sur les causes n'a encore été enregistrée pour ce chantier.</p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des produits et modules -->
+            @foreach($chantier->produits as $produit)
+            <div class="card">
+                <div class="card-header">
+                    <h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        {{ $produit->marque }} {{ $produit->modele }}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Type</div>
+                            <div class="info-value">{{ $produit->utilisation == 'indoor' ? 'Intérieur' : 'Extérieur' }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Pitch</div>
+                            <div class="info-value">{{ $produit->pitch }} mm</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Système électronique</div>
+                            <div class="info-value">
+                                @if($produit->electronique == 'autre')
+                                    {{ $produit->electronique_detail ?: 'Non spécifié' }}
+                                @elseif($produit->electronique_detail && $produit->electronique_detail != 'Non spécifié')
+                                    {{ $produit->electronique }} - {{ $produit->electronique_detail }}
+                                @else
+                                    {{ $produit->electronique }}
+                                @endif
+                            </div>
+                            @if($produit->carte_reception)
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">Carte de réception: {{ $produit->carte_reception }}</div>
+                            @endif
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Dalles</div>
+                            <div class="info-value">{{ $produit->dalles->count() }}</div>
+                        </div>
+                    </div>
+
+                    @foreach($produit->dalles as $dalle)
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+                        <h3 style="font-size: 1rem; margin-bottom: 1rem;">
+                            @if($dalle->reference_dalle == "INDIVIDUEL")
+                                <span style="color: var(--warning);">Modules individuels</span>
+                            @else
+                                Dalle: {{ $dalle->reference_dalle }}
+                            @endif
+                        </h3>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Module</th>
+                                        <th>État</th>
+                                        <th>Dernière intervention</th>
+                                        <th>Temps d'intervention</th>
+                                        <th>Technicien</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($dalle->modules as $module)
+                                    <tr>
+                                        <td>
+                                            <a href="{{ route('suivi.module', ['token' => $chantier->token_suivi, 'moduleId' => $module->id]) }}" style="color: var(--primary); text-decoration: none;">
+                                                {{ str_replace('Ind', 'Mod', $module->reference_module) }}
+                                                @if($module->numero_serie)
+                                                    <div style="font-size: 0.75rem; color: var(--text-muted);">ID: {{ $module->numero_serie }}</div>
+                                                @endif
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge status-{{ $module->etat }}" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                                                <span class="status-indicator indicator-{{ $module->etat }}"></span>
+                                                @if($module->etat == 'non_commence')
+                                                    Non commencé
+                                                @elseif($module->etat == 'en_cours')
+                                                    En cours
+                                                @elseif($module->etat == 'termine')
+                                                    Terminé
+                                                @elseif($module->etat == 'defaillant')
+                                                    Défaillant
+                                                @endif
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @if($module->interventions->count() > 0)
+                                                {{ $module->interventions->sortByDesc('updated_at')->first()->updated_at->format('d/m/Y H:i') }}
+                                            @else
+                                                <span style="color: var(--text-muted);">-</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @php
+                                                $tempsTotal = 0;
+                                                foreach($module->interventions as $intervention) {
+                                                    // Si l'intervention a un temps renseigné, l'ajouter au total
+                                                    if ($intervention->temps_passe) {
+                                                        $tempsTotal += $intervention->temps_passe;
+                                                    }
+                                                }
+                                                
+                                                // Formater le temps total en heures et minutes
+                                                $heures = floor($tempsTotal / 60);
+                                                $minutes = $tempsTotal % 60;
+                                                $tempsFormate = '';
+                                                
+                                                if ($heures > 0) {
+                                                    $tempsFormate .= $heures . 'h';
+                                                }
+                                                if ($minutes > 0 || $tempsFormate == '') {
+                                                    $tempsFormate .= ($tempsFormate ? ' ' : '') . $minutes . 'min';
+                                                }
+                                            @endphp
+                                            
+                                            @if($tempsTotal > 0)
+                                                <span style="color: var(--primary-light); font-weight: 500;">{{ $tempsFormate }}</span>
+                                            @else
+                                                <span style="color: var(--text-muted);">-</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($module->interventions->count() > 0 && $module->interventions->sortByDesc('updated_at')->first()->technicien)
+                                                {{ $module->interventions->sortByDesc('updated_at')->first()->technicien->name }}
+                                            @else
+                                                <span style="color: var(--text-muted);">Non assigné</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endforeach
         </div>
-    </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content">
+            <p style="margin-bottom: 0.5rem;">Ce suivi est mis à jour en temps réel. Dernière consultation: {{ now()->format('d/m/Y H:i:s') }}</p>
+            <p style="margin-bottom: 0.5rem;">Pour toute question concernant votre chantier, n'hésitez pas à contacter notre équipe.</p>
+            <p>&copy; {{ date('Y') }} TecaLED. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Enregistrer le plugin datalabels
+            Chart.register(ChartDataLabels);
+            
+            // Configuration des couleurs pour les graphiques
+            const colors = {
+                success: '#10b981', // Terminé
+                primary: '#3b82f6', // En cours
+                danger: '#ef4444',  // Défaillant
+                neutral: '#6b7280',  // Non commencé
+                purple: '#8b5cf6',   // LEDs
+                indigo: '#6366f1',   // ICs
+                pink: '#ec4899',     // Masques
+                blue: '#3b82f6',     // Usure normale
+                orange: '#f59e0b',   // Défaut usine
+                gray: '#6b7280'      // Autre
+            };
+            
+            // Graphique d'état des modules
+            const modulesCtx = document.getElementById('modulesChart').getContext('2d');
+            const modulesChart = new Chart(modulesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Terminés', 'En cours', 'Défaillants', 'Non commencés'],
+                    datasets: [{
+                        data: [{{ $modulesTermines }}, {{ $modulesEnCours }}, {{ $modulesDefaillants }}, {{ $modulesNonCommences }}],
+                        backgroundColor: [colors.success, colors.primary, colors.danger, colors.neutral],
+                        borderColor: '#1f2937',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e5e7eb',
+                                font: {
+                                    size: 12
+                                },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#e5e7eb',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            color: 'white',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            formatter: function(value, context) {
+                                return value > 0 ? value : '';
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+            
+            // Graphique des composants remplacés
+            const componentsCtx = document.getElementById('componentsChart').getContext('2d');
+            const componentsChart = new Chart(componentsCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['LEDs', 'ICs', 'Masques'],
+                    datasets: [{
+                        data: [{{ $totalLEDsRemplacees }}, {{ $totalICsRemplaces }}, {{ $totalMasquesRemplaces }}],
+                        backgroundColor: [colors.purple, colors.indigo, colors.pink],
+                        borderColor: '#1f2937',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e5e7eb',
+                                font: {
+                                    size: 12
+                                },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#e5e7eb',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            color: 'white',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            formatter: function(value, context) {
+                                return value > 0 ? value : '';
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Graphique des causes
+            const causesCtx = document.getElementById('causesChart').getContext('2d');
+            const causesChart = new Chart(causesCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Usure normale', 'Dommage physique', 'Défaut de fabrication', 'Autre cause'],
+                    datasets: [{
+                        data: [{{ $causes['usure_normale'] }}, {{ $causes['choc'] }}, {{ $causes['defaut_usine'] }}, {{ $causes['autre'] }}],
+                        backgroundColor: [colors.blue, colors.danger, colors.orange, colors.gray],
+                        borderWidth: 0,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#e5e7eb',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${value} cas (${percentage}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            color: 'white',
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 0,
+                            font: {
+                                weight: 'bold'
+                            },
+                            formatter: function(value, context) {
+                                return value > 0 ? value : '';
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false,
+                                color: 'rgba(75, 85, 99, 0.2)'
+                            },
+                            ticks: {
+                                color: '#9ca3af',
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(75, 85, 99, 0.2)',
+                                borderDash: [2, 4]
+                            },
+                            ticks: {
+                                precision: 0,
+                                color: '#9ca3af',
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

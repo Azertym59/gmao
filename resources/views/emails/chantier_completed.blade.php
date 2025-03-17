@@ -66,12 +66,16 @@
             <p><strong>Temps total consacré aux réparations :</strong> {{ $tempsFormate }}</p>
         </div>
         
-        <p>Vous trouverez ci-joint un rapport détaillé de toutes les réparations effectuées sur vos équipements. Ce document récapitule les diagnostics, les interventions réalisées et l'état final de chaque module.</p>
-        
         <p style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <strong>Vous pouvez consulter en ligne les détails complets de votre chantier :</strong><br>
             <a href="{{ $lienSuivi }}" style="display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">Consulter le chantier en ligne</a>
-            <br><small style="display: block; margin-top: 10px;">Ce lien reste accessible même après la fin du chantier pour vous permettre de consulter l'historique des interventions.</small>
+            <br><small style="display: block; margin-top: 10px;">Ce lien vous donne accès à l'historique complet des interventions, aux diagnostics et aux réparations effectuées.</small>
+        </p>
+        
+        <p style="background-color: #ebf5ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <strong>Accédez à l'historique de tous vos projets !</strong><br>
+            Créez un compte client pour consulter facilement l'ensemble de vos chantiers de réparation en un seul endroit.
+            <a href="{{ $lienInscription }}" style="display: inline-block; background-color: #4299e1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">Créer mon compte</a>
         </p>
         
         <p>Nous vous remercions pour votre confiance et restons à votre disposition pour toute information complémentaire concernant ces réparations ou pour tout autre besoin futur.</p>

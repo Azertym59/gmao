@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h1 class="text-2xl font-bold text-text-primary leading-tight">
-            {{ __('Chantiers') }}
+            {{ __('Registre SAV & Ventes') }}
         </h1>
     </x-slot>
 
@@ -14,16 +14,16 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
-                        <span>Liste des chantiers</span>
+                        <span>Liste des projets</span>
                     </h2>
-                    <p class="text-text-secondary mt-1">Gérez tous vos chantiers de manière centralisée</p>
+                    <p class="text-text-secondary mt-1">Gérez tous vos projets de vente et SAV</p>
                 </div>
                 <div>
-                    <a href="{{ route('chantiers.create.step1') }}" class="btn bg-white text-gray-900 hover:bg-gray-100 hover:scale-105 transition-transform">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <a href="{{ route('nouveau.projet') }}" class="btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
-                        Ajouter un chantier
+                        Ajouter un projet
                     </a>
                 </div>
             </div>
@@ -112,14 +112,14 @@
                                                     </svg>
                                                 </div>
                                                 <div>
-                                                    <p class="text-text-secondary">Aucun chantier trouvé</p>
+                                                    <p class="text-text-secondary">Aucun projet trouvé</p>
                                                     <p class="text-text-secondary text-sm mt-1">Commencez par en créer un</p>
                                                 </div>
-                                                <a href="{{ route('chantiers.create.step1') }}" class="btn bg-white text-gray-900 hover:bg-gray-100 hover:scale-105 transition-transform mt-2">
+                                                <a href="{{ route('nouveau.projet') }}" class="btn bg-white text-gray-900 hover:bg-gray-100 hover:scale-105 transition-transform mt-2">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                                     </svg>
-                                                    Créer mon premier chantier
+                                                    Créer mon premier projet
                                                 </a>
                                             </div>
                                         </td>

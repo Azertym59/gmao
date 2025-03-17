@@ -203,9 +203,14 @@ public function processMassCreate(Request $request, Produit $produit)
         'driver' => 'nullable|string',
         'shift_register' => 'nullable|string',
         'buffer' => 'nullable|string',
+        // Option pour l'impression des QR codes
+        'print_qrcodes' => 'nullable|boolean',
     ]);
     
     $count = 0;
+    $moduleIds = []; // Pour stocker les IDs des modules créés
+    $dalleIds = []; // Pour stocker les IDs des dalles créées
+    $flightcaseRefs = []; // Pour stocker les références des flightcases
     
     if ($validated['mode'] == 'flightcase') {
         // Vérifier si on est en mode flightcase partiel
@@ -214,6 +219,10 @@ public function processMassCreate(Request $request, Produit $produit)
         
         // Création structurée Flight case > Dalle > Module
         for ($f = 1; $f <= $validated['nb_flightcases']; $f++) {
+            // Ajouter la référence du flightcase
+            $flightcaseRef = "FC{$f}";
+            $flightcaseRefs[] = $flightcaseRef;
+            
             for ($d = 1; $d <= $validated['nb_dalles_par_flightcase']; $d++) {
                 $dalleId = "FC{$f}-D{$d}";
                 
@@ -234,10 +243,13 @@ public function processMassCreate(Request $request, Produit $produit)
                     'hub' => $validated['hub'], // Nouveau champ
                     'reference_dalle' => $dalleId // Reference automatique
                 ]);
+                
+                // Ajouter l'ID de la dalle
+                $dalleIds[] = $dalle->id;
 
                 // Créer les modules pour cette dalle
                 for ($m = 1; $m <= $validated['nb_modules_par_dalle']; $m++) {
-                    Module::create([
+                    $module = Module::create([
                         'dalle_id' => $dalle->id,
                         'largeur' => $validated['largeur_module'],
                         'hauteur' => $validated['hauteur_module'],
@@ -249,6 +261,9 @@ public function processMassCreate(Request $request, Produit $produit)
                         'etat' => 'non_commence',
                         'reference_module' => "{$dalleId}-M{$m}"
                     ]);
+                    
+                    // Ajouter l'ID du module
+                    $moduleIds[] = $module->id;
                     $count++;
                 }
             }
@@ -264,10 +279,13 @@ public function processMassCreate(Request $request, Produit $produit)
             'alimentation' => $validated['alimentation_dalle'],
             'reference_dalle' => "INDIVIDUEL"
         ]);
+        
+        // Ajouter l'ID de la dalle
+        $dalleIds[] = $dalle->id;
 
         // Créer tous les modules
         for ($m = 1; $m <= $validated['nb_modules_total']; $m++) {
-            Module::create([
+            $module = Module::create([
                 'dalle_id' => $dalle->id,
                 'largeur' => $validated['largeur_module'],
                 'hauteur' => $validated['hauteur_module'],
@@ -281,11 +299,48 @@ public function processMassCreate(Request $request, Produit $produit)
                 'etat' => 'non_commence',
                 'reference_module' => "IND-{$m}"
             ]);
+            
+            // Ajouter l'ID du module
+            $moduleIds[] = $module->id;
             $count++;
         }
     }
 
+    // Stocker en session les IDs pour l'impression potentielle
+    session([
+        'created_module_ids' => $moduleIds,
+        'created_dalle_ids' => $dalleIds,
+        'created_flightcase_refs' => $flightcaseRefs
+    ]);
+    
+    // Si l'impression des QR codes est requise
+    if ($request->has('print_qrcodes') && $request->print_qrcodes) {
+        return redirect()->route('modules.print-batch', ['produit_id' => $produit->id]);
+    }
+
     return redirect()->route('produits.show', $produit)
         ->with('success', "{$count} modules créés avec succès.");
+}
+
+/**
+ * Affiche la page d'impression en masse des QR codes
+ */
+public function printBatch(Request $request)
+{
+    // Récupérer les IDs stockés en session
+    $moduleIds = session('created_module_ids', []);
+    $dalleIds = session('created_dalle_ids', []);
+    $flightcaseRefs = session('created_flightcase_refs', []);
+    
+    // Si pas d'IDs ou IDs vides
+    if (empty($moduleIds) && empty($dalleIds) && empty($flightcaseRefs)) {
+        return redirect()->back()
+            ->with('error', 'Aucun module ou dalle à imprimer.');
+    }
+    
+    // Pour simplifier, nous allons transmettre à la vue des QR codes seulement les modules
+    return redirect()->route('qrcode.module.batch', [
+        'module_ids' => implode(',', $moduleIds)
+    ]);
 }
 }

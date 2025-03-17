@@ -16,6 +16,41 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="{{ asset('css/fixes.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/qz-tray@2/qz-tray.js"></script>
+    
+    <!-- Style force prioritaire pour le menu latéral -->
+    <style>
+        /* Forcer les éléments du menu à être blancs */
+        #sidebar .sidebar-item,
+        #sidebar .sidebar-item span,
+        #sidebar a,
+        #sidebar a span {
+            color: white !important;
+            text-decoration: none !important;
+        }
+        
+        /* Style hover */
+        #sidebar .sidebar-item:hover,
+        #sidebar a:hover {
+            color: white !important;
+            text-decoration: none !important;
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        /* Style actif */
+        #sidebar .sidebar-item.active,
+        #sidebar a.active {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+            font-weight: 500 !important;
+        }
+        
+        /* Titre de section Configuration en vert */
+        #sidebar h3.text-xs {
+            color: #10B981 !important; /* Vert vif */
+            font-weight: 600 !important;
+            letter-spacing: 0.05em !important;
+        }
+    </style>
 </head>
 <body class="font-sans antialiased bg-app-bg text-text-primary">
     <div class="flex h-screen overflow-hidden">
@@ -33,7 +68,7 @@
                 
                 <!-- Breadcrumb -->
                 <div class="ml-4 flex-1">
-                    <h2 class="text-xl font-semibold text-text-primary">
+                    <h2 class="text-xl font-semibold">
                         {{ $header ?? '' }}
                     </h2>
                 </div>
@@ -112,78 +147,80 @@
 
             <!-- Main content -->
             <main class="flex-1 overflow-y-auto bg-app-bg p-4 sm:p-6">
-                <!-- Flash Messages -->
-                @if (session('success'))
-                    <div id="successMessage" class="bg-green-500/80 border border-green-400 text-white px-4 py-3 rounded-lg shadow-lg mb-6 flex items-center justify-between">
-                        <div class="flex items-center">
-                            <svg class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>{{ session('success') }}</span>
+                <div class="main-content">
+                    <!-- Flash Messages -->
+                    @if (session('success'))
+                        <div id="successMessage" class="bg-green-500/80 border border-green-400 text-white px-4 py-3 rounded-lg shadow-lg mb-6 flex items-center justify-between">
+                            <div class="flex items-center">
+                                <svg class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span>{{ session('success') }}</span>
+                            </div>
+                            <button onclick="document.getElementById('successMessage').style.display = 'none'" class="text-white hover:text-gray-100">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
                         </div>
-                        <button onclick="document.getElementById('successMessage').style.display = 'none'" class="text-white hover:text-gray-100">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                @endif
-                
-                @if (session('error'))
-                    <div id="errorMessage" class="bg-red-500/80 border border-red-400 text-white px-4 py-3 rounded-lg shadow-lg mb-6 flex items-center justify-between">
-                        <div class="flex items-center">
-                            <svg class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>{{ session('error') }}</span>
+                    @endif
+                    
+                    @if (session('error'))
+                        <div id="errorMessage" class="bg-red-500/80 border border-red-400 text-white px-4 py-3 rounded-lg shadow-lg mb-6 flex items-center justify-between">
+                            <div class="flex items-center">
+                                <svg class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>{{ session('error') }}</span>
+                            </div>
+                            <button onclick="document.getElementById('errorMessage').style.display = 'none'" class="text-white hover:text-gray-100">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
                         </div>
-                        <button onclick="document.getElementById('errorMessage').style.display = 'none'" class="text-white hover:text-gray-100">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                @endif
-                
-                @if (session('info'))
-                    <div id="infoMessage" class="bg-blue-500/80 border border-blue-400 text-white px-4 py-3 rounded-lg shadow-lg mb-6 flex items-center justify-between">
-                        <div class="flex items-center">
-                            <svg class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>{{ session('info') }}</span>
+                    @endif
+                    
+                    @if (session('info'))
+                        <div id="infoMessage" class="bg-blue-500/80 border border-blue-400 text-white px-4 py-3 rounded-lg shadow-lg mb-6 flex items-center justify-between">
+                            <div class="flex items-center">
+                                <svg class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>{{ session('info') }}</span>
+                            </div>
+                            <button onclick="document.getElementById('infoMessage').style.display = 'none'" class="text-white hover:text-gray-100">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
                         </div>
-                        <button onclick="document.getElementById('infoMessage').style.display = 'none'" class="text-white hover:text-gray-100">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                @endif
-                
-                @if (session('warning'))
-                    <div id="warningMessage" class="bg-yellow-500/80 border border-yellow-400 text-white px-4 py-3 rounded-lg shadow-lg mb-6 flex items-center justify-between">
-                        <div class="flex items-center">
-                            <svg class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            <span>{{ session('warning') }}</span>
+                    @endif
+                    
+                    @if (session('warning'))
+                        <div id="warningMessage" class="bg-yellow-500/80 border border-yellow-400 text-white px-4 py-3 rounded-lg shadow-lg mb-6 flex items-center justify-between">
+                            <div class="flex items-center">
+                                <svg class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <span>{{ session('warning') }}</span>
+                            </div>
+                            <button onclick="document.getElementById('warningMessage').style.display = 'none'" class="text-white hover:text-gray-100">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
                         </div>
-                        <button onclick="document.getElementById('warningMessage').style.display = 'none'" class="text-white hover:text-gray-100">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                    @endif
+                    
+                    <!-- Contenu principal -->
+                    <div class="space-y-6">
+                    @if(isset($slot))
+                        {{ $slot }}
+                    @else
+                        @yield('content', '')
+                    @endif
                     </div>
-                @endif
-                
-                <!-- Contenu principal -->
-                <div class="space-y-6">
-                @if(isset($slot))
-                    {{ $slot }}
-                @else
-                    @yield('content', '')
-                @endif
                 </div>
             </main>
             

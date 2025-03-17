@@ -38,9 +38,14 @@ class ProduitCatalogueController extends Controller
             'electronique_detail' => 'nullable|required_if:electronique,autre|string|max:255',
             'description' => 'nullable|string',
             'image_url' => 'nullable|url',
+            'carte_reception' => 'nullable|string|max:255',
         ]);
 
+        // Créer le produit de base
         $produit = ProduitCatalogue::create($validated);
+        
+        // Mettre à jour les options de cartes de réception disponibles en fonction du système électronique
+        $this->updateCartesReceptionOptions($produit);
 
         return redirect()->route('produits-catalogue.index')
             ->with('success', 'Produit ajouté au catalogue avec succès.');
@@ -76,9 +81,13 @@ class ProduitCatalogueController extends Controller
             'electronique_detail' => 'nullable|required_if:electronique,autre|string|max:255',
             'description' => 'nullable|string',
             'image_url' => 'nullable|url',
+            'carte_reception' => 'nullable|string|max:255',
         ]);
 
         $produitsCatalogue->update($validated);
+        
+        // Mettre à jour les options de cartes de réception disponibles
+        $this->updateCartesReceptionOptions($produitsCatalogue);
 
         return redirect()->route('produits-catalogue.index')
             ->with('success', 'Produit du catalogue mis à jour avec succès.');
@@ -93,5 +102,70 @@ class ProduitCatalogueController extends Controller
 
         return redirect()->route('produits-catalogue.index')
             ->with('success', 'Produit supprimé du catalogue.');
+    }
+    
+    /**
+     * Met à jour les options de cartes de réception disponibles en fonction du système électronique
+     */
+    protected function updateCartesReceptionOptions($produit)
+    {
+        $systems = [
+            'nova' => [
+                'Novastar Taurus',
+                'Novastar MCTRL300',
+                'Novastar MCTRL660',
+                'Novastar MCTRL4K',
+                'Novastar A5s Plus',
+                'Novastar A8s Plus',
+            ],
+            'linsn' => [
+                'Linsn TS802',
+                'Linsn TS852',
+                'Linsn TS902',
+                'Linsn RV908',
+                'Linsn RV908M',
+            ],
+            'colorlight' => [
+                'Colorlight Z6',
+                'Colorlight S6',
+                'Colorlight M9',
+                'Colorlight X8',
+            ],
+            'dbstar' => [
+                'DBstar HVT11IN',
+                'DBstar MRF4IN',
+            ],
+            'barco' => [
+                'Barco E2',
+                'Barco S3',
+                'Barco EventMaster',
+            ],
+            'brompton' => [
+                'Brompton Tessera S4',
+                'Brompton Tessera M2',
+                'Brompton Tessera SB40',
+                'Brompton Tessera R2',
+            ],
+            'autre' => [],
+        ];
+        
+        // Si une carte de réception a été définie et que le système est connu
+        if ($produit->carte_reception && isset($systems[$produit->electronique])) {
+            // Mettre à jour la liste des cartes disponibles pour ce système électronique
+            $currentCards = json_decode($produit->cartes_reception_disponibles ?? '[]', true) ?: [];
+            
+            // Si la carte actuelle n'est pas déjà dans la liste
+            if (!in_array($produit->carte_reception, $currentCards) && 
+                !in_array($produit->carte_reception, $systems[$produit->electronique])) {
+                // Ajouter la nouvelle carte
+                $systems[$produit->electronique][] = $produit->carte_reception;
+            }
+        }
+        
+        // Mettre à jour avec les cartes disponibles pour le système
+        if (isset($systems[$produit->electronique])) {
+            $produit->cartes_reception_disponibles = json_encode($systems[$produit->electronique]);
+            $produit->save();
+        }
     }
 }

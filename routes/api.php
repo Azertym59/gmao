@@ -3,7 +3,10 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ClientController;
+use App\Http\Controllers\Api\DalleController;
 use App\Http\Controllers\Api\PrintController;
+use App\Http\Controllers\Api\ProduitController;
+use App\Http\Controllers\Api\CartesReceptionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +25,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 // Routes d'API pour l'autocomplétion
 Route::get('/clients/search', [ClientController::class, 'search'])->name('api.clients.search');
+
+// Mise à jour rapide du numéro de dalle
+Route::post('/dalles/{id}/update-numero', [DalleController::class, 'updateNumero'])->name('dalles.update.numero');
 
 // Routes existantes
 Route::post('/print/job', [PrintController::class, 'createPrintJob']);
@@ -72,4 +78,58 @@ Route::prefix('printers')->group(function () {
             'status' => $status
         ]);
     });
+});
+
+// Routes API pour les produits
+Route::get('/produits', [ProduitController::class, 'index']);
+Route::get('/produits/catalogue', [ProduitController::class, 'catalogue']);
+
+// Routes API pour les cartes de réception
+Route::get('/cartes-reception', [CartesReceptionController::class, 'getCartesForElectronique']);
+
+// API pour l'autocomplétion des marques et modèles
+Route::get('/marques', function(Request $request) {
+    $term = $request->input('term', '');
+    
+    $marques = \App\Models\ProduitCatalogue::select('marque')
+        ->where('marque', 'like', "%{$term}%")
+        ->distinct()
+        ->orderBy('marque')
+        ->limit(10)
+        ->get()
+        ->map(function($item) {
+            return [
+                'id' => $item->marque,
+                'text' => $item->marque
+            ];
+        });
+    
+    return response()->json($marques);
+});
+
+Route::get('/modeles', function(Request $request) {
+    $term = $request->input('term', '');
+    $marque = $request->input('marque', '');
+    
+    $query = \App\Models\ProduitCatalogue::select('modele', 'pitch', 'utilisation')
+        ->where('modele', 'like', "%{$term}%")
+        ->distinct();
+    
+    if (!empty($marque)) {
+        $query->where('marque', $marque);
+    }
+    
+    $modeles = $query->orderBy('modele')
+        ->limit(10)
+        ->get()
+        ->map(function($item) {
+            return [
+                'id' => $item->modele,
+                'text' => $item->modele,
+                'pitch' => $item->pitch,
+                'utilisation' => $item->utilisation
+            ];
+        });
+    
+    return response()->json($modeles);
 });

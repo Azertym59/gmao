@@ -19,6 +19,7 @@ use App\Http\Controllers\RapportController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\TechnicienDashboardController;
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\ClientMiddleware;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -57,6 +58,26 @@ Route::get('/direct-dashboard', function () {
     return redirect('/dashboard');
 });
 
+// Routes d'authentification client
+Route::get('/client-login', [App\Http\Controllers\ClientAuthController::class, 'showLoginForm'])
+    ->name('client.login');
+Route::post('/client-login', [App\Http\Controllers\ClientAuthController::class, 'login'])
+    ->name('client.login.submit');
+Route::get('/client-register', [App\Http\Controllers\ClientAuthController::class, 'showRegisterForm'])
+    ->name('client.register');
+Route::post('/client-register', [App\Http\Controllers\ClientAuthController::class, 'register'])
+    ->name('client.register.submit');
+
+// Routes protégées pour l'espace client
+Route::middleware([ClientMiddleware::class])->group(function() {
+    Route::post('/client/logout', [App\Http\Controllers\ClientAuthController::class, 'logout'])
+        ->name('client.logout');
+    Route::get('/client/dashboard', [App\Http\Controllers\ClientAuthController::class, 'dashboard'])
+        ->name('client.dashboard');
+    Route::get('/client/chantiers', [App\Http\Controllers\SuiviController::class, 'clientChantiers'])
+        ->name('client.chantiers');
+});
+
 // Routes de suivi public de chantier
 Route::get('/suivi/{token}', [App\Http\Controllers\SuiviController::class, 'show'])
     ->name('suivi.chantier');
@@ -68,6 +89,14 @@ Route::get('/generate-tokens', [App\Http\Controllers\SuiviController::class, 'ge
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/client-test', function () {
+    return view('client-test');
+})->name('client.test');
+
+Route::get('/client-login-test', function () {
+    return view('client-login-test');
+})->name('client.login.test');
 
 // Routes pour la configuration initiale
 Route::get('/setup/admin', [SetupController::class, 'showAdminSetup'])->name('setup.admin');
@@ -91,8 +120,20 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/test-catalogue-form', [ChantierController::class, 'testCatalogueFormSubmit'])->name('test.catalogue.form.submit');
     
     // Gestion des chantiers
-    Route::resource('chantiers', ChantierController::class);
+    // IMPORTANT: Les routes spécifiques doivent être placées AVANT la route resource
+    
+    // Routes pour le choix du type de projet (maintenance ou vente)
+    Route::get('/nouveau-projet', [ChantierController::class, 'typeChoix'])->name('nouveau.projet'); // Route simple et directe
+    Route::get('/chantiers/type-choix', [ChantierController::class, 'typeChoix'])->name('chantiers.type.choix');
+    Route::get('/chantiers/select-type', [ChantierController::class, 'typeChoix'])->name('chantiers.select.type'); // Route alternative
+    Route::get('/chantiers/maintenance/create', [ChantierController::class, 'createMaintenanceProject'])->name('chantiers.maintenance.create');
+    Route::get('/chantiers/vente/create', [ChantierController::class, 'createVenteProject'])->name('chantiers.vente.create');
+    
+    // Route patch doit venir avant resource pour éviter les conflits
     Route::patch('/chantiers/{chantier}/state', [ChantierController::class, 'updateState'])->name('chantiers.update.state');
+    
+    // Route resource doit venir en dernier car elle capture tous les chemins /chantiers/*
+    Route::resource('chantiers', ChantierController::class);
     
     // Routes pour les emails
     Route::post('/emails/chantier/{chantier}', [App\Http\Controllers\EmailController::class, 'sendChantierEmail'])->name('emails.chantier');
@@ -117,14 +158,17 @@ Route::middleware(['auth'])->group(function () {
     
     // Gestion des dalles et modules
     Route::resource('dalles', DalleController::class);
+    Route::post('/dalles/{id}/update-numero', [DalleController::class, 'updateNumero'])->name('dalles.update.numero');
     Route::resource('modules', ModuleController::class);
     Route::get('/produits/{produit}/modules/mass-create', [ModuleController::class, 'showMassCreateForm'])->name('modules.mass-create.form');
     Route::post('/produits/{produit}/modules/mass-create', [ModuleController::class, 'processMassCreate'])->name('modules.mass-create.process');
+    Route::get('/modules/print-batch', [ModuleController::class, 'printBatch'])->name('modules.print-batch');
     
     // Gestion des interventions
     Route::resource('interventions', InterventionController::class);
     Route::post('/interventions/{intervention}/pause', [InterventionController::class, 'pause'])->name('interventions.pause');
     Route::post('/interventions/{intervention}/resume', [InterventionController::class, 'resume'])->name('interventions.resume');
+    Route::post('/interventions/{intervention}/cancel', [InterventionController::class, 'cancel'])->name('interventions.cancel');
     
     // Routes pour le workflow à 3 étapes des interventions
     Route::get('/interventions/{intervention}/step1', [InterventionController::class, 'showDiagnosticStep'])->name('interventions.step1.diagnostic');
@@ -133,13 +177,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/interventions/{intervention}/store-diagnostic', [InterventionController::class, 'storeDiagnostic'])->name('interventions.store.diagnostic');
     Route::post('/interventions/{intervention}/store-reparation', [InterventionController::class, 'storeReparation'])->name('interventions.store.reparation');
     
-    // Routes pour les rapports
-    Route::get('/rapports', [RapportController::class, 'index'])->name('rapports.index');
-    Route::get('/rapports/chantier/{chantier}', [RapportController::class, 'genererRapportChantier'])->name('rapports.chantier');
-    Route::get('/rapports/intervention/{intervention}', [RapportController::class, 'genererFicheIntervention'])->name('rapports.intervention');
-    Route::get('/rapports/performance', [RapportController::class, 'genererRapportPerformance'])->name('rapports.performance');
-    Route::get('/rapports/inventaire', [RapportController::class, 'genererRapportInventaire'])->name('rapports.inventaire');
-    Route::get('/rapports/statistiques', [RapportController::class, 'genererRapportStatistiques'])->name('rapports.statistiques');
+    // Les routes pour les rapports ont été supprimées, les clients utilisent maintenant le suivi des chantiers
     
     // Routes pour les QR codes - Structure originale conservée
     Route::prefix('qrcode')->name('qrcode.')->group(function () {
@@ -154,6 +192,7 @@ Route::middleware(['auth'])->group(function () {
         // Routes pour les modules
         Route::get('/module/{id}/print', [ModuleQrCodeController::class, 'printLabel'])->name('module.print');
         Route::get('/module/{id}', [ModuleQrCodeController::class, 'show'])->name('module.show');
+        Route::get('/module/batch', [ModuleQrCodeController::class, 'printBatchLabels'])->name('module.batch');
         
         // Route pour la page de scan
         Route::get('/scan', function () {
@@ -171,7 +210,11 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::get('/notifications/unread', [NotificationController::class, 'getUnreadNotifications'])->name('notifications.unread');
     
-    // Routes pour les administrateurs seulement
+    // Route pour définir le mot de passe client (administrateur)
+    Route::post('/clients/{client}/set-password', [App\Http\Controllers\ClientAuthController::class, 'setPassword'])
+        ->name('client.set-password');
+
+// Routes pour les administrateurs seulement
     Route::middleware([AdminMiddleware::class])->group(function () {
         // Gestion des imprimantes (admin uniquement) - Mise à jour pour QZ Tray
         Route::prefix('printers')->name('printers.')->group(function () {

@@ -1,7 +1,12 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-white leading-tight">
-            {{ __('Créer un chantier - Étape 1/5') }}
+            <!-- Debug: Type de projet = {{ $type ?? 'non défini' }} -->
+            @if (isset($type) && $type === 'vente')
+                {{ __('Créer un projet de vente - Étape 1/5') }}
+            @else
+                {{ __('Créer un projet de maintenance - Étape 1/5') }}
+            @endif
         </h2>
     </x-slot>
 
@@ -104,7 +109,8 @@
                             <!-- Date butoir -->
                             <div>
                                 <x-input-label for="date_butoir" :value="__('Date butoir')" class="text-gray-300" />
-                                <x-text-input id="date_butoir" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="date" name="date_butoir" :value="old('date_butoir')" required />
+                                <x-text-input id="date_butoir" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="date" name="date_butoir" :value="old('date_butoir')" />
+                                <p class="text-xs text-blue-300 mt-1">Obligatoire pour SAV / Réparation, optionnel pour Vente / Achat client</p>
                                 <x-input-error :messages="$errors->get('date_butoir')" class="mt-2" />
                             </div>
 
@@ -117,6 +123,50 @@
                                     <option value="termine" {{ old('etat') == 'termine' ? 'selected' : '' }}>Terminé</option>
                                 </select>
                                 <x-input-error :messages="$errors->get('etat')" class="mt-2" />
+                            </div>
+                            
+                            <!-- Séparateur -->
+                            <div class="md:col-span-2 border-t border-gray-700 my-6"></div>
+                            
+                            <!-- Type de projet (prédéfini selon la sélection) -->
+                            <div>
+                                <x-input-label for="type_projet" :value="__('Type de projet')" class="text-gray-300" />
+                                <select id="type_projet" name="is_client_achat" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                    @if (isset($type) && $type === 'vente')
+                                        <option value="1" selected>Vente / Achat client</option>
+                                    @else
+                                        <option value="0" selected>SAV / Réparation</option>
+                                    @endif
+                                </select>
+                                <p class="text-xs text-blue-300 mt-1">Le type de projet est prédéfini selon votre choix précédent</p>
+                                <x-input-error :messages="$errors->get('is_client_achat')" class="mt-2" />
+                            </div>
+                            
+                            <!-- Garantie -->
+                            <div>
+                                <div class="flex items-center mt-3">
+                                    <input type="checkbox" id="is_under_warranty" name="is_under_warranty" value="1" {{ old('is_under_warranty') ? 'checked' : '' }} class="rounded bg-gray-700 border-gray-600 text-accent-blue focus:ring-indigo-500">
+                                    <label for="is_under_warranty" class="ml-2 text-gray-300">Produit sous garantie</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Options de garantie (affichées seulement si sous garantie) -->
+                            <div id="warranty_options" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 mt-2 bg-blue-900/20 p-4 rounded-lg border border-blue-500/30" style="display: none;">
+                                <div>
+                                    <x-input-label for="warranty_end_date" :value="__('Date de fin de garantie')" class="text-gray-300" />
+                                    <x-text-input id="warranty_end_date" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="date" name="warranty_end_date" :value="old('warranty_end_date')" />
+                                </div>
+                                
+                                <div>
+                                    <x-input-label for="warranty_type" :value="__('Type de garantie')" class="text-gray-300" />
+                                    <select id="warranty_type" name="warranty_type" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                        <option value="">-- Sélectionnez --</option>
+                                        <option value="standard" {{ old('warranty_type') == 'standard' ? 'selected' : '' }}>Standard (1 an)</option>
+                                        <option value="extended" {{ old('warranty_type') == 'extended' ? 'selected' : '' }}>Étendue (2 ans)</option>
+                                        <option value="premium" {{ old('warranty_type') == 'premium' ? 'selected' : '' }}>Premium (3 ans)</option>
+                                        <option value="custom" {{ old('warranty_type') == 'custom' ? 'selected' : '' }}>Personnalisée</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
@@ -259,6 +309,84 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Gestion des options de garantie
+            const isUnderWarrantyCheckbox = document.getElementById('is_under_warranty');
+            const warrantyOptionsContainer = document.getElementById('warranty_options');
+            const typeProjetSelect = document.getElementById('type_projet');
+            
+            // Initialisation spécifique au type de projet
+            @if(isset($type) && $type === 'vente')
+                // Pour un projet de vente, pré-cocher la garantie
+                if (!isUnderWarrantyCheckbox.checked) {
+                    isUnderWarrantyCheckbox.checked = true;
+                }
+                
+                // Suggérer une date de fin de garantie par défaut (+1 an)
+                const warrantyEndDateInput = document.getElementById('warranty_end_date');
+                if (!warrantyEndDateInput.value) {
+                    const today = new Date();
+                    today.setFullYear(today.getFullYear() + 1);
+                    warrantyEndDateInput.value = today.toISOString().split('T')[0];
+                }
+                
+                // Afficher les options de garantie
+                warrantyOptionsContainer.style.display = 'grid';
+            @endif
+            
+            // Fonction pour gérer l'affichage des options de garantie
+            function toggleWarrantyOptions() {
+                if (isUnderWarrantyCheckbox.checked) {
+                    warrantyOptionsContainer.style.display = 'grid';
+                    
+                    // Si c'est une vente client, suggérer une date de fin de garantie par défaut
+                    if (typeProjetSelect.value === '1') {
+                        const warrantyEndDateInput = document.getElementById('warranty_end_date');
+                        if (!warrantyEndDateInput.value) {
+                            const today = new Date();
+                            // Par défaut, garantie d'un an pour les nouveaux achats
+                            today.setFullYear(today.getFullYear() + 1);
+                            warrantyEndDateInput.value = today.toISOString().split('T')[0];
+                        }
+                    }
+                } else {
+                    warrantyOptionsContainer.style.display = 'none';
+                }
+            }
+            
+            // Initialiser l'état à partir de l'état actuel du checkbox
+            toggleWarrantyOptions();
+            
+            // Ajouter les écouteurs d'événements
+            isUnderWarrantyCheckbox.addEventListener('change', toggleWarrantyOptions);
+            
+            // Gérer le champ date_butoir
+            const dateButoir = document.getElementById('date_butoir');
+            
+            // Fonction pour gérer l'obligation du champ date_butoir en fonction du type de projet
+            function toggleDateButoir() {
+                if (typeProjetSelect.value === '0') { // SAV / Réparation
+                    dateButoir.setAttribute('required', 'required');
+                } else { // Vente / Achat client
+                    dateButoir.removeAttribute('required');
+                }
+            }
+            
+            // Initialiser l'état du champ date_butoir
+            toggleDateButoir();
+            
+            // Définir un comportement conditionnel pour le type de projet
+            typeProjetSelect.addEventListener('change', function() {
+                // Pour un achat client, présélectionner automatiquement la garantie
+                if (this.value === '1' && !isUnderWarrantyCheckbox.checked) {
+                    isUnderWarrantyCheckbox.checked = true;
+                    toggleWarrantyOptions();
+                }
+                
+                // Mettre à jour l'obligation du champ date_butoir
+                toggleDateButoir();
+            });
+            
+            // Gestion du modal client
             const clientModal = document.getElementById('createClientModal');
             const openModalBtn = document.getElementById('openCreateClientModal');
             const closeModalBtn = document.getElementById('closeClientModal');

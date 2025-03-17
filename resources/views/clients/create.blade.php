@@ -36,6 +36,16 @@
                         @csrf
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Civilité -->
+                            <div>
+                                <x-input-label for="civilite" :value="__('Civilité')" class="text-gray-300" />
+                                <select id="civilite" name="civilite" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                    <option value="M." {{ old('civilite') == 'M.' ? 'selected' : '' }}>M.</option>
+                                    <option value="Mme" {{ old('civilite') == 'Mme' ? 'selected' : '' }}>Mme</option>
+                                </select>
+                                <x-input-error :messages="$errors->get('civilite')" class="mt-2" />
+                            </div>
+                            
                             <!-- Nom (sera automatiquement mis en MAJUSCULES) -->
                             <div>
                                 <x-input-label for="nom" :value="__('Nom (MAJUSCULES)')" class="text-gray-300" />

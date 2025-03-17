@@ -34,7 +34,8 @@
                                 <!-- Carte de réception -->
                                 <div>
                                     <x-input-label for="carte_reception" :value="__('Carte de réception')" class="text-gray-300" />
-                                    <x-text-input id="carte_reception" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="carte_reception" :value="old('carte_reception')" placeholder="ex: Novastar Taurus" required />
+                                    <x-text-input id="carte_reception" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="carte_reception" :value="old('carte_reception')" placeholder="ex: Novastar Taurus TB6" required />
+                                    <p class="text-xs text-gray-400 mt-1">Format conseillé: Marque Modèle (Référence)</p>
                                     <x-input-error :messages="$errors->get('carte_reception')" class="mt-2" />
                                 </div>
 

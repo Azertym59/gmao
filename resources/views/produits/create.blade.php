@@ -80,11 +80,12 @@
                         <!-- Caractéristiques spécifiques du produit -->
                         <div class="mb-6">
                             <h3 class="text-lg font-medium text-blue-300 mb-4">Caractéristiques spécifiques</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <!-- Carte de réception -->
                                 <div>
                                     <x-input-label for="carte_reception" :value="__('Carte de réception')" class="text-gray-300" />
-                                    <x-text-input id="carte_reception" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="carte_reception" :value="old('carte_reception')" placeholder="ex: Novastar Taurus" />
+                                    <x-text-input id="carte_reception" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="carte_reception" :value="old('carte_reception')" placeholder="ex: Novastar Taurus TB6" />
+                                    <p class="text-xs text-gray-400 mt-1">Format conseillé: Marque Modèle (Référence)</p>
                                     <x-input-error :messages="$errors->get('carte_reception')" class="mt-2" />
                                 </div>
 
@@ -134,7 +135,8 @@
                                                     </div>
                                                     <div>
                                                         <label class="block text-sm font-medium text-gray-300">Carte de réception</label>
-                                                        <input type="text" name="variantes[{{ $key }}][carte_reception]" value="{{ $variante['carte_reception'] ?? '' }}" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" placeholder="ex: Novastar Taurus" required>
+                                                        <input type="text" name="variantes[{{ $key }}][carte_reception]" value="{{ $variante['carte_reception'] ?? '' }}" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" placeholder="ex: Novastar Taurus TB6" required>
+                                                        <p class="text-xs text-gray-400 mt-1">Format conseillé: Marque Modèle (Référence)</p>
                                                     </div>
                                                     <div>
                                                         <label class="block text-sm font-medium text-gray-300">Hub</label>
@@ -221,7 +223,8 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-300">Carte de réception</label>
-                            <input type="text" name="variantes[${varianteCount}][carte_reception]" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" placeholder="ex: Novastar Taurus" required>
+                            <input type="text" name="variantes[${varianteCount}][carte_reception]" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" placeholder="ex: Novastar Taurus TB6" required>
+                            <p class="text-xs text-gray-400 mt-1">Format conseillé: Marque Modèle (Référence)</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-300">Hub</label>

@@ -14,6 +14,16 @@
                         @method('PUT')
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Civilité -->
+                            <div>
+                                <x-input-label for="civilite" :value="__('Civilité')" class="text-gray-300" />
+                                <select id="civilite" name="civilite" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                    <option value="M." {{ old('civilite', $client->civilite) == 'M.' ? 'selected' : '' }}>M.</option>
+                                    <option value="Mme" {{ old('civilite', $client->civilite) == 'Mme' ? 'selected' : '' }}>Mme</option>
+                                </select>
+                                <x-input-error :messages="$errors->get('civilite')" class="mt-2" />
+                            </div>
+                            
                             <!-- Nom -->
                             <div>
                                 <x-input-label for="nom" :value="__('Nom')" class="text-gray-300" />
@@ -91,6 +101,80 @@
                             </a>
                             <button type="submit" class="btn-action btn-primary">
                                 {{ __('Mettre à jour') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Section pour définir un mot de passe client pour l'accès à l'espace client -->
+            <div class="glassmorphism overflow-hidden shadow-lg rounded-xl mt-6">
+                <div class="p-6 border-b border-gray-700">
+                    <h3 class="text-lg font-medium text-white mb-4">
+                        {{ __('Accès Espace Client') }}
+                    </h3>
+                    <p class="text-gray-300 mb-4">
+                        {{ __('Définissez un mot de passe pour permettre au client d\'accéder à l\'espace client et consulter ses projets.') }}
+                    </p>
+
+                    <form method="POST" action="{{ route('client.set-password', $client) }}">
+                        @csrf
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Mot de passe -->
+                            <div>
+                                <x-input-label for="password" :value="__('Mot de passe')" class="text-gray-300" />
+                                <x-text-input id="password" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="password" name="password" required />
+                                <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                            </div>
+
+                            <!-- Confirmation du mot de passe -->
+                            <div>
+                                <x-input-label for="password_confirmation" :value="__('Confirmer le mot de passe')" class="text-gray-300" />
+                                <x-text-input id="password_confirmation" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="password" name="password_confirmation" required />
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-end mt-6">
+                            <button type="submit" class="btn-action btn-success">
+                                {{ __('Définir le mot de passe') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Section pour définir un mot de passe client pour l'accès à l'espace client -->
+            <div class="glassmorphism overflow-hidden shadow-lg rounded-xl mt-6">
+                <div class="p-6 border-b border-gray-700">
+                    <h3 class="text-lg font-medium text-white mb-4">
+                        {{ __('Accès Espace Client') }}
+                    </h3>
+                    <p class="text-gray-300 mb-4">
+                        {{ __('Définissez un mot de passe pour permettre au client d\'accéder à l\'espace client et consulter ses projets.') }}
+                    </p>
+
+                    <form method="POST" action="{{ route('client.set-password', $client) }}">
+                        @csrf
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Mot de passe -->
+                            <div>
+                                <x-input-label for="password" :value="__('Mot de passe')" class="text-gray-300" />
+                                <x-text-input id="password" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="password" name="password" required />
+                                <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                            </div>
+
+                            <!-- Confirmation du mot de passe -->
+                            <div>
+                                <x-input-label for="password_confirmation" :value="__('Confirmer le mot de passe')" class="text-gray-300" />
+                                <x-text-input id="password_confirmation" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="password" name="password_confirmation" required />
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-end mt-6">
+                            <button type="submit" class="btn-action btn-success">
+                                {{ __('Définir le mot de passe') }}
                             </button>
                         </div>
                     </form>

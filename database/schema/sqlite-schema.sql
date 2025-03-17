@@ -115,22 +115,11 @@ CREATE TABLE IF NOT EXISTS "chantiers"(
   "created_at" datetime,
   "updated_at" datetime,
   "deleted_at" datetime,
+  "token_suivi" varchar,
+  "token_suivi_last_used_at" datetime,
   foreign key("client_id") references "clients"("id") on delete cascade
 );
 CREATE UNIQUE INDEX "chantiers_reference_unique" on "chantiers"("reference");
-CREATE TABLE IF NOT EXISTS "produits"(
-  "id" integer primary key autoincrement not null,
-  "chantier_id" integer not null,
-  "marque" varchar not null,
-  "modele" varchar not null,
-  "pitch" float not null,
-  "utilisation" varchar check("utilisation" in('indoor', 'outdoor')) not null,
-  "electronique" varchar check("electronique" in('nova', 'linsn', 'dbstar', 'brompton', 'autre')) not null,
-  "electronique_detail" varchar,
-  "created_at" datetime,
-  "updated_at" datetime,
-  foreign key("chantier_id") references "chantiers"("id") on delete cascade
-);
 CREATE TABLE IF NOT EXISTS "dalles"(
   "id" integer primary key autoincrement not null,
   "produit_id" integer not null,
@@ -143,6 +132,14 @@ CREATE TABLE IF NOT EXISTS "dalles"(
   "updated_at" datetime,
   "carte_reception" varchar,
   "hub" varchar,
+  "disposition_modules" varchar,
+  "nb_colonnes" integer not null default '1',
+  "nb_lignes" integer not null default '1',
+  "disposition_type" varchar check("disposition_type" in('standard', 'personnalisee')) not null default 'standard',
+  "disposition_schema" text,
+  "mode_emballage" varchar check("mode_emballage" in('flightcase', 'carton', 'palette', 'autre')),
+  "mode_emballage_detail" varchar,
+  "numero_dalle" varchar,
   foreign key("produit_id") references "produits"("id") on delete cascade
 );
 CREATE TABLE IF NOT EXISTS "modules"(
@@ -163,30 +160,12 @@ CREATE TABLE IF NOT EXISTS "modules"(
   "reference_module" varchar,
   "created_at" datetime,
   "updated_at" datetime,
+  "numero_serie" varchar,
+  "position_lettre" varchar,
+  "position_x" integer,
+  "position_y" integer,
   foreign key("dalle_id") references "dalles"("id") on delete cascade,
   foreign key("technicien_id") references "users"("id")
-);
-CREATE TABLE IF NOT EXISTS "diagnostics"(
-  "id" integer primary key autoincrement not null,
-  "intervention_id" integer not null,
-  "nb_leds_hs" integer not null default '0',
-  "nb_ic_hs" integer not null default '0',
-  "nb_masques_hs" integer not null default '0',
-  "remarques" text,
-  "created_at" datetime,
-  "updated_at" datetime,
-  foreign key("intervention_id") references "interventions"("id") on delete cascade
-);
-CREATE TABLE IF NOT EXISTS "reparations"(
-  "id" integer primary key autoincrement not null,
-  "intervention_id" integer not null,
-  "nb_leds_remplacees" integer not null default '0',
-  "nb_ic_remplaces" integer not null default '0',
-  "nb_masques_remplaces" integer not null default '0',
-  "remarques" text,
-  "created_at" datetime,
-  "updated_at" datetime,
-  foreign key("intervention_id") references "interventions"("id") on delete cascade
 );
 CREATE TABLE IF NOT EXISTS "stock_pieces"(
   "id" integer primary key autoincrement not null,
@@ -242,6 +221,10 @@ CREATE TABLE IF NOT EXISTS "produits_catalogue"(
   "description" text,
   "created_at" datetime,
   "updated_at" datetime
+  ,
+  "cartes_reception_disponibles" text,
+  "hubs_disponibles" text,
+  "bains_couleur_disponibles" text
 );
 CREATE TABLE IF NOT EXISTS "notifications"(
   "id" integer primary key autoincrement not null,
@@ -323,6 +306,59 @@ CREATE TABLE IF NOT EXISTS "interventions"(
   foreign key("module_id") references modules("id") on delete cascade on update no action,
   foreign key("technicien_id") references "users"("id")
 );
+CREATE TABLE IF NOT EXISTS "diagnostics"(
+  "id" integer primary key autoincrement not null,
+  "intervention_id" integer not null,
+  "nb_leds_hs" integer not null default '0',
+  "nb_ic_hs" integer not null default '0',
+  "nb_masques_hs" integer not null default '0',
+  "remarques" text,
+  "created_at" datetime,
+  "updated_at" datetime,
+  "description" text not null default '',
+  "conclusion" text not null default '',
+  "composant_defectueux" varchar,
+  "pose_fake_pcb" tinyint(1) not null default '0',
+  "cause" varchar,
+  foreign key("intervention_id") references interventions("id") on delete cascade on update no action
+);
+CREATE TABLE IF NOT EXISTS "reparations"(
+  "id" integer primary key autoincrement not null,
+  "intervention_id" integer not null,
+  "nb_leds_remplacees" integer not null default '0',
+  "nb_ic_remplaces" integer not null default '0',
+  "nb_masques_remplaces" integer not null default '0',
+  "remarques" text,
+  "created_at" datetime,
+  "updated_at" datetime,
+  "description" text not null default '',
+  "actions" text not null default '',
+  "pieces_remplacees" text,
+  "resultat" varchar,
+  "fake_pcb_pose" tinyint(1) not null default '0',
+  foreign key("intervention_id") references interventions("id") on delete cascade on update no action
+);
+CREATE TABLE IF NOT EXISTS "produits"(
+  "id" integer primary key autoincrement not null,
+  "chantier_id" integer not null,
+  "marque" varchar not null,
+  "modele" varchar not null,
+  "pitch" float not null,
+  "utilisation" varchar not null,
+  "electronique" varchar not null,
+  "electronique_detail" varchar,
+  "created_at" datetime,
+  "updated_at" datetime,
+  "bain_couleur" varchar,
+  "hub" varchar,
+  "alimentation" varchar,
+  "carte_reception" varchar,
+  "variante_id" integer,
+  "is_variante" tinyint(1) not null default '0',
+  "variante_nom" varchar,
+  foreign key("chantier_id") references chantiers("id") on delete cascade on update no action,
+  foreign key("variante_id") references "produits"("id") on delete cascade
+);
 
 INSERT INTO migrations VALUES(26,'0001_01_01_000000_create_users_table',1);
 INSERT INTO migrations VALUES(27,'0001_01_01_000001_create_cache_table',1);
@@ -350,3 +386,16 @@ INSERT INTO migrations VALUES(48,'2025_03_13_232544_allow_null_technicien_id_int
 INSERT INTO migrations VALUES(49,'2025_03_13_232825_create_telescope_entries_table',1);
 INSERT INTO migrations VALUES(50,'2025_03_14_012616_add_role_column_to_users_table',1);
 INSERT INTO migrations VALUES(51,'2025_03_15_add_etat_to_interventions',2);
+INSERT INTO migrations VALUES(52,'2025_03_14_015000_create_sessions_table',3);
+INSERT INTO migrations VALUES(53,'2025_03_14_085825_add_bain_couleur_and_hub_to_produits_table',3);
+INSERT INTO migrations VALUES(54,'2025_03_14_094106_add_disposition_modules_to_dalles_table',3);
+INSERT INTO migrations VALUES(55,'2025_03_14_115125_update_diagnostics_table_add_missing_columns',3);
+INSERT INTO migrations VALUES(56,'2025_03_14_115129_update_reparations_table_add_missing_columns',3);
+INSERT INTO migrations VALUES(57,'2025_03_14_115209_update_diagnostics_and_reparations_tables',3);
+INSERT INTO migrations VALUES(58,'2025_03_14_160740_add_fake_pcb_to_diagnostics_and_reparations',3);
+INSERT INTO migrations VALUES(59,'2025_03_14_variant_fields_produits',3);
+INSERT INTO migrations VALUES(60,'2025_03_15_031605_add_token_suivi_to_chantiers_table',3);
+INSERT INTO migrations VALUES(61,'2025_03_15_033357_add_numero_serie_to_modules_table',3);
+INSERT INTO migrations VALUES(62,'2025_03_15_044303_add_cause_to_diagnostics_table',3);
+INSERT INTO migrations VALUES(63,'2025_03_15_add_module_columns',3);
+INSERT INTO migrations VALUES(64,'2025_03_15_113308_add_numero_dalle_to_dalles_table',4);

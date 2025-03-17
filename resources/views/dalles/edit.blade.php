@@ -31,7 +31,16 @@
                             <div>
                                 <x-input-label for="reference_dalle" :value="__('Référence (optionnel)')" />
                                 <x-text-input id="reference_dalle" class="block mt-1 w-full" type="text" name="reference_dalle" :value="old('reference_dalle', $dalle->reference_dalle)" />
+                                <p class="text-xs text-gray-500 mt-1">Référence de la dalle dans le système (ex: FC1-D1)</p>
                                 <x-input-error :messages="$errors->get('reference_dalle')" class="mt-2" />
+                            </div>
+                            
+                            <!-- Numéro dalle -->
+                            <div>
+                                <x-input-label for="numero_dalle" :value="__('Numéro dalle usine/client')" />
+                                <x-text-input id="numero_dalle" class="block mt-1 w-full" type="text" name="numero_dalle" :value="old('numero_dalle', $dalle->numero_dalle)" />
+                                <p class="text-xs text-gray-500 mt-1">Numéro d'usine ou attribué par le client pour la traçabilité</p>
+                                <x-input-error :messages="$errors->get('numero_dalle')" class="mt-2" />
                             </div>
 
                             <!-- Largeur -->

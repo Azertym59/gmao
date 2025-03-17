@@ -26,7 +26,7 @@ export function marqueAutocomplete() {
       this.isLoading = true;
       console.log('Recherche marques avec:', this.query);
       
-      fetch(`/debug-marques.php?term=${encodeURIComponent(this.query)}`)
+      fetch(`/api/marques?term=${encodeURIComponent(this.query)}`)
         .then(response => {
           console.log('Statut de la réponse marques:', response.status);
           if (!response.ok) {
@@ -137,7 +137,7 @@ export function modeleAutocomplete() {
       this.isLoading = true;
       console.log(`Recherche modèles pour ${this.marque} avec:`, this.query);
       
-      fetch(`/debug-modeles.php?term=${encodeURIComponent(this.query)}&marque=${encodeURIComponent(this.marque)}`)
+      fetch(`/api/modeles?term=${encodeURIComponent(this.query)}&marque=${encodeURIComponent(this.marque)}`)
         .then(response => {
           console.log('Statut de la réponse modèles:', response.status);
           if (!response.ok) {

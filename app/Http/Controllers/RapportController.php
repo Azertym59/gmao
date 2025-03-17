@@ -22,6 +22,66 @@ class RapportController extends Controller
         return view('rapports.index', compact('chantiers', 'interventions'));
     }
     
+    /**
+     * Analyse les remarques d'une intervention pour générer des recommandations spécifiques
+     * 
+     * @param Intervention $intervention
+     * @return array
+     */
+    private function analyzerInterventionForRecommendations($intervention)
+    {
+        $recommendations = [];
+        
+        // Motifs à rechercher dans les remarques pour générer des recommandations spécifiques
+        $patterns = [
+            'perte_couleur_rouge' => [
+                'patterns' => ['/perte.*couleur rouge/i', '/perte.*rouge/i', '/led.*rouge.*morte/i', '/défaut.*rouge/i'],
+                'recommendation' => 'La perte de couleur rouge est souvent liée à une surchauffe des LED rouges, qui ont une durée de vie plus courte que les autres LED. Un suivi thermique régulier est recommandé.'
+            ],
+            'perte_couleur_verte' => [
+                'patterns' => ['/perte.*couleur verte/i', '/perte.*vert/i', '/led.*verte.*morte/i', '/défaut.*vert/i'],
+                'recommendation' => 'La perte de couleur verte peut indiquer un problème d\'alimentation électrique ou de tension instable. Un contrôle du système d\'alimentation est conseillé.'
+            ],
+            'ic_remplacement' => [
+                'patterns' => ['/remplacement.*ic/i', '/ic.*remplacé/i', '/changement.*ic/i'],
+                'recommendation' => 'Le remplacement fréquent des circuits intégrés suggère une possible surtension ou une instabilité électrique. Une vérification de l\'installation électrique pourrait être nécessaire.'
+            ],
+            'ligne_morte' => [
+                'patterns' => ['/ligne.*morte/i', '/ligne.*éteinte/i', '/rangée.*morte/i'],
+                'recommendation' => 'La présence de lignes mortes indique souvent un problème de connectique ou de circuit de commande. Une inspection périodique des connexions est recommandée pour éviter la propagation du problème.'
+            ],
+            'humidite' => [
+                'patterns' => ['/humid/i', '/infiltration/i', '/eau/i', '/humidité/i'],
+                'recommendation' => 'Des signes d\'humidité ont été détectés. Cela peut affecter sérieusement la durée de vie des composants. Une vérification de l\'étanchéité et une protection supplémentaire contre l\'humidité sont vivement conseillées.'
+            ]
+        ];
+        
+        $remarques = '';
+        
+        if ($intervention->diagnostic && $intervention->diagnostic->remarques) {
+            $remarques .= $intervention->diagnostic->remarques . ' ';
+        }
+        
+        if ($intervention->reparation && $intervention->reparation->remarques) {
+            $remarques .= $intervention->reparation->remarques . ' ';
+        }
+        
+        if ($intervention->reparation && $intervention->reparation->actions_effectuees) {
+            $remarques .= $intervention->reparation->actions_effectuees . ' ';
+        }
+        
+        foreach ($patterns as $key => $data) {
+            foreach ($data['patterns'] as $pattern) {
+                if (preg_match($pattern, $remarques)) {
+                    $recommendations[$key] = $data['recommendation'];
+                    break;
+                }
+            }
+        }
+        
+        return $recommendations;
+    }
+    
     public function genererRapportChantier(Chantier $chantier)
     {
         $chantier->load(['client', 'produits.dalles.modules.interventions.reparation', 'produits.dalles.modules.interventions.diagnostic']);
@@ -44,6 +104,9 @@ class RapportController extends Controller
             'autre' => 0,
         ];
         $composantsDefectueux = [];
+        
+        // Collecte des recommandations spécifiques
+        $specificRecommendations = [];
         
         foreach($chantier->produits as $produit) {
             foreach($produit->dalles as $dalle) {
@@ -70,6 +133,18 @@ class RapportController extends Controller
                                     $composantsDefectueux[$intervention->diagnostic->composant_defectueux] = 0;
                                 }
                                 $composantsDefectueux[$intervention->diagnostic->composant_defectueux]++;
+                            }
+                            
+                            // Analyse des remarques pour des recommandations spécifiques
+                            $recommendations = $this->analyzerInterventionForRecommendations($intervention);
+                            foreach ($recommendations as $key => $recommendation) {
+                                if (!isset($specificRecommendations[$key])) {
+                                    $specificRecommendations[$key] = [
+                                        'count' => 0,
+                                        'recommendation' => $recommendation
+                                    ];
+                                }
+                                $specificRecommendations[$key]['count']++;
                             }
                         }
                         
@@ -140,14 +215,15 @@ class RapportController extends Controller
             'totalInterventions',
             'causes',
             'composantsDefectueux',
+            'specificRecommendations',
             'dataEtatModules',
             'dataCauses',
             'dataComposants',
             'dataComposantsDefectueux'
         ));
         
-        // Définir le format paysage pour avoir plus d'espace pour les graphiques
-        $pdf->setPaper('a4', 'landscape');
+        // Définir le format portrait qui est plus adapté pour les listes et tableaux
+        $pdf->setPaper('a4', 'portrait');
         
         return $pdf->download('rapport-chantier-' . $chantier->reference . '.pdf');
     }
@@ -162,7 +238,10 @@ class RapportController extends Controller
         $secondes = $intervention->temps_total % 60;
         $tempsFormate = sprintf('%dh %02dm %02ds', $heures, $minutes, $secondes);
         
-        $pdf = PDF::loadView('rapports.intervention', compact('intervention', 'tempsFormate'));
+        // Analyse des remarques pour des recommandations spécifiques
+        $specificRecommendations = $this->analyzerInterventionForRecommendations($intervention);
+        
+        $pdf = PDF::loadView('rapports.intervention', compact('intervention', 'tempsFormate', 'specificRecommendations'));
         
         return $pdf->download('fiche-intervention-' . $intervention->id . '.pdf');
     }

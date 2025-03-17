@@ -30,12 +30,26 @@ class InterventionController extends Controller
     /**
      * Afficher la liste des interventions
      */
-    public function index()
+    public function index(Request $request)
     {
-        $interventions = $this->interventionRepository->getPaginated(20);
+        // Utiliser le repository existant mais lui passer les paramètres de filtrage
+        $filter = null;
+        if ($request->has('filter_status')) {
+            $filter = [
+                'status' => $request->input('filter_status')
+            ];
+        }
+        
+        // Obtenir les interventions paginées via le repository
+        $interventions = $this->interventionRepository->getPaginated(20, $filter);
         $stats = $this->interventionRepository->getStats();
         
-        return view('interventions.index', compact('interventions', 'stats'));
+        // Passer les filtres à la vue pour marquer les onglets actifs
+        $activeFilters = [
+            'status' => $request->input('filter_status'),
+        ];
+        
+        return view('interventions.index', compact('interventions', 'stats', 'activeFilters'));
     }
 
     /**
@@ -189,7 +203,11 @@ class InterventionController extends Controller
             // Log l'action
             \Illuminate\Support\Facades\Log::info('Intervention #' . $intervention->id . ' terminée par l\'utilisateur #' . Auth::id());
             
-            return redirect()->route('interventions.show', $intervention)
+            // Récupérer l'ID du chantier associé à cette intervention
+            $chantierId = $intervention->module->dalle->produit->chantier->id;
+            
+            // Rediriger vers la page du chantier
+            return redirect()->route('chantiers.show', $chantierId)
                 ->with('success', 'Intervention terminée avec succès.');
                 
         } catch (\Exception $e) {
@@ -656,6 +674,27 @@ class InterventionController extends Controller
         
         return redirect()->route('interventions.index')
             ->with('success', 'Intervention supprimée avec succès.');
+    }
+    
+    /**
+     * Annuler une intervention et libérer le module
+     */
+    public function cancel(Intervention $intervention)
+    {
+        try {
+            $result = $this->interventionService->cancelIntervention($intervention);
+            
+            if ($result) {
+                return redirect()->route('interventions.index')
+                    ->with('success', 'L\'intervention a été annulée et le module a été libéré.');
+            } else {
+                return redirect()->back()
+                    ->with('error', 'Erreur lors de l\'annulation de l\'intervention.');
+            }
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Erreur lors de l\'annulation de l\'intervention: ' . $e->getMessage());
+        }
     }
     
     /**

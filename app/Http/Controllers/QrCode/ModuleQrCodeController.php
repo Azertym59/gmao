@@ -93,4 +93,85 @@ class ModuleQrCodeController extends Controller
                 ->with('error', 'Erreur lors de l\'impression: ' . $e->getMessage());
         }
     }
+    
+    /**
+     * Print multiple QR code labels for modules in batch
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function printBatchLabels(Request $request)
+    {
+        try {
+            // Validate request
+            $validated = $request->validate([
+                'module_ids' => 'required|array',
+                'module_ids.*' => 'exists:modules,id',
+                'printer_id' => 'nullable|exists:printers,id',
+            ]);
+            
+            // Get printer
+            $printer = null;
+            
+            if ($request->has('printer_id')) {
+                $printer = Printer::findOrFail($request->printer_id);
+            } else {
+                $printer = Printer::where('is_default', true)->first();
+                
+                if (!$printer) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Aucune imprimante par défaut trouvée. Veuillez en configurer une.'
+                    ], 400);
+                }
+            }
+            
+            // Get modules
+            $modules = Module::with(['dalle', 'dalle.produit', 'dalle.produit.chantier'])
+                            ->whereIn('id', $validated['module_ids'])
+                            ->get();
+            
+            // Prepare batch print data
+            $batchPrintData = [];
+            $count = 0;
+            
+            foreach ($modules as $module) {
+                $url = route('qrcode.module.show', $module->id);
+                
+                $printData = $this->qzTrayService->prepareQrCodePrint(
+                    $printer->name,
+                    $url,
+                    ['size' => 300],
+                    [
+                        'copies' => 1,
+                        'size' => $printer->type === 'thermal' ? '57mm' : 'A4'
+                    ]
+                );
+                
+                $batchPrintData[] = [
+                    'module' => $module,
+                    'printData' => $printData
+                ];
+                
+                $count++;
+            }
+            
+            // Return view with batch labels and print script
+            return view('qrcodes.module.batch_labels', [
+                'batchPrintData' => $batchPrintData,
+                'modules' => $modules,
+                'printer' => $printer,
+                'count' => $count,
+                'qzTrayService' => $this->qzTrayService
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Module QR code batch print error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'impression en masse: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

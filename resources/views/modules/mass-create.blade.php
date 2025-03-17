@@ -197,6 +197,26 @@
                             </div>
                         </div>
                         
+                        <!-- Options d'impression des QR codes -->
+                        <div class="mb-6 p-4 border rounded-lg bg-blue-50">
+                            <h3 class="text-lg font-medium text-blue-800 mb-4">Options d'impression</h3>
+                            
+                            <div class="flex items-center mb-2">
+                                <input type="checkbox" id="print_qrcodes" name="print_qrcodes" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                <label for="print_qrcodes" class="ml-2 text-blue-800">Imprimer les QR codes après la création</label>
+                            </div>
+                            
+                            <p class="text-sm text-blue-700 mb-2">
+                                En cochant cette option, vous serez redirigé vers la page d'impression des QR codes après la création des modules. Vous pourrez y imprimer les QR codes pour les FlightCases, les Dalles et les Modules.
+                            </p>
+                            
+                            <div class="mt-2 bg-yellow-50 p-2 rounded border border-yellow-200">
+                                <p class="text-sm text-yellow-800">
+                                    <strong>Note:</strong> Assurez-vous que QZ Tray est installé et en cours d'exécution sur votre ordinateur, et qu'une imprimante est configurée comme imprimante par défaut.
+                                </p>
+                            </div>
+                        </div>
+                        
                         <div class="flex items-center justify-between mt-6">
                             <div>
                                 <div id="total_modules_message" class="font-medium text-lg text-blue-700">

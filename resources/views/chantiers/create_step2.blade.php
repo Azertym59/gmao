@@ -185,6 +185,12 @@
                                         <x-text-input id="buffer" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="buffer" :value="old('buffer')" />
                                         <x-input-error :messages="$errors->get('buffer')" class="mt-2" />
                                     </div>
+                                    
+                                    <div>
+                                        <x-input-label for="carte_reception" :value="__('Carte de Réception')" class="text-gray-300" />
+                                        <x-text-input id="carte_reception" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="text" name="carte_reception" :value="old('carte_reception')" placeholder="Modèle de carte de réception" />
+                                        <x-input-error :messages="$errors->get('carte_reception')" class="mt-2" />
+                                    </div>
                                 </div>
                             </div>
                             
@@ -551,6 +557,46 @@
                                 <x-input-label for="description" :value="__('Description')" class="text-gray-300" />
                                 <textarea id="description" name="description" rows="4" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">{{ old('description', $chantierData['description'] ?? '') }}</textarea>
                                 <x-input-error :messages="$errors->get('description')" class="mt-2" />
+                            </div>
+                            
+                            <!-- Section garantie -->
+                            <div class="md:col-span-2 p-4 border border-gray-700 rounded-xl bg-blue-900/10 mb-4">
+                                <h4 class="font-medium text-white mb-4 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                    Informations de garantie et provenance
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <div class="flex items-center mb-2">
+                                            <input id="is_client_achat" name="is_client_achat" type="checkbox" class="w-4 h-4 accent-blue-500 bg-gray-700 border-gray-600 rounded focus:ring-blue-600" {{ old('is_client_achat') ? 'checked' : '' }}>
+                                            <label for="is_client_achat" class="ml-2 text-sm text-gray-300">Le client a acheté le produit chez nous</label>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <input id="is_under_warranty" name="is_under_warranty" type="checkbox" class="w-4 h-4 accent-green-500 bg-gray-700 border-gray-600 rounded focus:ring-green-600" {{ old('is_under_warranty') ? 'checked' : '' }}>
+                                            <label for="is_under_warranty" class="ml-2 text-sm text-gray-300">Le produit est sous garantie</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="warranty_details" class="{{ old('is_under_warranty') ? '' : 'hidden' }}">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <x-input-label for="warranty_end_date" :value="__('Date de fin de garantie')" class="text-gray-300" />
+                                                <x-text-input id="warranty_end_date" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="date" name="warranty_end_date" :value="old('warranty_end_date')" />
+                                            </div>
+                                            <div>
+                                                <x-input-label for="warranty_type" :value="__('Type de garantie')" class="text-gray-300" />
+                                                <select id="warranty_type" name="warranty_type" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                    <option value="">Sélectionnez un type de garantie</option>
+                                                    <option value="standard" {{ old('warranty_type') == 'standard' ? 'selected' : '' }}>Standard (1 an)</option>
+                                                    <option value="premium" {{ old('warranty_type') == 'premium' ? 'selected' : '' }}>Premium (2 ans)</option>
+                                                    <option value="prolongee" {{ old('warranty_type') == 'prolongee' ? 'selected' : '' }}>Extension de garantie</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

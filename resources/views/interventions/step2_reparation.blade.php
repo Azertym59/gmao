@@ -84,6 +84,24 @@
                                 <p class="text-gray-300"><span class="font-semibold">Client:</span> {{ $module->dalle->produit->chantier->client->nom_complet }}</p>
                             </div>
                         </div>
+                        
+                        @if($module->dalle->produit->ledDatasheet)
+                        <div class="mt-4 pt-4 border-t border-indigo-500/30 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h4 class="font-medium text-indigo-300 mb-2">LED Datasheet</h4>
+                                <p class="text-gray-300"><span class="font-semibold">Type:</span> {{ $module->dalle->produit->ledDatasheet->type }} {{ $module->dalle->produit->ledDatasheet->reference }}</p>
+                                <p class="text-gray-300"><span class="font-semibold">Pôles:</span> {{ $module->dalle->produit->ledDatasheet->nb_poles }}</p>
+                                <p class="text-gray-300"><span class="font-semibold">Notes:</span> {{ $module->dalle->produit->ledDatasheet->notes }}</p>
+                            </div>
+                            @if($module->dalle->produit->ledDatasheet->image_data)
+                            <div class="flex justify-center">
+                                <div class="bg-white p-2 rounded">
+                                    <img src="{{ $module->dalle->produit->ledDatasheet->image_data }}" alt="LED Datasheet" class="h-60 w-auto">
+                                </div>
+                            </div>
+                            @endif
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Résumé du diagnostic -->
@@ -304,6 +322,25 @@
                 console.log('ICs remplacés:', nbIcRemplaces.value);
                 console.log('Masques remplacés:', nbMasquesRemplaces.value);
             });
+            
+            // Toggle datasheet
+            const toggleDatasheetBtn = document.getElementById('toggle-datasheet');
+            const datasheetContent = document.getElementById('datasheet-content');
+            
+            if (toggleDatasheetBtn && datasheetContent) {
+                toggleDatasheetBtn.addEventListener('click', function() {
+                    datasheetContent.classList.toggle('hidden');
+                    const isHidden = datasheetContent.classList.contains('hidden');
+                    
+                    toggleDatasheetBtn.innerHTML = isHidden 
+                        ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                           </svg> Afficher`
+                        : `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                           </svg> Masquer`;
+                });
+            }
         });
     </script>
 </x-app-layout>

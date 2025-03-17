@@ -12,34 +12,75 @@
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-semibold text-white">{{ $chantier->nom }}</h3>
                         <div class="flex space-x-2">
-                            <a href="{{ route('chantiers.edit', $chantier) }}" 
-                               class="btn-action btn-secondary flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                                {{ __('Modifier') }}
-                            </a>
-                            <a href="{{ route('chantiers.index') }}" 
-                               class="btn-action btn-primary flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                </svg>
-                                {{ __('Retour') }}
-                            </a>
+                            <x-edit-button :route="route('chantiers.edit', $chantier)" />
+                            <x-back-button :route="route('chantiers.index')" />
                         </div>
                     </div>
                     
                     <!-- Boutons d'envoi d'email -->
                     <div class="mt-4 mb-6 flex space-x-2 justify-end">
-                        <x-email-button :chantier="$chantier" type="created" class="bg-blue-600 hover:bg-blue-500 text-white">
+                        <x-email-button :chantier="$chantier" type="created" class="btn-glow">
                             Email création
                         </x-email-button>
-                        <x-email-button :chantier="$chantier" type="started" class="bg-yellow-600 hover:bg-yellow-500 text-white">
+                        <x-email-button :chantier="$chantier" type="started" class="pulse-primary">
                             Email interventions
                         </x-email-button>
-                        <x-email-button :chantier="$chantier" type="completed" class="bg-green-600 hover:bg-green-500 text-white">
+                        <x-email-button :chantier="$chantier" type="completed" class="btn-rainbow">
                             Email finalisation
                         </x-email-button>
+                        
+                        <div class="ml-2 flex space-x-1">
+                            <x-icon-button 
+                                tag="button" 
+                                type="info" 
+                                tooltip="Email création" 
+                                tooltipPosition="top"
+                                size="sm" 
+                                class="rotate-icon"
+                                onclick="document.getElementById('email-created-form').submit();">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </x-icon-button>
+                            <form id="email-created-form" action="{{ route('emails.chantier', $chantier) }}" method="POST" class="hidden">
+                                @csrf
+                                <input type="hidden" name="email_type" value="created">
+                            </form>
+                            
+                            <x-icon-button 
+                                tag="button" 
+                                type="warning" 
+                                tooltip="Email interventions" 
+                                tooltipPosition="top"
+                                size="sm" 
+                                class="rotate-icon"
+                                onclick="document.getElementById('email-started-form').submit();">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </x-icon-button>
+                            <form id="email-started-form" action="{{ route('emails.chantier', $chantier) }}" method="POST" class="hidden">
+                                @csrf
+                                <input type="hidden" name="email_type" value="started">
+                            </form>
+                            
+                            <x-icon-button 
+                                tag="button" 
+                                type="success" 
+                                tooltip="Email finalisation" 
+                                tooltipPosition="top"
+                                size="sm" 
+                                class="rotate-icon"
+                                onclick="document.getElementById('email-completed-form').submit();">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </x-icon-button>
+                            <form id="email-completed-form" action="{{ route('emails.chantier', $chantier) }}" method="POST" class="hidden">
+                                @csrf
+                                <input type="hidden" name="email_type" value="completed">
+                            </form>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -215,13 +256,9 @@
                                 <div class="glassmorphism p-4 rounded-xl border border-gray-700 mb-6">
                                     <div class="flex justify-between items-center mb-3">
                                         <h5 class="font-medium text-lg text-white">{{ $produit->marque }} {{ $produit->modele }}</h5>
-                                        <a href="{{ route('produits.show', $produit) }}" class="btn-action btn-primary flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
+                                        <x-view-button :route="route('produits.show', $produit)">
                                             Détails
-                                        </a>
+                                        </x-view-button>
                                     </div>
                                     
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4 text-sm text-gray-300">
@@ -238,168 +275,587 @@
                                         <div><span class="font-medium">Dalles:</span> {{ $produit->dalles->count() }}</div>
                                     </div>
                                     
-                                    <!-- Liste des dalles avec progrès -->
+                                    <!-- Liste des dalles avec modules -->
                                     @if($produit->dalles->count() > 0)
-                                        <h6 class="font-medium text-gray-300 mb-2">Dalles</h6>
-                                        <div class="overflow-x-auto rounded-lg shadow-lg">
-                                            <table class="min-w-full table-styled">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col" class="py-3 px-4 text-left">Dalle</th>
-                                                        <th scope="col" class="px-3 py-3 text-left">Dimensions</th>
-                                                        <th scope="col" class="px-3 py-3 text-left">Modules</th>
-                                                        <th scope="col" class="px-3 py-3 text-left">Progrès</th>
-                                                        <th scope="col" class="relative py-3 pl-3 pr-4">
-                                                            <span class="sr-only">Actions</span>
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                @foreach($produit->dalles as $dalle)
-                                                    <tr>
-                                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium">
-                                                            Dalle #{{ $dalle->id }}
-                                                            @if($dalle->reference_dalle)
-                                                                <span class="text-gray-400 text-xs block">{{ $dalle->reference_dalle }}</span>
-                                                            @endif
-                                                        </td>
-                                                        <td class="whitespace-nowrap px-3 py-4 text-sm">
-                                                            {{ $dalle->largeur }} × {{ $dalle->hauteur }} mm
-                                                        </td>
-                                                        <td class="whitespace-nowrap px-3 py-4 text-sm">
-                                                            <div class="flex space-x-1">
-                                                                <span class="badge badge-success">
-                                                                    {{ $dalle->modules->where('etat', 'termine')->count() }} terminés
+                                        <h6 class="font-medium text-gray-300 mb-2">Dalles et modules</h6>
+                                        
+                                        @php
+                                            // Organiser les dalles par flightcase et modules individuels
+                                            $dallesGrouped = [
+                                                'individuel' => [],
+                                                'flightcases' => []
+                                            ];
+                                            
+                                            foreach($produit->dalles as $dalle) {
+                                                if($dalle->reference_dalle == "INDIVIDUEL") {
+                                                    $dallesGrouped['individuel'][] = $dalle;
+                                                } elseif(preg_match('/^FC(\d+)-D\d+$/', $dalle->reference_dalle, $matches)) {
+                                                    $fcNumber = $matches[1];
+                                                    if(!isset($dallesGrouped['flightcases'][$fcNumber])) {
+                                                        $dallesGrouped['flightcases'][$fcNumber] = [];
+                                                    }
+                                                    $dallesGrouped['flightcases'][$fcNumber][] = $dalle;
+                                                } else {
+                                                    // Si aucun format reconnu, traiter comme une dalle indépendante
+                                                    if(!isset($dallesGrouped['autres'])) {
+                                                        $dallesGrouped['autres'] = [];
+                                                    }
+                                                    $dallesGrouped['autres'][] = $dalle;
+                                                }
+                                            }
+                                            
+                                            // Trier les flightcases par numéro
+                                            ksort($dallesGrouped['flightcases']);
+                                        @endphp
+                                        
+                                        <!-- Modules individuels -->
+                                        @if(!empty($dallesGrouped['individuel']))
+                                            <div class="glassmorphism border border-gray-700 rounded-xl p-4 mb-6">
+                                                <div class="flex justify-between items-center mb-3">
+                                                    <h6 class="font-medium text-white flex items-center">
+                                                        <span class="text-amber-400">Modules individuels</span>
+                                                        
+                                                        @foreach($dallesGrouped['individuel'] as $dalle)
+                                                        <!-- Affichage du numéro de dalle ou formulaire de saisie rapide -->
+                                                        <span class="ml-2" x-data="{ 
+                                                            isEditing: false,
+                                                            numeroValue: '{{ $dalle->numero_dalle }}',
+                                                            initialValue: '{{ $dalle->numero_dalle }}',
+                                                            toggleEdit() { this.isEditing = !this.isEditing; },
+                                                            save() {
+                                                                if (this.numeroValue.trim() === this.initialValue) {
+                                                                    this.isEditing = false;
+                                                                    return;
+                                                                }
+                                                                
+                                                                fetch('{{ route('dalles.update.numero', $dalle->id) }}', {
+                                                                    method: 'POST',
+                                                                    headers: {
+                                                                        'Content-Type': 'application/json',
+                                                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                                                    },
+                                                                    body: JSON.stringify({ numero_dalle: this.numeroValue })
+                                                                })
+                                                                .then(response => response.json())
+                                                                .then(data => {
+                                                                    if (data.success) {
+                                                                        this.isEditing = false;
+                                                                        this.initialValue = this.numeroValue;
+                                                                    }
+                                                                });
+                                                            },
+                                                            cancel() {
+                                                                this.numeroValue = this.initialValue;
+                                                                this.isEditing = false;
+                                                            }
+                                                        }">
+                                                            <!-- Affichage si on a déjà un numéro -->
+                                                            <template x-if="!isEditing && initialValue">
+                                                                <span @click="toggleEdit()" class="cursor-pointer group">
+                                                                    <span class="text-xs text-accent-blue">[N° <span x-text="initialValue"></span>]</span>
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline ml-1 text-gray-400 group-hover:text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                                    </svg>
                                                                 </span>
-                                                                @if($dalle->modules->where('etat', 'en_cours')->count() > 0)
-                                                                    <span class="badge badge-warning">
-                                                                        {{ $dalle->modules->where('etat', 'en_cours')->count() }} en cours
-                                                                    </span>
-                                                                @endif
-                                                                @if($dalle->modules->where('etat', 'defaillant')->count() > 0)
-                                                                    <span class="badge badge-danger">
-                                                                        {{ $dalle->modules->where('etat', 'defaillant')->count() }} défaillants
-                                                                    </span>
-                                                                @endif
+                                                            </template>
+                                                            
+                                                            <!-- Bouton pour ajouter un numéro si on n'en a pas -->
+                                                            <template x-if="!isEditing && !initialValue">
+                                                                <button @click="toggleEdit()" class="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded flex items-center shadow-md transition-all duration-150 transform hover:scale-105 border border-purple-500">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                                    </svg>
+                                                                    N° dalle
+                                                                </button>
+                                                            </template>
+                                                            
+                                                            <!-- Formulaire de saisie -->
+                                                            <template x-if="isEditing">
+                                                                <span class="flex items-center">
+                                                                    <input 
+                                                                        type="text" 
+                                                                        x-model="numeroValue" 
+                                                                        class="text-xs px-1 py-0.5 w-28 bg-gray-700 border border-accent-blue rounded" 
+                                                                        placeholder="N° dalle"
+                                                                        @keydown.enter="save()"
+                                                                        @keydown.escape="cancel()"
+                                                                    />
+                                                                    <button @click="save()" class="ml-1 text-accent-green">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                                        </svg>
+                                                                    </button>
+                                                                    <button @click="cancel()" class="ml-1 text-accent-red">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                                        </svg>
+                                                                    </button>
+                                                                </span>
+                                                            </template>
+                                                        </span>
+                                                        @endforeach
+                                                    </h6>
+                                                    <div class="flex space-x-4 items-center">
+                                                        @foreach($dallesGrouped['individuel'] as $dalle)
+                                                            <div class="text-sm text-gray-300">
+                                                                <span class="mr-2">Progrès:</span>
+                                                                <span class="badge badge-success">
+                                                                    {{ $dalle->modules->where('etat', 'termine')->count() }}/{{ $dalle->modules->count() }}
+                                                                </span>
                                                             </div>
-                                                        </td>
-                                                        <td class="whitespace-nowrap px-3 py-4 text-sm">
-                                                            <div class="w-32">
-                                                                <div class="flex justify-between text-xs mb-1">
+                                                            <a href="{{ route('dalles.show', $dalle) }}" class="text-xs text-accent-blue hover:text-blue-400">Détails</a>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                                
+                                                @foreach($dallesGrouped['individuel'] as $dalle)
+                                                    <div class="flex flex-wrap gap-2 justify-center mt-3">
+                                                        @foreach($dalle->modules as $module)
+                                                            <a href="{{ route('modules.show', $module) }}" 
+                                                               class="relative group">
+                                                                <div class="aspect-square w-10 h-10 
+                                                                    @if($module->etat == 'termine') bg-accent-green
+                                                                    @elseif($module->etat == 'en_cours') bg-accent-yellow
+                                                                    @elseif($module->etat == 'defaillant') bg-accent-red
+                                                                    @else bg-gray-600
+                                                                    @endif
+                                                                    rounded-sm border border-black/10 hover:brightness-110 transition-all hover:shadow-lg duration-150 transform hover:scale-105"
+                                                                    title="Module #{{ $module->id }} - {{ ucfirst($module->etat) }}"
+                                                                >
+                                                                    <div class="flex items-center justify-center h-full text-xs font-medium text-white/90">
+                                                                        {{ preg_replace('/[^0-9]/', '', $module->reference_module) }}
+                                                                    </div>
+                                                                </div>
+                                                                <div class="hidden group-hover:block absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
+                                                                    Module #{{ $module->id }}
+                                                                </div>
+                                                            </a>
+                                                        @endforeach
+                                                    </div>
+                                                    <div class="w-full mt-3">
+                                                        <div class="flex justify-between text-xs mb-1 text-gray-300">
+                                                            <span>{{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%</span>
+                                                            <span>{{ $dalle->modules->where('etat', 'termine')->count() }}/{{ $dalle->modules->count() }} modules</span>
+                                                        </div>
+                                                        <div class="h-2 w-full bg-gray-700 rounded-full overflow-hidden">
+                                                            <div class="h-full bg-accent-green rounded-full" style="width: {{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%"></div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        
+                                        <!-- FlightCases -->
+                                        @foreach($dallesGrouped['flightcases'] as $fcNumber => $dalles)
+                                            <div class="mb-6">
+                                                <div class="flex items-center bg-gray-800/50 p-2 rounded-t-xl border-t border-l border-r border-gray-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" />
+                                                    </svg>
+                                                    <h6 class="font-medium text-white">Flight Case #{{ $fcNumber }} - {{ count($dalles) }} dalles</h6>
+                                                </div>
+                                                
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-900/30 rounded-b-xl border-b border-l border-r border-gray-700">
+                                                    @foreach($dalles as $dalle)
+                                                        <div class="glassmorphism border border-gray-700 rounded-xl p-4">
+                                                            <div class="flex justify-between items-center mb-3">
+                                                                <h6 class="font-medium text-white flex items-center flex-wrap">
+                                                                    {{ $dalle->reference_dalle }} 
+                                                                    <span class="text-xs text-gray-400 ml-1">({{ $dalle->largeur }}×{{ $dalle->hauteur }} mm)</span>
+                                                                    
+                                                                    <!-- Affichage du numéro de dalle ou formulaire de saisie rapide -->
+                                                                    <span class="ml-2" x-data="{ 
+                                                                        isEditing: false,
+                                                                        numeroValue: '{{ $dalle->numero_dalle }}',
+                                                                        initialValue: '{{ $dalle->numero_dalle }}',
+                                                                        toggleEdit() { this.isEditing = !this.isEditing; },
+                                                                        save() {
+                                                                            if (this.numeroValue.trim() === this.initialValue) {
+                                                                                this.isEditing = false;
+                                                                                return;
+                                                                            }
+                                                                            
+                                                                            fetch('{{ route('dalles.update.numero', $dalle->id) }}', {
+                                                                                method: 'POST',
+                                                                                headers: {
+                                                                                    'Content-Type': 'application/json',
+                                                                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                                                                },
+                                                                                body: JSON.stringify({ numero_dalle: this.numeroValue })
+                                                                            })
+                                                                            .then(response => response.json())
+                                                                            .then(data => {
+                                                                                if (data.success) {
+                                                                                    this.isEditing = false;
+                                                                                    this.initialValue = this.numeroValue;
+                                                                                }
+                                                                            });
+                                                                        },
+                                                                        cancel() {
+                                                                            this.numeroValue = this.initialValue;
+                                                                            this.isEditing = false;
+                                                                        }
+                                                                    }">
+                                                                        <!-- Affichage si on a déjà un numéro -->
+                                                                        <template x-if="!isEditing && initialValue">
+                                                                            <span @click="toggleEdit()" class="cursor-pointer group">
+                                                                                <span class="text-xs text-accent-blue">[N° <span x-text="initialValue"></span>]</span>
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline ml-1 text-gray-400 group-hover:text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                                                </svg>
+                                                                            </span>
+                                                                        </template>
+                                                                        
+                                                                        <!-- Bouton pour ajouter un numéro si on n'en a pas -->
+                                                                        <template x-if="!isEditing && !initialValue">
+                                                                            <button @click="toggleEdit()" class="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded flex items-center shadow-md transition-all duration-150 transform hover:scale-105 border border-purple-500">
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                                                </svg>
+                                                                                N° dalle
+                                                                            </button>
+                                                                        </template>
+                                                                        
+                                                                        <!-- Formulaire de saisie -->
+                                                                        <template x-if="isEditing">
+                                                                            <span class="flex items-center">
+                                                                                <input 
+                                                                                    type="text" 
+                                                                                    x-model="numeroValue" 
+                                                                                    class="text-xs px-1 py-0.5 w-28 bg-gray-700 border border-accent-blue rounded" 
+                                                                                    placeholder="N° dalle"
+                                                                                    @keydown.enter="save()"
+                                                                                    @keydown.escape="cancel()"
+                                                                                />
+                                                                                <button @click="save()" class="ml-1 text-accent-green">
+                                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                                                    </svg>
+                                                                                </button>
+                                                                                <button @click="cancel()" class="ml-1 text-accent-red">
+                                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                                                    </svg>
+                                                                                </button>
+                                                                            </span>
+                                                                        </template>
+                                                                    </span>
+                                                                </h6>
+                                                                <div class="flex space-x-3 items-center">
+                                                                    <div class="text-xs">
+                                                                        <span class="badge badge-success">
+                                                                            {{ $dalle->modules->where('etat', 'termine')->count() }}/{{ $dalle->modules->count() }}
+                                                                        </span>
+                                                                    </div>
+                                                                    <a href="{{ route('dalles.show', $dalle) }}" class="text-xs text-accent-blue hover:text-blue-400">Détails</a>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            @php
+                                                                // Extraire les dimensions depuis disposition_modules
+                                                                $nbColonnes = 2; // Par défaut 2x2
+                                                                $nbLignes = 2;
+                                                                
+                                                                // Récupérer disposition_modules depuis l'objet dalle ou la session
+                                                                $disposition = $dalle->disposition_modules ?? session('disposition_modules_dalle_' . $dalle->id);
+                                                                
+                                                                // Si disposition_modules est définie et au format AxB
+                                                                if (!empty($disposition) && strpos($disposition, 'x') !== false) {
+                                                                    $parts = explode('x', $disposition);
+                                                                    if (count($parts) == 2) {
+                                                                        $nbColonnes = (int)$parts[0];
+                                                                        $nbLignes = (int)$parts[1];
+                                                                    }
+                                                                } else {
+                                                                    // Essayer de calculer la disposition en fonction du nombre de modules
+                                                                    $nbModules = $dalle->modules->count();
+                                                                    if ($nbModules == 4) {
+                                                                        $nbColonnes = 2;
+                                                                        $nbLignes = 2;
+                                                                    } elseif ($nbModules == 6) {
+                                                                        $nbColonnes = 3;
+                                                                        $nbLignes = 2;
+                                                                    } elseif ($nbModules == 9) {
+                                                                        $nbColonnes = 3;
+                                                                        $nbLignes = 3;
+                                                                    }
+                                                                }
+                                                                
+                                                                // Créer une grille pour les modules
+                                                                $modules = $dalle->modules->all();
+                                                                $grille = [];
+                                                                
+                                                                // Remplir la grille dans l'ordre ligne par ligne
+                                                                $moduleIndex = 0;
+                                                                for ($y = 1; $y <= $nbLignes; $y++) {
+                                                                    for ($x = 1; $x <= $nbColonnes; $x++) {
+                                                                        if ($moduleIndex < count($modules)) {
+                                                                            $grille[$y][$x] = $modules[$moduleIndex];
+                                                                            $moduleIndex++;
+                                                                        } else {
+                                                                            $grille[$y][$x] = null;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            @endphp
+                                                            
+                                                            <div class="flex justify-center">
+                                                                <div class="grid max-w-xs mx-auto" style="grid-template-columns: repeat({{ $nbColonnes }}, minmax(0, 1fr)); gap: 0.25rem;">
+                                                                    @for ($y = 1; $y <= $nbLignes; $y++)
+                                                                        @for ($x = 1; $x <= $nbColonnes; $x++)
+                                                                            @if (isset($grille[$y][$x]))
+                                                                                @php $module = $grille[$y][$x]; @endphp
+                                                                                <a href="{{ route('modules.show', $module) }}" 
+                                                                                   class="relative group">
+                                                                                    <div class="aspect-square w-10 h-10 
+                                                                                        @if($module->etat == 'termine') bg-accent-green
+                                                                                        @elseif($module->etat == 'en_cours') bg-accent-yellow
+                                                                                        @elseif($module->etat == 'defaillant') bg-accent-red
+                                                                                        @else bg-gray-600
+                                                                                        @endif
+                                                                                        rounded-sm border border-black/10 hover:brightness-110 transition-all hover:shadow-lg duration-150 transform hover:scale-105"
+                                                                                        title="Module #{{ $module->id }} - {{ ucfirst($module->etat) }}"
+                                                                                    >
+                                                                                        <div class="flex items-center justify-center h-full text-xs font-medium text-white/90">
+                                                                                            {{ $x }},{{ $y }}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div class="hidden group-hover:block absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
+                                                                                        Module #{{ $module->id }}
+                                                                                    </div>
+                                                                                </a>
+                                                                            @else
+                                                                                <div class="aspect-square w-10 h-10 bg-gray-800/50 rounded-sm border border-gray-700" title="Emplacement vide">
+                                                                                    <div class="flex items-center justify-center h-full text-xs text-gray-600">
+                                                                                        {{ $x }},{{ $y }}
+                                                                                    </div>
+                                                                                </div>
+                                                                            @endif
+                                                                        @endfor
+                                                                    @endfor
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div class="w-full mt-3">
+                                                                <div class="flex justify-between text-xs mb-1 text-gray-300">
                                                                     <span>{{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%</span>
-                                                                    <span>{{ $dalle->modules->where('etat', 'termine')->count() }}/{{ $dalle->modules->count() }}</span>
+                                                                    <span>{{ $dalle->modules->where('etat', 'termine')->count() }}/{{ $dalle->modules->count() }} modules</span>
                                                                 </div>
                                                                 <div class="h-2 w-full bg-gray-700 rounded-full overflow-hidden">
                                                                     <div class="h-full bg-accent-green rounded-full" style="width: {{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%"></div>
                                                                 </div>
                                                             </div>
-                                                        </td>
-                                                        <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium">
-                                                            <a href="{{ route('dalles.show', $dalle) }}" class="text-accent-blue hover:text-blue-500">
-                                                                Voir détails
-                                                            </a>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        
-                                        <!-- Aperçu visuel des modules -->
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                                            @foreach($produit->dalles as $dalle)
-                                                <div class="glassmorphism border border-gray-700 rounded-xl p-4">
-                                                    <div class="flex justify-between items-center mb-3">
-                                                        <h6 class="font-medium text-white">Dalle #{{ $dalle->id }} - Aperçu des modules</h6>
-                                                        <a href="{{ route('dalles.show', $dalle) }}" class="text-xs text-accent-blue hover:text-blue-400">Détails</a>
-                                                    </div>
-                                                    @php
-                                                        // Extraire les dimensions depuis disposition_modules
-                                                        $nbColonnes = 2; // Par défaut 2x2
-                                                        $nbLignes = 2;
-                                                        
-                                                        // Récupérer disposition_modules depuis l'objet dalle ou la session
-                                                        $disposition = $dalle->disposition_modules ?? session('disposition_modules_dalle_' . $dalle->id);
-                                                        
-                                                        // Si disposition_modules est définie et au format AxB
-                                                        if (!empty($disposition) && strpos($disposition, 'x') !== false) {
-                                                            $parts = explode('x', $disposition);
-                                                            if (count($parts) == 2) {
-                                                                $nbColonnes = (int)$parts[0];
-                                                                $nbLignes = (int)$parts[1];
-                                                            }
-                                                        } else {
-                                                            // Essayer de calculer la disposition en fonction du nombre de modules
-                                                            $nbModules = $dalle->modules->count();
-                                                            if ($nbModules == 4) {
-                                                                $nbColonnes = 2;
-                                                                $nbLignes = 2;
-                                                            } elseif ($nbModules == 6) {
-                                                                $nbColonnes = 3;
-                                                                $nbLignes = 2;
-                                                            } elseif ($nbModules == 9) {
-                                                                $nbColonnes = 3;
-                                                                $nbLignes = 3;
-                                                            }
-                                                        }
-                                                        
-                                                        // Créer une grille pour les modules
-                                                        $modules = $dalle->modules->all();
-                                                        $grille = [];
-                                                        
-                                                        // Remplir la grille dans l'ordre ligne par ligne
-                                                        $moduleIndex = 0;
-                                                        for ($y = 1; $y <= $nbLignes; $y++) {
-                                                            for ($x = 1; $x <= $nbColonnes; $x++) {
-                                                                if ($moduleIndex < count($modules)) {
-                                                                    $grille[$y][$x] = $modules[$moduleIndex];
-                                                                    $moduleIndex++;
-                                                                } else {
-                                                                    $grille[$y][$x] = null;
-                                                                }
-                                                            }
-                                                        }
-                                                    @endphp
-                                                    
-                                                    <div class="mb-2 text-sm text-gray-400">
-                                                        Disposition: {{ $nbColonnes }}x{{ $nbLignes }} ({{ $dalle->modules->count() }} modules)
-                                                    </div>
-                                                    
-                                                    <div class="flex justify-center">
-                                                        <div class="grid max-w-xs mx-auto" style="grid-template-columns: repeat({{ $nbColonnes }}, minmax(0, 1fr)); gap: 0.15rem;">
-                                                            @for ($y = 1; $y <= $nbLignes; $y++)
-                                                                @for ($x = 1; $x <= $nbColonnes; $x++)
-                                                                    @if (isset($grille[$y][$x]))
-                                                                        @php $module = $grille[$y][$x]; @endphp
-                                                                        <a href="{{ route('modules.show', $module) }}" class="block">
-                                                                            <div class="aspect-square w-8 h-8 
-                                                                                @if($module->etat == 'termine') bg-accent-green
-                                                                                @elseif($module->etat == 'en_cours') bg-accent-yellow
-                                                                                @elseif($module->etat == 'defaillant') bg-accent-red
-                                                                                @else bg-gray-600
-                                                                                @endif
-                                                                                rounded-sm border border-black/10 hover:brightness-110 transition-all hover:shadow-lg duration-150 transform hover:scale-105"
-                                                                                title="Module #{{ $module->id }} - {{ ucfirst($module->etat) }}"
-                                                                            >
-                                                                                <div class="flex items-center justify-center h-full text-xs font-medium text-white/90" style="font-size: 0.65rem;">
-                                                                                    {{ $x }},{{ $y }}
-                                                                                </div>
-                                                                            </div>
-                                                                        </a>
-                                                                    @else
-                                                                        <div class="aspect-square w-8 h-8 bg-gray-800/50 rounded-sm border border-gray-700" title="Emplacement vide">
-                                                                            <div class="flex items-center justify-center h-full text-xs text-gray-600" style="font-size: 0.65rem;">
-                                                                                {{ $x }},{{ $y }}
-                                                                            </div>
-                                                                        </div>
-                                                                    @endif
-                                                                @endfor
-                                                            @endfor
                                                         </div>
-                                                    </div>
+                                                    @endforeach
                                                 </div>
-                                            @endforeach
-                                        </div>
+                                            </div>
+                                        @endforeach
+                                        
+                                        <!-- Autres dalles -->
+                                        @if(!empty($dallesGrouped['autres']))
+                                            <div class="mb-6">
+                                                <div class="flex items-center bg-gray-800/50 p-2 rounded-t-xl border-t border-l border-r border-gray-700">
+                                                    <h6 class="font-medium text-white">Dalles indépendantes ({{ count($dallesGrouped['autres']) }})</h6>
+                                                </div>
+                                                
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-900/30 rounded-b-xl border-b border-l border-r border-gray-700">
+                                                    @foreach($dallesGrouped['autres'] as $dalle)
+                                                        <div class="glassmorphism border border-gray-700 rounded-xl p-4">
+                                                            <div class="flex justify-between items-center mb-3">
+                                                                <h6 class="font-medium text-white flex items-center flex-wrap">
+                                                                    Dalle #{{ $dalle->id }} 
+                                                                    @if($dalle->reference_dalle)
+                                                                        <span class="text-gray-400 ml-1">({{ $dalle->reference_dalle }})</span>
+                                                                    @endif
+                                                                    <span class="text-xs text-gray-400 ml-1">({{ $dalle->largeur }}×{{ $dalle->hauteur }} mm)</span>
+                                                                    
+                                                                    <!-- Affichage du numéro de dalle ou formulaire de saisie rapide -->
+                                                                    <span class="ml-2" x-data="{ 
+                                                                        isEditing: false,
+                                                                        numeroValue: '{{ $dalle->numero_dalle }}',
+                                                                        initialValue: '{{ $dalle->numero_dalle }}',
+                                                                        toggleEdit() { this.isEditing = !this.isEditing; },
+                                                                        save() {
+                                                                            if (this.numeroValue.trim() === this.initialValue) {
+                                                                                this.isEditing = false;
+                                                                                return;
+                                                                            }
+                                                                            
+                                                                            fetch('{{ route('dalles.update.numero', $dalle->id) }}', {
+                                                                                method: 'POST',
+                                                                                headers: {
+                                                                                    'Content-Type': 'application/json',
+                                                                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                                                                },
+                                                                                body: JSON.stringify({ numero_dalle: this.numeroValue })
+                                                                            })
+                                                                            .then(response => response.json())
+                                                                            .then(data => {
+                                                                                if (data.success) {
+                                                                                    this.isEditing = false;
+                                                                                    this.initialValue = this.numeroValue;
+                                                                                }
+                                                                            });
+                                                                        },
+                                                                        cancel() {
+                                                                            this.numeroValue = this.initialValue;
+                                                                            this.isEditing = false;
+                                                                        }
+                                                                    }">
+                                                                        <!-- Affichage si on a déjà un numéro -->
+                                                                        <template x-if="!isEditing && initialValue">
+                                                                            <span @click="toggleEdit()" class="cursor-pointer group">
+                                                                                <span class="text-xs text-accent-blue">[N° <span x-text="initialValue"></span>]</span>
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline ml-1 text-gray-400 group-hover:text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                                                </svg>
+                                                                            </span>
+                                                                        </template>
+                                                                        
+                                                                        <!-- Bouton pour ajouter un numéro si on n'en a pas -->
+                                                                        <template x-if="!isEditing && !initialValue">
+                                                                            <button @click="toggleEdit()" class="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded flex items-center shadow-md transition-all duration-150 transform hover:scale-105 border border-purple-500">
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                                                </svg>
+                                                                                N° dalle
+                                                                            </button>
+                                                                        </template>
+                                                                        
+                                                                        <!-- Formulaire de saisie -->
+                                                                        <template x-if="isEditing">
+                                                                            <span class="flex items-center">
+                                                                                <input 
+                                                                                    type="text" 
+                                                                                    x-model="numeroValue" 
+                                                                                    class="text-xs px-1 py-0.5 w-28 bg-gray-700 border border-accent-blue rounded" 
+                                                                                    placeholder="N° dalle"
+                                                                                    @keydown.enter="save()"
+                                                                                    @keydown.escape="cancel()"
+                                                                                />
+                                                                                <button @click="save()" class="ml-1 text-accent-green">
+                                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                                                    </svg>
+                                                                                </button>
+                                                                                <button @click="cancel()" class="ml-1 text-accent-red">
+                                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                                                    </svg>
+                                                                                </button>
+                                                                            </span>
+                                                                        </template>
+                                                                    </span>
+                                                                </h6>
+                                                                <div class="flex space-x-3 items-center">
+                                                                    <div class="text-xs">
+                                                                        <span class="badge badge-success">
+                                                                            {{ $dalle->modules->where('etat', 'termine')->count() }}/{{ $dalle->modules->count() }}
+                                                                        </span>
+                                                                    </div>
+                                                                    <a href="{{ route('dalles.show', $dalle) }}" class="text-xs text-accent-blue hover:text-blue-400">Détails</a>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            @php
+                                                                // Extraire les dimensions depuis disposition_modules
+                                                                $nbColonnes = 2; // Par défaut 2x2
+                                                                $nbLignes = 2;
+                                                                
+                                                                // Récupérer disposition_modules depuis l'objet dalle ou la session
+                                                                $disposition = $dalle->disposition_modules ?? session('disposition_modules_dalle_' . $dalle->id);
+                                                                
+                                                                // Si disposition_modules est définie et au format AxB
+                                                                if (!empty($disposition) && strpos($disposition, 'x') !== false) {
+                                                                    $parts = explode('x', $disposition);
+                                                                    if (count($parts) == 2) {
+                                                                        $nbColonnes = (int)$parts[0];
+                                                                        $nbLignes = (int)$parts[1];
+                                                                    }
+                                                                } else {
+                                                                    // Essayer de calculer la disposition en fonction du nombre de modules
+                                                                    $nbModules = $dalle->modules->count();
+                                                                    if ($nbModules == 4) {
+                                                                        $nbColonnes = 2;
+                                                                        $nbLignes = 2;
+                                                                    } elseif ($nbModules == 6) {
+                                                                        $nbColonnes = 3;
+                                                                        $nbLignes = 2;
+                                                                    } elseif ($nbModules == 9) {
+                                                                        $nbColonnes = 3;
+                                                                        $nbLignes = 3;
+                                                                    }
+                                                                }
+                                                                
+                                                                // Créer une grille pour les modules
+                                                                $modules = $dalle->modules->all();
+                                                                $grille = [];
+                                                                
+                                                                // Remplir la grille dans l'ordre ligne par ligne
+                                                                $moduleIndex = 0;
+                                                                for ($y = 1; $y <= $nbLignes; $y++) {
+                                                                    for ($x = 1; $x <= $nbColonnes; $x++) {
+                                                                        if ($moduleIndex < count($modules)) {
+                                                                            $grille[$y][$x] = $modules[$moduleIndex];
+                                                                            $moduleIndex++;
+                                                                        } else {
+                                                                            $grille[$y][$x] = null;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            @endphp
+                                                            
+                                                            <div class="flex justify-center">
+                                                                <div class="grid max-w-xs mx-auto" style="grid-template-columns: repeat({{ $nbColonnes }}, minmax(0, 1fr)); gap: 0.25rem;">
+                                                                    @for ($y = 1; $y <= $nbLignes; $y++)
+                                                                        @for ($x = 1; $x <= $nbColonnes; $x++)
+                                                                            @if (isset($grille[$y][$x]))
+                                                                                @php $module = $grille[$y][$x]; @endphp
+                                                                                <a href="{{ route('modules.show', $module) }}" 
+                                                                                   class="relative group">
+                                                                                    <div class="aspect-square w-10 h-10 
+                                                                                        @if($module->etat == 'termine') bg-accent-green
+                                                                                        @elseif($module->etat == 'en_cours') bg-accent-yellow
+                                                                                        @elseif($module->etat == 'defaillant') bg-accent-red
+                                                                                        @else bg-gray-600
+                                                                                        @endif
+                                                                                        rounded-sm border border-black/10 hover:brightness-110 transition-all hover:shadow-lg duration-150 transform hover:scale-105"
+                                                                                        title="Module #{{ $module->id }} - {{ ucfirst($module->etat) }}"
+                                                                                    >
+                                                                                        <div class="flex items-center justify-center h-full text-xs font-medium text-white/90">
+                                                                                            {{ $x }},{{ $y }}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div class="hidden group-hover:block absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
+                                                                                        Module #{{ $module->id }}
+                                                                                    </div>
+                                                                                </a>
+                                                                            @else
+                                                                                <div class="aspect-square w-10 h-10 bg-gray-800/50 rounded-sm border border-gray-700" title="Emplacement vide">
+                                                                                    <div class="flex items-center justify-center h-full text-xs text-gray-600">
+                                                                                        {{ $x }},{{ $y }}
+                                                                                    </div>
+                                                                                </div>
+                                                                            @endif
+                                                                        @endfor
+                                                                    @endfor
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div class="w-full mt-3">
+                                                                <div class="flex justify-between text-xs mb-1 text-gray-300">
+                                                                    <span>{{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%</span>
+                                                                    <span>{{ $dalle->modules->where('etat', 'termine')->count() }}/{{ $dalle->modules->count() }} modules</span>
+                                                                </div>
+                                                                <div class="h-2 w-full bg-gray-700 rounded-full overflow-hidden">
+                                                                    <div class="h-full bg-accent-green rounded-full" style="width: {{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
                                     @else
                                         <div class="p-4 rounded-xl text-center text-gray-400 bg-gray-800/30">
                                             Ce produit n'a pas encore de dalles.
@@ -419,15 +875,27 @@
                             </div>
                         @endif
                     </div>
-                    <!-- Ajoutez le bouton ICI -->
+                    <!-- Bouton QR Code -->
                     <div class="text-center mt-6">
-                        <a href="{{ route('qrcode.chantier.print', $chantier->id) }}" 
-                        class="btn-action btn-primary inline-flex items-center">
+                        <x-primary-button tag="a" href="{{ route('qrcode.chantier.print', $chantier->id) }}" class="flex items-center btn-3d">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4M4 8h16V5a1 1 0 00-1-1H5a1 1 0 00-1 1v3zm16 4v7a1 1 0 01-1 1H5a1 1 0 01-1-1v-7" />
                             </svg>
                             Générer QR Code
-                        </a>
+                        </x-primary-button>
+                        
+                        <x-icon-button 
+                            tag="a" 
+                            href="{{ route('qrcode.chantier.print', $chantier->id) }}"
+                            type="primary" 
+                            tooltip="Générer QR Code" 
+                            tooltipPosition="top"
+                            size="lg"
+                            class="ml-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4M4 8h16V5a1 1 0 00-1-1H5a1 1 0 00-1 1v3zm16 4v7a1 1 0 01-1 1H5a1 1 0 01-1-1v-7" />
+                            </svg>
+                        </x-icon-button>
                 </div>
             </div>
         </div>

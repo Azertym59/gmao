@@ -79,6 +79,24 @@
                             </div>
                         </div>
                         
+                        @if($module->dalle->produit->ledDatasheet)
+                        <div class="mt-4 pt-4 border-t border-indigo-500/30 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h4 class="font-medium text-indigo-300 mb-2">LED Datasheet</h4>
+                                <p class="text-gray-300"><span class="font-semibold">Type:</span> {{ $module->dalle->produit->ledDatasheet->type }} {{ $module->dalle->produit->ledDatasheet->reference }}</p>
+                                <p class="text-gray-300"><span class="font-semibold">Pôles:</span> {{ $module->dalle->produit->ledDatasheet->nb_poles }}</p>
+                                <p class="text-gray-300"><span class="font-semibold">Notes:</span> {{ $module->dalle->produit->ledDatasheet->notes }}</p>
+                            </div>
+                            @if($module->dalle->produit->ledDatasheet->image_data)
+                            <div class="flex justify-center">
+                                <div class="bg-white p-2 rounded">
+                                    <img src="{{ $module->dalle->produit->ledDatasheet->image_data }}" alt="LED Datasheet" class="h-40 w-auto">
+                                </div>
+                            </div>
+                            @endif
+                        </div>
+                        @endif
+                        
                         <div class="mt-4 pt-4 border-t border-indigo-500/30">
                             <div class="flex items-center">
                                 <h4 class="font-medium text-indigo-300 mb-2">Numéro de série / ID Usine</h4>
@@ -121,6 +139,7 @@
                         <div class="grid grid-cols-1 gap-6 mb-6">
                             <div>
                                 <h4 class="font-medium text-gray-300 mb-4">Diagnostic visuel</h4>
+                                
                                 <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                         <div>
@@ -199,7 +218,19 @@
 
                         </div>
 
-                        <div class="flex items-center justify-end mt-6">
+                        <div class="flex items-center justify-between mt-6">
+                            <!-- Bouton d'annulation -->
+                            <form action="{{ route('interventions.cancel', $intervention) }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150" onclick="return confirm('Êtes-vous sûr de vouloir annuler cette intervention ? Le module sera libéré.')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    {{ __('Annuler l\'intervention') }}
+                                </button>
+                            </form>
+                            
+                            <!-- Bouton de continuation -->
                             <x-primary-button type="submit" class="bg-blue-600 hover:bg-blue-700 flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />

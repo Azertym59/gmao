@@ -220,6 +220,51 @@ class InterventionService
     }
     
     /**
+     * Annule une intervention et libère le module
+     * 
+     * @param Intervention $intervention L'intervention à annuler
+     * @return bool True si l'opération a réussi, false sinon
+     */
+    public function cancelIntervention(Intervention $intervention): bool
+    {
+        DB::beginTransaction();
+        
+        try {
+            // Vérifier si l'intervention n'est pas déjà terminée
+            if ($intervention->is_completed) {
+                throw new \Exception("Impossible d'annuler une intervention déjà terminée.");
+            }
+            
+            // Libérer le module
+            $module = $intervention->module;
+            
+            if ($module) {
+                $module->est_occupe = false;
+                
+                // Remettre l'état précédent ou non_commence si non défini
+                // Si le module était défaillant, on le maintient dans cet état
+                if ($module->etat !== 'defaillant') {
+                    $module->etat = $module->etat_precedent ?? 'non_commence';
+                }
+                
+                $module->save();
+                
+                Log::info('Module #' . $module->id . ' libéré suite à l\'annulation de l\'intervention #' . $intervention->id);
+            }
+            
+            // Supprimer l'intervention
+            $intervention->delete();
+            
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de l\'annulation de l\'intervention: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Récupère les statistiques des interventions pour un technicien
      */
     public function getTechnicienStats(?int $technicienId = null): array

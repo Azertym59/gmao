@@ -39,6 +39,11 @@
                                     <span class="font-semibold">Référence:</span> {{ $dalle->reference_dalle }}
                                 </div>
                                 @endif
+                                @if($dalle->numero_dalle)
+                                <div class="mb-2">
+                                    <span class="font-semibold">Numéro dalle (usine/client):</span> {{ $dalle->numero_dalle }}
+                                </div>
+                                @endif
                             </div>
                         </div>
 

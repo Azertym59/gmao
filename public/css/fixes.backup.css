@@ -1,0 +1,1232 @@
+/* ======= HARMONISATION DU THÈME TECALED GMAO ======= */
+
+/* Force dark mode sur tout le site */
+:root {
+    color-scheme: dark;
+}
+
+/* === Correction des couleurs de texte === */
+.text-gray-500 {
+    color: #a0aec0 !important;
+}
+
+.text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+    color: #F3F4F6 !important; /* text-primary de notre thème */
+}
+
+/* === Correction des fonds === */
+.bg-white, .bg-gray-100, .bg-gray-200 {
+    background-color: #121212 !important; /* app-bg de notre thème */
+    color: #F3F4F6 !important;
+}
+
+/* === Fond noir simple pour le body === */
+body {
+    background: #121212 !important;
+}
+
+/* === Appliquer le style glassmorphism amélioré à tous les conteneurs principaux === */
+.bg-white.overflow-hidden.shadow-sm, 
+.bg-white.overflow-hidden.shadow-xl,
+.bg-gray-100.overflow-hidden.shadow-sm,
+.bg-gray-100.overflow-hidden.shadow-xl,
+.bg-gray-200.overflow-hidden.shadow-sm {
+    background: rgba(30, 30, 30, 0.65) !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+    transition: all 0.3s ease !important;
+}
+
+/* === Style global pour tous les boutons === */
+.btn,
+.btn-action, 
+.btn-primary,
+.btn-secondary,
+.btn-success,
+.btn-danger,
+.btn-link,
+.btn-outline,
+.btn-info,
+button[type="submit"]:not(.btn-link),
+a.inline-flex {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.5rem 1.25rem !important;
+    border-radius: 0.5rem !important;
+    font-weight: 600 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer !important;
+    border: none !important;
+    font-size: 0.875rem !important;
+    letter-spacing: 0.025em !important;
+    position: relative !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.1) !important;
+    text-decoration: none !important;
+    z-index: 1 !important;
+}
+
+/* Effet de brillance commune sur les boutons */
+.btn::before,
+.btn-action::before, 
+.btn-primary::before,
+.btn-secondary::before,
+.btn-success::before,
+.btn-danger::before,
+.btn-info::before,
+button[type="submit"]:not(.btn-link)::before,
+.btn-outline::before {
+    content: "" !important;
+    position: absolute !important;
+    top: -20% !important;
+    left: -200% !important;
+    width: 60% !important;
+    height: 200% !important;
+    background: linear-gradient(to right, 
+                               rgba(255, 255, 255, 0.01), 
+                               rgba(255, 255, 255, 0.25),
+                               rgba(255, 255, 255, 0.01)) !important;
+    transform: rotate(25deg) !important;
+    opacity: 0.6 !important;
+    transition: all 0.8s ease-in-out !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+}
+
+.btn:hover::before,
+.btn-action:hover::before, 
+.btn-primary:hover::before,
+.btn-secondary:hover::before,
+.btn-success:hover::before,
+.btn-danger:hover::before,
+.btn-info:hover::before,
+button[type="submit"]:not(.btn-link):hover::before,
+.btn-outline:hover::before {
+    left: 120% !important;
+}
+
+/* Effet de pulse pour attirer l'attention */
+@keyframes button-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+/* Bouton principal - dark theme avec dégradé */
+.btn-primary, 
+button[type="submit"]:not(.btn-secondary):not(.btn-success):not(.btn-danger):not(.btn-link):not(.btn-outline):not(.btn-info) {
+    background: linear-gradient(135deg, #4F46E5 0%, #3B82F6 50%, #60A5FA 100%) !important; /* Dégradé bleu violet */
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn-primary:hover, 
+button[type="submit"]:not(.btn-secondary):not(.btn-success):not(.btn-danger):not(.btn-link):not(.btn-outline):not(.btn-info):hover {
+    background: linear-gradient(135deg, #4338CA 0%, #2563EB 50%, #3B82F6 100%) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 10px 20px -3px rgba(79, 70, 229, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn-primary:active, 
+button[type="submit"]:not(.btn-secondary):not(.btn-success):not(.btn-danger):not(.btn-link):not(.btn-outline):not(.btn-info):active {
+    transform: translateY(-1px) !important;
+}
+
+/* Bouton action - avec effet glassmorphism */
+.btn-action, .btn {
+    background: rgba(40, 40, 40, 0.8) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.btn-action:hover, .btn:hover {
+    background-color: rgba(60, 60, 60, 0.9) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Bouton secondaire avec dégradé */
+.btn-secondary, button.secondary {
+    background: linear-gradient(135deg, #475569 0%, #64748B 100%) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.btn-secondary:hover, button.secondary:hover {
+    background: linear-gradient(135deg, #334155 0%, #475569 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 15px -3px rgba(71, 85, 105, 0.3) !important;
+}
+
+/* Bouton succès/OK avec dégradé */
+.btn-success, button.success {
+    background: linear-gradient(135deg, #059669 0%, #10B981 50%, #34D399 100%) !important;
+    color: white !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.btn-success:hover, button.success:hover {
+    background: linear-gradient(135deg, #047857 0%, #059669 50%, #10B981 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 15px -3px rgba(5, 150, 105, 0.3) !important;
+}
+
+/* Bouton danger/suppression avec dégradé */
+.btn-danger, button.danger {
+    background: linear-gradient(135deg, #DC2626 0%, #EF4444 50%, #F87171 100%) !important;
+    color: white !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.btn-danger:hover, button.danger:hover {
+    background: linear-gradient(135deg, #B91C1C 0%, #DC2626 50%, #EF4444 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 15px -3px rgba(220, 38, 38, 0.3) !important;
+}
+
+/* Bouton informatif avec dégradé */
+.btn-info {
+    background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 50%, #93C5FD 100%) !important;
+    color: white !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(59, 130, 246, 0.3) !important;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #60A5FA 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 15px -3px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* Bouton avec contour */
+.btn-outline {
+    background-color: rgba(30, 30, 30, 0.3) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    color: #E5E7EB !important;
+    border: 1.5px solid rgba(156, 163, 175, 0.5) !important;
+    box-shadow: 0 2px 6px -1px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.btn-outline:hover {
+    background-color: rgba(75, 85, 99, 0.3) !important;
+    border-color: rgba(156, 163, 175, 0.8) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+}
+
+/* Bouton lien - texte simple avec effet de transition */
+.btn-link {
+    background-color: transparent !important;
+    color: #60A5FA !important;
+    box-shadow: none !important;
+    padding: 0.25rem 0.5rem !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.btn-link::after {
+    content: '' !important;
+    position: absolute !important;
+    width: 0 !important;
+    height: 1.5px !important;
+    bottom: 0.25rem !important;
+    left: 0.5rem !important;
+    background-color: #3B82F6 !important;
+    transition: width 0.3s ease !important;
+}
+
+.btn-link:hover {
+    color: #93C5FD !important;
+    text-decoration: none !important;
+}
+
+.btn-link:hover::after {
+    width: calc(100% - 1rem) !important;
+}
+
+/* Animation scale pour tous les boutons (sauf btn-link) au focus */
+.btn:focus:not(.btn-link),
+.btn-action:focus, 
+.btn-primary:focus,
+.btn-secondary:focus,
+.btn-success:focus,
+.btn-danger:focus,
+.btn-info:focus,
+.btn-outline:focus,
+button[type="submit"]:not(.btn-link):focus {
+    animation: button-scale 0.3s ease-in-out;
+}
+
+@keyframes button-scale {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* === Style pour tous les éléments de formulaire === */
+input:not([type="checkbox"]):not([type="radio"]), 
+select, 
+textarea {
+    background-color: #1E1E1E !important; /* card-bg */
+    border-color: rgba(75, 85, 99, 0.5) !important;
+    color: #F3F4F6 !important;
+    border-radius: 0.375rem !important;
+    padding: 0.5rem 0.75rem !important;
+    transition: all 0.2s ease !important;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: #3B82F6 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+    outline: none !important;
+}
+
+/* Checkboxes et radios */
+input[type="checkbox"], input[type="radio"] {
+    accent-color: #3B82F6 !important;
+}
+
+/* === Style pour les labels === */
+label {
+    color: #D1D5DB !important;
+    font-weight: 500 !important;
+    margin-bottom: 0.25rem !important;
+    display: block !important;
+}
+
+/* === Ajustement des espacements === */
+.py-12 {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+}
+
+/* === Cartes et conteneurs === */
+.p-6 {
+    padding: 1.25rem !important;
+}
+
+/* === Style pour les tableaux === */
+table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    margin-bottom: 1.5rem !important;
+    border-radius: 0.75rem !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+table th {
+    background: #000000 !important;
+    color: #F3F4F6 !important;
+    font-weight: 600 !important;
+    text-align: left !important;
+    padding: 1rem 1.25rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    text-transform: uppercase !important;
+    font-size: 0.8rem !important;
+    letter-spacing: 0.05em !important;
+}
+
+table th:first-child {
+    border-top-left-radius: 0.75rem !important;
+}
+
+table th:last-child {
+    border-top-right-radius: 0.75rem !important;
+}
+
+table td {
+    padding: 1rem 1.25rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    color: #F3F4F6 !important;
+    transition: all 0.2s ease !important;
+}
+
+table tr {
+    background-color: rgba(30, 30, 30, 0.65) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    transition: all 0.2s ease !important;
+}
+
+table tr:nth-child(even) {
+    background-color: rgba(45, 45, 45, 0.65) !important;
+}
+
+table tr:hover td {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+table tr:last-child td:first-child {
+    border-bottom-left-radius: 0.75rem !important;
+}
+
+table tr:last-child td:last-child {
+    border-bottom-right-radius: 0.75rem !important;
+}
+
+/* === Badges et statuts === */
+.badge, .status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.25rem 0.75rem !important;
+    border-radius: 9999px !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+}
+
+.badge-success, .status-success {
+    background-color: rgba(16, 185, 129, 0.3) !important;
+    color: #34D399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.4) !important;
+}
+
+.badge-warning, .status-warning {
+    background-color: rgba(245, 158, 11, 0.3) !important;
+    color: #FBBF24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+}
+
+.badge-danger, .status-danger {
+    background-color: rgba(239, 68, 68, 0.3) !important;
+    color: #F87171 !important;
+    border: 1px solid rgba(239, 68, 68, 0.4) !important;
+}
+
+/* === Page header/Titres === */
+h1, h2, h3, h4, h5, h6 {
+    color: #F3F4F6 !important;
+    position: relative !important;
+}
+
+h1 {
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 1.5rem !important;
+    letter-spacing: -0.025em !important;
+    color: #3b82f6 !important;
+}
+
+h2 {
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 1rem !important;
+    color: #10B981 !important;
+}
+
+h3 {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    color: #60A5FA !important;
+}
+
+.font-semibold {
+    font-weight: 600 !important;
+}
+
+.section-title {
+    display: flex !important;
+    align-items: center !important;
+    margin-bottom: 1.5rem !important;
+    color: #F59E0B !important;
+}
+
+.section-title::before {
+    content: "" !important;
+    display: block !important;
+    width: 0.75rem !important;
+    height: 0.75rem !important;
+    background: #F59E0B !important;
+    border-radius: 9999px !important;
+    margin-right: 0.75rem !important;
+}
+
+/* === Standardisation des conteneurs === */
+.py-12 {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+}
+
+.bg-white.overflow-hidden.shadow-sm.sm\:rounded-lg,
+.bg-gray-100.overflow-hidden.shadow-sm.sm\:rounded-lg {
+    background: rgba(30, 30, 30, 0.65) !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.15) !important;
+    overflow: hidden !important;
+    transition: all 0.4s ease !important;
+    transform: translateY(0) !important;
+}
+
+.bg-white.overflow-hidden.shadow-sm.sm\:rounded-lg:hover,
+.bg-gray-100.overflow-hidden.shadow-sm.sm\:rounded-lg:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.25), 0 10px 15px -5px rgba(0, 0, 0, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Container avec bordure simple */
+.main-container {
+    position: relative !important;
+    z-index: 1 !important;
+    padding: 1px !important;
+    border-radius: 0.75rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+.main-container > div {
+    border-radius: 0.7rem !important;
+    background: rgba(30, 30, 30, 0.95) !important;
+    padding: 1.5rem !important;
+    height: 100% !important;
+}
+
+/* === Liens === */
+a:not(.btn-action):not(.sidebar-item) {
+    color: #D1D5DB !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+    position: relative !important;
+    display: inline-block !important;
+}
+
+a:not(.btn-action):not(.sidebar-item)::after {
+    content: '' !important;
+    position: absolute !important;
+    width: 100% !important;
+    transform: scaleX(0) !important;
+    height: 1px !important;
+    bottom: -2px !important;
+    left: 0 !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    transform-origin: bottom right !important;
+    transition: transform 0.3s ease-out !important;
+}
+
+a:not(.btn-action):not(.sidebar-item):hover {
+    color: #FFFFFF !important;
+    text-decoration: none !important;
+}
+
+a:not(.btn-action):not(.sidebar-item):hover::after {
+    transform: scaleX(1) !important;
+    transform-origin: bottom left !important;
+}
+
+/* Sidebar menu items */
+.sidebar-item {
+    color: white !important;
+    text-decoration: none !important;
+    transition: all 0.3s ease !important;
+    padding: 0.75rem 1.25rem !important;
+    border-radius: 0.5rem !important;
+    margin-bottom: 0.25rem !important;
+    display: flex !important;
+    align-items: center !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.sidebar-item svg {
+    margin-right: 0.75rem !important;
+    transition: all 0.3s ease !important;
+}
+
+.sidebar-item::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 0.25rem !important;
+    height: 100% !important;
+    background: rgba(255, 255, 255, 0.7) !important;
+    transition: all 0.3s ease !important;
+    opacity: 0 !important;
+}
+
+.sidebar-item:hover {
+    text-decoration: none !important;
+    background-color: rgba(55, 65, 81, 0.5) !important;
+    transform: translateX(0.25rem) !important;
+}
+
+.sidebar-item:hover::before {
+    opacity: 1 !important;
+}
+
+.sidebar-item:hover svg {
+    transform: scale(1.1) !important;
+    color: #ffffff !important;
+}
+
+.sidebar-item.active {
+    background-color: rgba(55, 65, 81, 0.7) !important;
+    font-weight: 600 !important;
+}
+
+.sidebar-item.active::before {
+    opacity: 1 !important;
+}
+
+/* === Animation du logo === */
+.logo-container img {
+    transition: all 0.5s ease !important;
+}
+
+.logo-container:hover img {
+    transform: scale(1.05) !important;
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5)) !important;
+}
+
+/* === Correction de l'arrière-plan principal === */
+body, html {
+    background-color: #121212 !important;
+    min-height: 100vh !important;
+}
+
+/* Améliorations des tableaux */
+.table-styled {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    border-radius: 0.75rem !important;
+    overflow: hidden !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+    margin-bottom: 2rem !important;
+}
+
+.table-styled thead tr {
+    background: #000000 !important;
+    position: relative !important;
+}
+
+.table-styled thead th {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 0.75rem !important;
+    padding: 1rem 1.25rem !important;
+    letter-spacing: 0.075em !important;
+    border: none !important;
+    position: relative !important;
+}
+
+.table-styled thead th:not(:last-child)::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    right: 0 !important;
+    height: 60% !important;
+    width: 1px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: translateY(-50%) !important;
+}
+
+.table-styled tbody tr {
+    transition: all 0.25s ease !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+}
+
+.table-styled tbody tr:nth-child(odd) {
+    background-color: rgba(30, 30, 30, 0.65) !important;
+}
+
+.table-styled tbody tr:nth-child(even) {
+    background-color: rgba(40, 40, 40, 0.65) !important;
+}
+
+.table-styled tbody tr:hover {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+    transform: translateX(0.25rem) !important;
+}
+
+.table-styled tbody td {
+    padding: 1rem 1.25rem !important;
+    color: #e2e8f0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    transition: all 0.25s ease !important;
+}
+
+.table-styled tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+/* Pagination styles */
+.pagination {
+    display: flex !important;
+    justify-content: center !important;
+    margin-top: 2rem !important;
+    gap: 0.25rem !important;
+}
+
+.pagination .page-item .page-link {
+    background: rgba(30, 30, 30, 0.65) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    color: #e2e8f0 !important;
+    padding: 0.5rem 0.75rem !important;
+    border-radius: 0.375rem !important;
+    transition: all 0.25s ease !important;
+}
+
+.pagination .page-item .page-link:hover {
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #ffffff !important;
+    transform: translateY(-2px) !important;
+}
+
+.pagination .page-item.active .page-link {
+    background: rgba(100, 100, 100, 0.8) !important;
+    color: white !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Badges d'état améliorés */
+.badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0.35rem 0.85rem !important;
+    border-radius: 9999px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+}
+
+.badge-success {
+    background-color: rgba(16, 185, 129, 0.25) !important;
+    color: #34D399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.5) !important;
+}
+
+.badge-warning {
+    background-color: rgba(245, 158, 11, 0.25) !important;
+    color: #FBBF24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.5) !important;
+}
+
+.badge-danger {
+    background-color: rgba(239, 68, 68, 0.25) !important;
+    color: #F87171 !important;
+    border: 1px solid rgba(239, 68, 68, 0.5) !important;
+}
+
+.badge-info {
+    background-color: rgba(59, 130, 246, 0.25) !important;
+    color: #60A5FA !important;
+    border: 1px solid rgba(59, 130, 246, 0.5) !important;
+}
+
+/* Améliorations des cartes */
+.card {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: rgba(30, 30, 30, 0.65);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.card-header {
+    padding: 1.25rem 1.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: #000000;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-body {
+    padding: 1.75rem;
+}
+
+/* Animation pour les transitions de hover */
+.hover-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Ajout d'effets de survol avec élévation */
+.hover-elevate {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.hover-elevate:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Ajout d'un effet de glow sur certains éléments */
+.hover-glow {
+    transition: all 0.3s ease !important;
+}
+
+.hover-glow:hover {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important;
+}
+
+/* === Boutons avec icônes seulement === */
+.btn-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    position: relative !important;
+    overflow: hidden !important;
+    z-index: 1 !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Tailles des boutons icône */
+.btn-icon-xs {
+    width: 24px !important;
+    height: 24px !important;
+}
+
+.btn-icon-sm {
+    width: 32px !important;
+    height: 32px !important;
+}
+
+.btn-icon-md {
+    width: 40px !important;
+    height: 40px !important;
+}
+
+.btn-icon-lg {
+    width: 48px !important;
+    height: 48px !important;
+}
+
+.btn-icon-xl {
+    width: 56px !important;
+    height: 56px !important;
+}
+
+/* Effet au survol pour tous les boutons icône */
+.btn-icon:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 15px -2px rgba(0, 0, 0, 0.25) !important;
+}
+
+.btn-icon:active {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 3px 6px -2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Effet de brillance pour les boutons icône */
+.btn-icon::before {
+    content: "" !important;
+    position: absolute !important;
+    top: -30% !important;
+    left: -180% !important;
+    width: 40% !important;
+    height: 200% !important;
+    background: linear-gradient(to right, 
+                          rgba(255, 255, 255, 0.01), 
+                          rgba(255, 255, 255, 0.15),
+                          rgba(255, 255, 255, 0.01)) !important;
+    transform: rotate(45deg) !important;
+    transition: all 0.5s ease-in-out !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+}
+
+.btn-icon:hover::before {
+    left: 150% !important;
+}
+
+/* Effet de rotation pour certains icônes sur hover */
+.btn-icon.rotate-icon svg {
+    transition: transform 0.3s ease !important;
+}
+
+.btn-icon.rotate-icon:hover svg {
+    transform: rotate(15deg) !important;
+}
+
+/* === Tooltip pour boutons icône === */
+.tooltip {
+    position: relative !important;
+}
+
+.tooltip::after {
+    content: attr(data-tooltip) !important;
+    position: absolute !important;
+    background-color: rgba(17, 24, 39, 0.95) !important;
+    color: white !important;
+    padding: 0.25rem 0.5rem !important;
+    border-radius: 0.25rem !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+    z-index: 10 !important;
+}
+
+.tooltip:hover::after {
+    opacity: 1 !important;
+}
+
+/* Positions du tooltip */
+.tooltip-top::after {
+    bottom: calc(100% + 6px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+}
+
+.tooltip-bottom::after {
+    top: calc(100% + 6px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+}
+
+.tooltip-left::after {
+    right: calc(100% + 6px) !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+}
+
+.tooltip-right::after {
+    left: calc(100% + 6px) !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+}
+
+/* Animation de pulsation pour attirer l'attention */
+@keyframes pulse-animation {
+    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+@keyframes pulse-blue {
+    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.pulse-animation {
+    animation: pulse-animation 2s infinite !important;
+}
+
+.pulse-primary {
+    animation: pulse-blue 2s infinite !important;
+}
+
+.pulse-success {
+    animation: pulse-green 2s infinite !important;
+}
+
+.pulse-danger {
+    animation: pulse-red 2s infinite !important;
+}
+
+/* Ajouter un état actif pour les boutons (when pressing/clicking) */
+.btn-primary:active, 
+.btn-secondary:active,
+.btn-success:active,
+.btn-danger:active,
+.btn-info:active,
+.btn-action:active,
+.btn-outline:active {
+    transform: scale(0.98) translateY(0) !important;
+    box-shadow: 0 2px 5px -1px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.1s ease-in-out !important;
+}
+
+/* Styles spécifiques pour les boutons d'action dans les tables */
+.btn-action {
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+    background-color: rgba(30, 41, 59, 0.8) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.btn-action:hover {
+    background-color: rgba(51, 65, 85, 0.9) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Boutons spéciaux avec effets visuels avancés */
+.btn-glow {
+    box-shadow: 0 0 15px 2px rgba(59, 130, 246, 0.5) !important;
+}
+
+.btn-rainbow {
+    background: linear-gradient(90deg, 
+        #f44336, #ff9800, #ffeb3b, #4caf50, #2196f3, #9c27b0) !important;
+    background-size: 600% 600% !important;
+    animation: rainbow-animation 4s ease infinite !important;
+    border: none !important;
+    color: white !important;
+    font-weight: bold !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+@keyframes rainbow-animation {
+    0% { background-position: 0% 50% }
+    50% { background-position: 100% 50% }
+    100% { background-position: 0% 50% }
+}
+
+.btn-neon {
+    background-color: transparent !important;
+    color: #f0f !important;
+    border: 2px solid #f0f !important;
+    box-shadow: 0 0 10px #f0f, inset 0 0 10px #f0f !important;
+    text-shadow: 0 0 5px #f0f !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-neon:hover {
+    background-color: rgba(255, 0, 255, 0.1) !important;
+    box-shadow: 0 0 20px #f0f, inset 0 0 20px #f0f !important;
+}
+
+/* Bouton 3D */
+.btn-3d {
+    background: linear-gradient(to bottom, #3B82F6, #1E40AF) !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 
+        0 6px 0 #1E3A8A,
+        0 8px 10px rgba(0, 0, 0, 0.3) !important;
+    transform: translateY(0) !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-3d:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 
+        0 8px 0 #1E3A8A,
+        0 10px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+.btn-3d:active {
+    transform: translateY(3px) !important;
+    box-shadow: 
+        0 3px 0 #1E3A8A,
+        0 4px 5px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Bouton de déconnexion spécifique */
+.btn-logout {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.5rem 1.25rem !important;
+    border-radius: 0.5rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    position: relative !important;
+    z-index: 1 !important;
+    
+    /* Dégradé rouge dominant */
+    background: linear-gradient(135deg, #991b1b 0%, #dc2626 50%, #ef4444 100%) !important;
+    color: white !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1) !important;
+    overflow: hidden !important;
+    
+    /* Effet d'alerte subtil */
+    animation: logout-idle 5s ease-in-out infinite !important;
+}
+
+.btn-logout:hover {
+    background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #dc2626 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 15px -3px rgba(220, 38, 38, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn-logout:active {
+    transform: scale(0.98) translateY(0) !important;
+    background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%) !important;
+    box-shadow: 0 2px 5px -1px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.1s ease-in-out !important;
+}
+
+/* Effet de brillance pour le bouton de déconnexion */
+.btn-logout::before {
+    content: "" !important;
+    position: absolute !important;
+    top: -100% !important;
+    left: -130% !important;
+    width: 70% !important;
+    height: 300% !important;
+    background: linear-gradient(to right, 
+                           rgba(255, 255, 255, 0.01), 
+                           rgba(255, 255, 255, 0.2),
+                           rgba(255, 255, 255, 0.01)) !important;
+    transform: rotate(40deg) !important;
+    transition: all 0.5s ease-in-out !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+}
+
+.btn-logout:hover::before {
+    left: 130% !important;
+}
+
+/* Animation subtile pour le bouton de déconnexion */
+@keyframes logout-idle {
+    0% { box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1); }
+    50% { box-shadow: 0 4px 8px -1px rgba(220, 38, 38, 0.25), 0 2px 4px -1px rgba(220, 38, 38, 0.15); }
+    100% { box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1); }
+}
+
+/* Version compacte pour la navigation */
+.btn-logout-compact {
+    background: transparent !important;
+    color: #ef4444 !important;
+    padding: 0 !important;
+    margin-top: 0.15rem !important;
+    font-size: 0.75rem !important;
+    border-radius: 0 !important;
+    transition: all 0.2s ease !important;
+    border: none !important;
+    box-shadow: none !important;
+    text-align: left !important;
+    position: relative !important;
+    font-weight: 500 !important;
+    display: inline !important;
+}
+
+.btn-logout-compact::before {
+    content: "" !important;
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 0 !important;
+    height: 1px !important;
+    background-color: #ef4444 !important;
+    transition: width 0.2s ease !important;
+}
+
+.btn-logout-compact:hover {
+    color: #f87171 !important;
+    text-decoration: underline !important;
+    transform: none !important;
+    background: transparent !important;
+}
+
+/* Correction des liens dans la sidebar pour meilleure lisibilité */
+.sidebar-item:hover {
+    background-color: rgba(55, 65, 81, 0.5) !important;
+}
+
+/* Améliorations pour les composants dropdown */
+.dropdown-menu {
+    background: rgba(26, 32, 44, 0.95) !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2) !important;
+    padding: 0.5rem !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+}
+
+.dropdown-menu::-webkit-scrollbar {
+    width: 6px !important;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 6px !important;
+}
+
+.dropdown-item {
+    color: #e2e8f0 !important;
+    padding: 0.75rem 1rem !important;
+    transition: all 0.2s ease-in-out !important;
+    border-radius: 0.5rem !important;
+    margin: 0.15rem 0 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.dropdown-item svg {
+    margin-right: 0.75rem !important;
+    width: 1rem !important;
+    height: 1rem !important;
+    opacity: 0.75 !important;
+    transition: all 0.2s !important;
+}
+
+.dropdown-item:hover {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #ffffff !important;
+    transform: translateX(0.15rem) !important;
+}
+
+.dropdown-item:hover svg {
+    opacity: 1 !important;
+    transform: scale(1.1) !important;
+    color: #60A5FA !important;
+}
+
+.dropdown-divider {
+    border-color: rgba(255, 255, 255, 0.05) !important;
+    margin: 0.5rem 0 !important;
+}

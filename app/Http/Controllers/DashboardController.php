@@ -29,7 +29,7 @@ class DashboardController extends Controller
         // Chantiers actifs
         $chantiersActifs = $this->getChantiersActifs();
         
-        return view('dashboard.index', compact(
+        return view('dashboard', compact(
             'statsModules',
             'chantiersUrgents',
             'statsInterventions',
@@ -108,10 +108,14 @@ class DashboardController extends Controller
     {
         // Nombre total d'interventions
         $totalInterventions = Intervention::count();
+        $interventionsTerminees = Intervention::where('is_completed', true)->count();
+        
+        // Modules réparés
+        $modulesRepares = Module::where('etat', 'termine')->count();
         
         // Temps moyen par intervention
         $tempsTotal = Intervention::where('is_completed', true)->sum('temps_total') ?: 0;
-        $tempsMoyen = $totalInterventions > 0 ? ($tempsTotal / $totalInterventions) : 0;
+        $tempsMoyen = $interventionsTerminees > 0 ? ($tempsTotal / $interventionsTerminees) : 0;
         $tempsMoyenMinutes = $tempsMoyen / 60;
         
         // Formater le temps moyen pour l'affichage (HH:MM:SS)
@@ -121,22 +125,27 @@ class DashboardController extends Controller
         $tempsMoyenFormat = sprintf('%02dh %02dm %02ds', $heures, $minutes, $secondes);
         
         // Taux de réussite des réparations
-        $interventionsTerminees = Intervention::where('is_completed', true)->count();
         $interventionsReussies = Intervention::whereHas('module', function ($query) {
             $query->where('etat', 'termine');
         })->count();
         
         $tauxReussite = $interventionsTerminees > 0 ? round(($interventionsReussies / $interventionsTerminees) * 100) : 0;
         
-        // Nombre de composants remplacés
-        $nbComposants = 0;
+        // Nombre de composants remplacés (détaillé)
+        $nbLedsRemplacees = 0;
+        $nbIcRemplaces = 0;
+        $nbMasquesRemplaces = 0;
+        $totalComposants = 0;
+        
         $interventionsAvecReparations = Intervention::with('reparation')->has('reparation')->get();
         
         foreach ($interventionsAvecReparations as $intervention) {
-            $nbComposants += $intervention->reparation->nb_leds_remplacees ?? 0;
-            $nbComposants += $intervention->reparation->nb_ic_remplaces ?? 0;
-            $nbComposants += $intervention->reparation->nb_masques_remplaces ?? 0;
+            $nbLedsRemplacees += $intervention->reparation->nb_leds_remplacees ?? 0;
+            $nbIcRemplaces += $intervention->reparation->nb_ic_remplaces ?? 0;
+            $nbMasquesRemplaces += $intervention->reparation->nb_masques_remplaces ?? 0;
         }
+        
+        $totalComposants = $nbLedsRemplacees + $nbIcRemplaces + $nbMasquesRemplaces;
         
         // Charge de travail (basée sur le nombre d'interventions récentes par rapport à la capacité)
         $interventionsRecentes = Intervention::where('created_at', '>=', Carbon::now()->subDays(7))->count();
@@ -148,14 +157,20 @@ class DashboardController extends Controller
             'temps_moyen_minutes' => $tempsMoyenMinutes,
             'temps_moyen_format' => $tempsMoyenFormat,
             'taux_reussite' => $tauxReussite,
-            'nb_composants' => $nbComposants,
-            'charge_travail' => $chargeTravail
+            'nb_leds_remplacees' => $nbLedsRemplacees,
+            'nb_ic_remplaces' => $nbIcRemplaces,
+            'nb_masques_remplaces' => $nbMasquesRemplaces,
+            'total_composants' => $totalComposants,
+            'modules_repares' => $modulesRepares,
+            'charge_travail' => $chargeTravail,
+            'total_interventions' => $totalInterventions,
+            'interventions_terminees' => $interventionsTerminees
         ];
     }
     
     private function getInterventionsRecentes()
     {
-        return Intervention::with(['module.dalle.produit.chantier', 'technicien'])
+        return Intervention::with(['module.dalle.produit.chantier.client', 'technicien'])
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();

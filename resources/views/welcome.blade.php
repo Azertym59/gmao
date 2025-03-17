@@ -48,9 +48,12 @@
     <body>
         <div class="hero-section">
             <div class="container mx-auto px-4">
-                <img src="{{ asset('images/Logo rectangle V2.png') }}" alt="TecaLED Logo" class="h-24 mx-auto mb-8">
+                <img src="{{ asset('images/Logo rectangle V2.png') }}" alt="TecaLED Logo" class="h-64 mx-auto mb-8">
                 <h1 class="text-4xl font-bold mb-4">GMAO TecaLED</h1>
                 <p class="text-xl mb-8">Gestion de Maintenance Assistée par Ordinateur</p>
+                @if (auth()->check() && auth()->user()->client_id)
+                <p class="text-2xl mb-8 text-white font-medium">Bienvenue {{ auth()->user()->client->civilite }} {{ auth()->user()->client->getNomCompletSansDoublonAttribute() }}</p>
+                @endif
                 <div class="space-x-4">
                     @if (Route::has('login'))
                         @auth
@@ -62,6 +65,7 @@
                             @endif
                         @endauth
                     @endif
+                    <a href="{{ route('client.login') }}" class="bg-green-600 text-white hover:bg-green-700 px-6 py-3 rounded-lg font-medium transition">Espace Client</a>
                 </div>
             </div>
         </div>
@@ -106,7 +110,10 @@
         <div class="py-12 bg-gray-100">
             <div class="container mx-auto px-4 text-center">
                 <h2 class="text-3xl font-bold mb-8">Simplifiez votre maintenance avec notre solution GMAO</h2>
-                <a href="{{ route('login') }}" class="bg-blue-600 text-white hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition">Commencer maintenant</a>
+                <div class="space-x-4">
+                    <a href="{{ route('login') }}" class="bg-blue-600 text-white hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition">Commencer maintenant</a>
+                    <a href="{{ route('client.login') }}" class="bg-green-600 text-white hover:bg-green-700 px-8 py-3 rounded-lg font-medium transition">Espace Client</a>
+                </div>
             </div>
         </div>
 

@@ -233,4 +233,29 @@ class DalleController extends Controller
         return redirect()->route('dalles.index')
             ->with('success', 'Dalle supprimée avec succès.');
     }
+
+    /**
+     * Mettre à jour le numéro d'une dalle via AJAX
+     */
+    public function updateNumero(Request $request, $id)
+    {
+        $dalle = Dalle::findOrFail($id);
+        
+        $request->validate([
+            'numero_dalle' => 'nullable|string|max:255',
+        ]);
+        
+        $dalle->update([
+            'numero_dalle' => $request->numero_dalle,
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Numéro de dalle mis à jour avec succès',
+            'data' => [
+                'id' => $dalle->id,
+                'numero_dalle' => $dalle->numero_dalle,
+            ]
+        ]);
+    }
 }

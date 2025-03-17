@@ -20,6 +20,7 @@ class Dalle extends Model
         'carte_reception',
         'hub',
         'reference_dalle',
+        'numero_dalle',
         'disposition_modules',
         'nb_colonnes',
         'nb_lignes',
@@ -43,5 +44,16 @@ class Dalle extends Model
     public function modules(): HasMany
     {
         return $this->hasMany(Module::class);
+    }
+    
+    /**
+     * Obtenir le datasheet LED associé au produit de cette dalle
+     */
+    public function getLedDatasheetAttribute()
+    {
+        if ($this->produit && $this->produit->ledDatasheet) {
+            return $this->produit->ledDatasheet;
+        }
+        return null;
     }
 }

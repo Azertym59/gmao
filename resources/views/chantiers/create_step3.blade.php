@@ -131,6 +131,16 @@
                         <div id="flightcase_config" class="mb-6 p-4 border border-gray-700 rounded-xl bg-gray-800/30">
                             <h3 class="text-lg font-medium text-white mb-4">Configuration Flight Case</h3>
                             
+                            <!-- Option pour tailles multiples -->
+                            <div class="mb-4 p-3 bg-amber-900/20 border border-amber-600/30 rounded-lg">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" id="multiple_sizes" name="multiple_sizes" value="1" 
+                                        class="rounded bg-gray-700 border-gray-600 text-accent-blue focus:ring-accent-blue focus:ring-opacity-50">
+                                    <span class="ml-2 font-medium text-white">Tailles de dalles multiples</span>
+                                </label>
+                                <p class="mt-1 text-sm text-gray-300">Cochez cette option si vous avez différentes tailles de dalles dans le même chantier (par exemple, des dalles 500x500 et des dalles 500x1000).</p>
+                            </div>
+                            
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <x-input-label for="nb_flightcases" :value="__('Nombre de Flight Cases')" class="text-gray-300" />
@@ -148,19 +158,101 @@
                                     <x-input-label for="nb_modules_par_dalle" :value="__('Modules par Dalle')" class="text-gray-300" />
                                     <div class="relative">
                                         <x-text-input id="nb_modules_par_dalle" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="nb_modules_par_dalle" :value="old('nb_modules_par_dalle', isset($produitData['disposition_modules']) ? 
-                                        (preg_match('/^(\d+)x(\d+)$/', $produitData['disposition_modules'], $matches) ? ($matches[1] * $matches[2]) : 4) : 4)" min="1" readonly />
+                                        (preg_match('/^(\d+)x(\d+)$/', $produitData['disposition_modules'], $matches) ? ($matches[1] * $matches[2]) : 4) : 4)" min="1" />
                                         <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                            <span class="text-xs text-gray-400">Auto</span>
+                                            <span class="text-xs text-amber-400">Variable selon le type de dalle</span>
                                         </div>
                                     </div>
-                                    <p class="text-xs text-gray-400 mt-1">Basé sur la disposition {{isset($produitData['disposition_modules']) ? $produitData['disposition_modules'] : '2x2'}} sélectionnée à l'étape précédente</p>
+                                    <p class="text-xs text-gray-400 mt-1">Basé sur la disposition {{isset($produitData['disposition_modules']) ? $produitData['disposition_modules'] : '2x2'}} par défaut, modifiable selon les besoins</p>
                                     <x-input-error :messages="$errors->get('nb_modules_par_dalle')" class="mt-2" />
                                 </div>
                             </div>
                             
-                            <!-- Configuration détaillée des FlightCases -->
-                            <div class="mt-6 bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl">
+                            <!-- Configurations de flight cases par type de dalle -->
+                            <div id="multiple_sizes_config" class="mt-5 pt-4 border-t border-gray-700" style="display:none;">
+                                <h4 class="font-medium text-lg text-white mb-3">Configuration par type de dalle</h4>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                                    <!-- Configuration 1 - Dalles 500x500 -->
+                                    <div class="bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl">
+                                        <h5 class="font-medium text-blue-300 mb-3">Configuration 1 (500x500)</h5>
+                                        <div class="grid grid-cols-1 gap-3">
+                                            <div>
+                                                <x-input-label for="config1_nb_flightcases" :value="__('Nombre de Flight Cases')" class="text-gray-300" />
+                                                <x-text-input id="config1_nb_flightcases" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="config1[nb_flightcases]" :value="old('config1.nb_flightcases', 1)" min="0" />
+                                            </div>
+                                            <div>
+                                                <x-input-label for="config1_nb_dalles" :value="__('Dalles par Flight Case')" class="text-gray-300" />
+                                                <x-text-input id="config1_nb_dalles" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="config1[nb_dalles]" :value="old('config1.nb_dalles', 8)" min="1" />
+                                            </div>
+                                            <div>
+                                                <x-input-label for="config1_modules_config" :value="__('Configuration des modules')" class="text-gray-300" />
+                                                <select id="config1_modules_config" name="config1[modules_config]" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white rounded-md focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                    <option value="2x2">2x2 (4 modules par dalle)</option>
+                                                    <option value="1x1">1x1 (1 module par dalle)</option>
+                                                    <option value="3x3">3x3 (9 modules par dalle)</option>
+                                                    <option value="4x4">4x4 (16 modules par dalle)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 text-xs text-gray-400">
+                                            <span id="config1_total">8 flight cases × 8 dalles × 4 modules = 256 modules</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Configuration 2 - Dalles 500x1000 -->
+                                    <div class="bg-purple-900/20 border border-purple-500/30 p-4 rounded-xl">
+                                        <h5 class="font-medium text-purple-300 mb-3">Configuration 2 (500x1000)</h5>
+                                        <div class="grid grid-cols-1 gap-3">
+                                            <div>
+                                                <x-input-label for="config2_nb_flightcases" :value="__('Nombre de Flight Cases')" class="text-gray-300" />
+                                                <x-text-input id="config2_nb_flightcases" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="config2[nb_flightcases]" :value="old('config2.nb_flightcases', 1)" min="0" />
+                                            </div>
+                                            <div>
+                                                <x-input-label for="config2_nb_dalles" :value="__('Dalles par Flight Case')" class="text-gray-300" />
+                                                <x-text-input id="config2_nb_dalles" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="config2[nb_dalles]" :value="old('config2.nb_dalles', 6)" min="1" />
+                                            </div>
+                                            <div>
+                                                <x-input-label for="config2_modules_config" :value="__('Configuration des modules')" class="text-gray-300" />
+                                                <select id="config2_modules_config" name="config2[modules_config]" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white rounded-md focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                                    <option value="2x4">2x4 (8 modules 250x250)</option>
+                                                    <option value="1x2">1x2 (2 modules 500x500)</option>
+                                                    <option value="2x2">2x2 (4 modules 250x500)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 text-xs text-gray-400">
+                                            <span id="config2_total">1 flight cases × 6 dalles × 8 modules = 48 modules</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Configuration détaillée des FlightCases (mode standard) -->
+                            <div id="standard_config" class="mt-6 bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl">
                                 <h4 class="font-medium text-blue-300 mb-3">Configuration détaillée des FlightCases</h4>
+                                
+                                <!-- Types de dalles disponibles -->
+                                @if(isset($dalleTypes) && count($dalleTypes) > 0)
+                                <div class="mb-4 bg-gray-800/50 p-3 rounded-lg">
+                                    <h5 class="text-sm font-medium text-white mb-2">Types de dalles disponibles</h5>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                        @foreach($dalleTypes as $type)
+                                        <div class="bg-gray-700/50 p-2 rounded border border-gray-600">
+                                            <span class="block text-sm font-medium text-white">{{ $type['nom'] }}</span>
+                                            <span class="block text-xs text-gray-300">{{ $type['largeur'] }}x{{ $type['hauteur'] }}mm</span>
+                                            <span class="block text-xs text-gray-400">Disposition: {{ $type['disposition'] }}</span>
+                                            @if($type['largeur'] == 500 && $type['hauteur'] == 1000)
+                                            <div class="mt-1 flex items-center">
+                                                <span class="inline-block px-2 py-1 text-xs font-medium bg-amber-600/30 text-amber-300 rounded">Configuration des modules variable</span>
+                                            </div>
+                                            @endif
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @endif
+                                
                                 <div id="flightcases_detail_container" class="space-y-4">
                                     <!-- Ce div sera rempli dynamiquement par JavaScript -->
                                 </div>
@@ -222,10 +314,27 @@
             const totalModulesMessage = document.getElementById('total_modules_message');
             const totalModulesFc = document.getElementById('total_modules_fc');
             
+            // Nouvel élément pour le mode de tailles multiples
+            const multipleSizesCheckbox = document.getElementById('multiple_sizes');
+            const multipleSizesConfig = document.getElementById('multiple_sizes_config');
+            const standardConfig = document.getElementById('standard_config');
+            
             // Champs pour le mode flight case
             const nbFlightcases = document.getElementById('nb_flightcases');
             const nbDallesParFlightcase = document.getElementById('nb_dalles_par_flightcase');
             const nbModulesParDalle = document.getElementById('nb_modules_par_dalle');
+            
+            // Champs pour la configuration 1 (500x500)
+            const config1NbFlightcases = document.getElementById('config1_nb_flightcases');
+            const config1NbDalles = document.getElementById('config1_nb_dalles');
+            const config1ModulesConfig = document.getElementById('config1_modules_config');
+            const config1Total = document.getElementById('config1_total');
+            
+            // Champs pour la configuration 2 (500x1000)
+            const config2NbFlightcases = document.getElementById('config2_nb_flightcases');
+            const config2NbDalles = document.getElementById('config2_nb_dalles');
+            const config2ModulesConfig = document.getElementById('config2_modules_config');
+            const config2Total = document.getElementById('config2_total');
             
             // Champ pour le mode individuel
             const nbModulesTotal = document.getElementById('nb_modules_total');
@@ -242,6 +351,65 @@
                 const matches = dispositionModules.match(/^(\d+)x(\d+)$/);
                 calculatedModulesPerDalle = parseInt(matches[1]) * parseInt(matches[2]);
             }
+            
+            // Gestionnaire d'événements pour le mode de tailles multiples
+            multipleSizesCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    multipleSizesConfig.style.display = 'block';
+                    standardConfig.style.display = 'none';
+                    nbFlightcases.disabled = true;
+                    nbDallesParFlightcase.disabled = true;
+                    updateMultipleSizesTotal();
+                } else {
+                    multipleSizesConfig.style.display = 'none';
+                    standardConfig.style.display = 'block';
+                    nbFlightcases.disabled = false;
+                    nbDallesParFlightcase.disabled = false;
+                    generateFlightCaseControls();
+                    updateTotalModules();
+                }
+            });
+            
+            // Fonction pour calculer et mettre à jour le total pour le mode tailles multiples
+            function updateMultipleSizesTotal() {
+                // Calcul du total pour la configuration 1 (500x500)
+                const config1Flightcases = parseInt(config1NbFlightcases.value) || 0;
+                const config1Dalles = parseInt(config1NbDalles.value) || 0;
+                let config1ModulesPerDalle = 4; // Par défaut pour 2x2
+                
+                if (config1ModulesConfig.value === '1x1') config1ModulesPerDalle = 1;
+                else if (config1ModulesConfig.value === '2x2') config1ModulesPerDalle = 4;
+                else if (config1ModulesConfig.value === '3x3') config1ModulesPerDalle = 9;
+                else if (config1ModulesConfig.value === '4x4') config1ModulesPerDalle = 16;
+                
+                const config1TotalModules = config1Flightcases * config1Dalles * config1ModulesPerDalle;
+                config1Total.textContent = `${config1Flightcases} flight cases × ${config1Dalles} dalles × ${config1ModulesPerDalle} modules = ${config1TotalModules} modules`;
+                
+                // Calcul du total pour la configuration 2 (500x1000)
+                const config2Flightcases = parseInt(config2NbFlightcases.value) || 0;
+                const config2Dalles = parseInt(config2NbDalles.value) || 0;
+                let config2ModulesPerDalle = 8; // Par défaut pour 2x4
+                
+                if (config2ModulesConfig.value === '1x2') config2ModulesPerDalle = 2;
+                else if (config2ModulesConfig.value === '2x2') config2ModulesPerDalle = 4;
+                else if (config2ModulesConfig.value === '2x4') config2ModulesPerDalle = 8;
+                
+                const config2TotalModules = config2Flightcases * config2Dalles * config2ModulesPerDalle;
+                config2Total.textContent = `${config2Flightcases} flight cases × ${config2Dalles} dalles × ${config2ModulesPerDalle} modules = ${config2TotalModules} modules`;
+                
+                // Afficher le total global
+                const grandTotal = config1TotalModules + config2TotalModules;
+                totalModulesFc.textContent = grandTotal;
+                totalModulesMessage.textContent = grandTotal + ' modules seront créés au total';
+            }
+            
+            // Événements pour la mise à jour des totaux du mode tailles multiples
+            config1NbFlightcases.addEventListener('input', updateMultipleSizesTotal);
+            config1NbDalles.addEventListener('input', updateMultipleSizesTotal);
+            config1ModulesConfig.addEventListener('change', updateMultipleSizesTotal);
+            config2NbFlightcases.addEventListener('input', updateMultipleSizesTotal);
+            config2NbDalles.addEventListener('input', updateMultipleSizesTotal);
+            config2ModulesConfig.addEventListener('change', updateMultipleSizesTotal);
             
             // Fonction pour générer les contrôles de chaque FlightCase
             function generateFlightCaseControls() {
@@ -283,12 +451,13 @@
                         </label>
                     `;
                     
-                    // Contrôle du nombre de dalles (caché par défaut)
+                    // Contrôle du nombre de dalles et types de dalles
                     const fcDallesControl = document.createElement('div');
-                    fcDallesControl.className = 'col-span-3 flex items-center';
+                    fcDallesControl.className = 'col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4';
                     fcDallesControl.id = `fc_dalles_control_${f}`;
-                    fcDallesControl.style.display = 'none';
-                    fcDallesControl.innerHTML = `
+                    
+                    // HTML pour le nombre de dalles
+                    const nbDallesHTML = `
                         <div class="w-full">
                             <label class="block text-sm font-medium text-blue-300 mb-1">Nombre de dalles présentes</label>
                             <div class="flex items-center">
@@ -299,6 +468,40 @@
                             </div>
                         </div>
                     `;
+                    
+                    // HTML pour le sélecteur de type de dalle
+                    let typeDalleOptions = '';
+                    @if(isset($dalleTypes))
+                        @foreach($dalleTypes as $type)
+                            typeDalleOptions += `<option value="{{ $type['id'] }}">{{ $type['nom'] }} ({{ $type['largeur'] }}x{{ $type['hauteur'] }}mm)</option>`;
+                        @endforeach
+                    @endif
+                    
+                    const typeDalleHTML = `
+                        <div class="w-full">
+                            <label class="block text-sm font-medium text-blue-300 mb-1">Type de dalle</label>
+                            <select id="fc_dalle_type_${f}" name="flights[${f}][dalle_type_id]" 
+                                class="fc-dalle-type w-full rounded-lg bg-gray-700 border-gray-600 text-white focus:border-accent-blue focus:ring focus:ring-accent-blue focus:ring-opacity-50" onchange="checkDalleType(${f})">
+                                ${typeDalleOptions}
+                            </select>
+                        </div>
+                    `;
+                    
+                    // HTML pour le sélecteur de modules par dalle (pour les dalles 500x1000)
+                    const modulesConfigHTML = `
+                        <div id="modules_config_container_${f}" class="w-full mt-2" style="display: none;">
+                            <label class="block text-sm font-medium text-amber-300 mb-1">Configuration des modules</label>
+                            <select id="fc_modules_config_${f}" name="flights[${f}][modules_config]" 
+                                class="fc-modules-config w-full rounded-lg bg-gray-700 border-gray-600 text-white focus:border-accent-blue focus:ring focus:ring-accent-blue focus:ring-opacity-50" onchange="updateModulesPerDalle(${f})">
+                                <option value="2x4">2x4 (8 modules 250x250)</option>
+                                <option value="1x2">1x2 (2 modules 500x500)</option>
+                                <option value="2x2">2x2 (4 modules 250x500)</option>
+                            </select>
+                        </div>
+                    `;
+                    
+                    // Assembler le contenu complet
+                    fcDallesControl.innerHTML = nbDallesHTML + typeDalleHTML + modulesConfigHTML;
                     
                     // Ajouter les éléments au conteneur du FlightCase
                     fcContainer.appendChild(fcInfo);
@@ -314,7 +517,7 @@
                     const nbDallesInput = document.getElementById(`fc_nb_dalles_${f}`);
                     
                     checkbox.addEventListener('change', function() {
-                        dallesControl.style.display = this.checked ? 'flex' : 'none';
+                        dallesControl.style.display = this.checked ? 'grid' : 'none';
                         updateTotalModules();
                     });
                     
@@ -324,11 +527,18 @@
                 }
             }
             
-            // Fonction pour calculer et mettre à jour le total des modules
+            // Fonction pour calculer et mettre à jour le total des modules (mode standard)
             function updateTotalModules() {
                 let totalModules = 0;
                 
                 if (modeFlightcaseRadio.checked) {
+                    // Si mode tailles multiples activé, utiliser ce calcul
+                    if (multipleSizesCheckbox.checked) {
+                        updateMultipleSizesTotal();
+                        return;
+                    }
+                    
+                    // Sinon mode flightcase standard
                     const nbFlightcasesValue = parseInt(nbFlightcases.value) || 1;
                     const nbDallesParFlightcaseValue = parseInt(nbDallesParFlightcase.value) || 8;
                     
@@ -336,14 +546,30 @@
                     for (let f = 1; f <= nbFlightcasesValue; f++) {
                         const fcPartielCheckbox = document.getElementById(`fc_partiel_${f}`);
                         
+                        // Déterminer le nombre de modules par dalle pour ce flightcase
+                        let modulesPerDalle = calculatedModulesPerDalle;
+                        const dalleTypeSelect = document.getElementById(`fc_dalle_type_${f}`);
+                        const modulesConfigSelect = document.getElementById(`fc_modules_config_${f}`);
+                        
+                        // Si c'est un type de dalle 500x1000 et qu'il a une config modules visible
+                        if (dalleTypeSelect && dalleTypeSelect.value == "1" && 
+                            document.getElementById(`modules_config_container_${f}`) && 
+                            document.getElementById(`modules_config_container_${f}`).style.display !== 'none') {
+                            
+                            const configValue = modulesConfigSelect.value;
+                            if (configValue === '2x4') modulesPerDalle = 8;
+                            else if (configValue === '1x2') modulesPerDalle = 2;
+                            else if (configValue === '2x2') modulesPerDalle = 4;
+                        }
+                        
                         if (fcPartielCheckbox && fcPartielCheckbox.checked) {
                             // FlightCase partiel: utiliser le nombre de dalles spécifié
                             const nbDallesInput = document.getElementById(`fc_nb_dalles_${f}`);
                             const nbDalles = parseInt(nbDallesInput.value) || 0;
-                            totalModules += nbDalles * calculatedModulesPerDalle;
+                            totalModules += nbDalles * modulesPerDalle;
                         } else {
                             // FlightCase complet: utiliser le nombre standard de dalles
-                            totalModules += nbDallesParFlightcaseValue * calculatedModulesPerDalle;
+                            totalModules += nbDallesParFlightcaseValue * modulesPerDalle;
                         }
                     }
                     
@@ -396,6 +622,30 @@
             }
             
             updateTotalModules();
+            
+            // Fonctions pour gérer les configurations spécifiques des modules
+            window.checkDalleType = function(flightcaseIndex) {
+                const dalleTypeSelect = document.getElementById(`fc_dalle_type_${flightcaseIndex}`);
+                const modulesConfigContainer = document.getElementById(`modules_config_container_${flightcaseIndex}`);
+                
+                if (dalleTypeSelect && modulesConfigContainer) {
+                    // Si c'est une dalle 500x1000 (type 1), afficher les options de configuration de modules
+                    if (dalleTypeSelect.value == "1") {
+                        modulesConfigContainer.style.display = "block";
+                    } else {
+                        modulesConfigContainer.style.display = "none";
+                    }
+                    
+                    // Mettre à jour le total après changement
+                    updateTotalModules();
+                }
+            };
+            
+            window.updateModulesPerDalle = function(flightcaseIndex) {
+                // Cette fonction est appelée quand l'utilisateur change la configuration des modules
+                // pour mettre à jour le calcul du nombre total
+                updateTotalModules();
+            };
         });
     </script>
 </x-app-layout>

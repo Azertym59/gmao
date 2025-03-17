@@ -6,6 +6,24 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Script externe chargé - Chantier create step 2');
     
+    // Appliquer un style moderne au conteneur de pads
+    const padsContainer = document.getElementById('pads_container');
+    if (padsContainer) {
+        padsContainer.classList.add('scrollbar-thin', 'scrollbar-thumb-gray-600', 'scrollbar-track-gray-800');
+    }
+    
+    // Écouter l'événement personnalisé pour forcer la mise à jour de la prévisualisation lors de changements spécifiques
+    document.addEventListener('update_preview', function(e) {
+        console.log('Événement update_preview reçu, détails:', e.detail);
+        // Déclencher directement la mise à jour de la prévisualisation 
+        // en utilisant la fonction updatePreview qui sera définie plus tard
+        setTimeout(function() {
+            if (typeof updatePreview === 'function') {
+                updatePreview();
+            }
+        }, 50);
+    });
+    
     // PARTIE 1: GESTION DU DATASHEET LED
     
     // Récupérer les éléments relatifs au datasheet LED
@@ -23,17 +41,80 @@ document.addEventListener('DOMContentLoaded', function() {
     // Récupérer les configurations de pads
     const padConfigs = document.querySelectorAll('.pad-configs');
     
+    // Créer le container des pads s'il n'existe pas
+    if (!document.getElementById('pads_container') && ledCanvas) {
+        const padsContainer = document.createElement('div');
+        padsContainer.id = 'pads_container';
+        padsContainer.className = 'my-4';
+        ledCanvas.parentNode.parentNode.insertBefore(padsContainer, ledCanvas.parentNode.nextSibling);
+    }
+    
     // Vérifier si les éléments sont présents dans le DOM
-    if (ledPadsSelect && padConfigs.length > 0) {
+    if (ledCanvas) {
         console.log('Éléments datasheet LED trouvés');
+        
+        // Vérifier si ledPadsSelect est défini, sinon le récupérer
+        if (!ledPadsSelect) {
+            ledPadsSelect = document.getElementById('led_pads');
+            console.log('ledPadsSelect récupéré:', ledPadsSelect ? 'trouvé' : 'non trouvé');
+        }
         
         // Fonction pour mettre à jour l'affichage des pads
         function updatePadConfigs() {
-            const numPads = parseInt(ledPadsSelect.value);
+            if (!ledPadsSelect) {
+                console.error('ledPadsSelect est toujours null');
+                ledPadsSelect = document.getElementById('led_pads');
+                if (!ledPadsSelect) {
+                    console.error('Impossible de trouver l\'élément led_pads même après réessai');
+                    return;
+                }
+            }
+            
+            const numPads = parseInt(ledPadsSelect.value || '4');
             console.log('Changement du nombre de pads à:', numPads);
             
+            // Créer les configurations de pads si elles n'existent pas
+            if (padConfigs.length === 0) {
+                const padsContainer = document.getElementById('pads_container');
+                if (!padsContainer) return;
+                
+                // Créer les configs pour différents nombres de pads
+                const padCounts = [2, 4, 6, 8];
+                
+                padCounts.forEach(count => {
+                    const configDiv = document.createElement('div');
+                    configDiv.id = `pad-config-${count}`;
+                    configDiv.className = 'pad-configs grid grid-cols-2 md:grid-cols-4 gap-4 my-3';
+                    configDiv.style.display = 'none';
+                    
+                    // Ajouter les inputs pour chaque pad
+                    for (let i = 1; i <= count; i++) {
+                        const id = count === 2 ? `pad_${i}` : `pad_${i}_${count}`;
+                        const padDiv = document.createElement('div');
+                        padDiv.innerHTML = `
+                            <label for="${id}" class="block text-sm text-gray-300 mb-1">Pad ${i}</label>
+                            <select id="${id}" class="pad-select block w-full rounded-md bg-gray-700 border-gray-600 text-white">
+                                <option value="R">R (Rouge)</option>
+                                <option value="G">G (Vert)</option>
+                                <option value="B">B (Bleu)</option>
+                                <option value="+">+ (Positif)</option>
+                                <option value="-">- (Négatif)</option>
+                            </select>
+                        `;
+                        configDiv.appendChild(padDiv);
+                    }
+                    
+                    padsContainer.appendChild(configDiv);
+                });
+                
+                // Réassigner padConfigs après leur création
+                const newPadConfigs = document.querySelectorAll('.pad-configs');
+                padConfigs.length = 0;
+                newPadConfigs.forEach(config => padConfigs.push(config));
+            }
+            
             // Masquer toutes les configurations
-            padConfigs.forEach(config => {
+            document.querySelectorAll('.pad-configs').forEach(config => {
                 config.style.display = 'none';
             });
             
@@ -63,9 +144,27 @@ document.addEventListener('DOMContentLoaded', function() {
             const height = ledCanvas.height;
             const padding = 20;
             const size = width - (padding * 2);
+            const centerX = width / 2;
+            const centerY = height / 2;
             
-            // Effacer le canvas
+            // Récupérer la rotation actuelle (en degrés)
+            const rotationDegrees = parseInt(ledRotationSelect?.value || 0);
+            const rotationRadians = (rotationDegrees * Math.PI) / 180;
+            
+            // Effacer le canvas complet
             ctx.clearRect(0, 0, width, height);
+            
+            // Sauvegarder l'état du contexte
+            ctx.save();
+            
+            // Déplacer le point d'origine au centre du canvas
+            ctx.translate(centerX, centerY);
+            
+            // Appliquer la rotation
+            ctx.rotate(rotationRadians);
+            
+            // Déplacer le point d'origine au coin supérieur gauche du carré de la LED
+            ctx.translate(-centerX, -centerY);
             
             // Dessiner le corps de la LED
             ctx.fillStyle = '#e0e0e0';
@@ -86,6 +185,12 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.strokeStyle = '#888';
             ctx.lineWidth = 1;
             ctx.stroke();
+            
+            // Ajouter un indicateur de sens (une petite marque pour montrer l'orientation)
+            ctx.fillStyle = '#999';
+            ctx.beginPath();
+            ctx.arc(padding + 15, padding + 15, 3, 0, Math.PI * 2);
+            ctx.fill();
             
             // Dessiner les pads selon la configuration
             const numPads = parseInt(ledPadsSelect.value);
@@ -220,6 +325,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 ctx.fillText(pad.value, pad.x, pad.y + 5);
             });
             
+            // Restaurer l'état du contexte (annuler la rotation)
+            ctx.restore();
+            
             // Mettre à jour le nom du datasheet
             if (ledNamePreview) {
                 const type = ledTypeSelect?.value || 'SMD';
@@ -241,7 +349,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Fonction pour générer le datasheet final
         function generateDatasheet() {
-            if (!ledDatasheetName || !ledDatasheetImage || !ledCanvas) return;
+            if (!ledDatasheetName || !ledDatasheetImage || !ledCanvas) {
+                console.error('Éléments datasheet manquants', {
+                    ledDatasheetName: !!ledDatasheetName,
+                    ledDatasheetImage: !!ledDatasheetImage,
+                    ledCanvas: !!ledCanvas
+                });
+                alert('Erreur: Impossible de générer le datasheet. Veuillez réessayer ou recharger la page.');
+                return;
+            }
             
             // Récupérer directement le nom de la prévisualisation si elle est définie
             let dataSheetName = '';
@@ -254,34 +370,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 const rotation = ledRotationSelect?.value || '0';
                 
                 // Récupérer les valeurs des pads actuellement sélectionnées
-                const numPads = parseInt(ledPadsSelect?.value || '2');
+                const numPads = parseInt(ledPadsSelect?.value || '4');
                 let padValues = '';
                 
-                // Construire une liste des éléments de pad
-                const padElements = [];
+                // Construire une liste de valeurs de pads par défaut
                 if (numPads === 2) {
-                    padElements.push(document.getElementById('pad_1'), document.getElementById('pad_2'));
+                    padValues = 'R+';
                 } else if (numPads === 4) {
-                    padElements.push(
-                        document.getElementById('pad_1_4'), document.getElementById('pad_2_4'),
-                        document.getElementById('pad_3_4'), document.getElementById('pad_4_4')
-                    );
+                    padValues = 'RGB+';
                 } else if (numPads === 6) {
-                    for (let i = 1; i <= 6; i++) {
-                        padElements.push(document.getElementById(`pad_${i}_6`));
-                    }
+                    padValues = 'RGBRGB';
                 } else if (numPads === 8) {
-                    for (let i = 1; i <= 8; i++) {
-                        padElements.push(document.getElementById(`pad_${i}_8`));
-                    }
+                    padValues = 'RGBRGB++';
                 }
                 
-                // Assembler les valeurs des pads
-                padElements.forEach(element => {
-                    if (element && element.value) {
-                        padValues += element.value;
+                // Essayer de récupérer les valeurs réelles des pads si disponibles
+                try {
+                    const padElements = [];
+                    if (numPads === 2) {
+                        padElements.push(document.getElementById('pad_1'), document.getElementById('pad_2'));
+                    } else if (numPads === 4) {
+                        padElements.push(
+                            document.getElementById('pad_1_4'), document.getElementById('pad_2_4'),
+                            document.getElementById('pad_3_4'), document.getElementById('pad_4_4')
+                        );
+                    } else if (numPads === 6) {
+                        for (let i = 1; i <= 6; i++) {
+                            padElements.push(document.getElementById(`pad_${i}_6`));
+                        }
+                    } else if (numPads === 8) {
+                        for (let i = 1; i <= 8; i++) {
+                            padElements.push(document.getElementById(`pad_${i}_8`));
+                        }
                     }
-                });
+                    
+                    // Si tous les éléments sont trouvés, utiliser leurs valeurs
+                    if (padElements.every(el => el !== null)) {
+                        padValues = '';
+                        padElements.forEach(element => {
+                            if (element && element.value) {
+                                padValues += element.value;
+                            } else if (element) {
+                                padValues += 'X'; // Valeur par défaut si value est manquante
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error('Erreur lors de la récupération des valeurs de pads:', e);
+                }
                 
                 dataSheetName = `${type}${size}${padValues}${rotation}`;
             }
@@ -301,6 +437,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Ajouter les écouteurs d'événements
         if (ledPadsSelect) {
             ledPadsSelect.addEventListener('change', updatePadConfigs);
+        } else if (document.getElementById('led_pads')) {
+            // Réessayer d'obtenir l'élément si null au début
+            setTimeout(() => {
+                const ledPadsSelectRetry = document.getElementById('led_pads');
+                if (ledPadsSelectRetry) {
+                    ledPadsSelectRetry.addEventListener('change', updatePadConfigs);
+                }
+            }, 500);
         }
         
         if (ledTypeSelect) ledTypeSelect.addEventListener('change', updatePreview);
@@ -313,20 +457,76 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
-        if (ledRotationSelect) ledRotationSelect.addEventListener('change', updatePreview);
         
-        // Écouteurs pour tous les sélecteurs de pads
-        document.querySelectorAll('#pads_container select').forEach(select => {
-            select.addEventListener('change', updatePreview);
+        // Gestion spéciale pour la rotation
+        if (ledRotationSelect) {
+            ledRotationSelect.addEventListener('change', function() {
+                console.log('Rotation changée à:', this.value);
+                updatePreview();
+            });
+            
+            // Vérifier le bouton de rotation et l'initialiser s'il existe
+            const rotateButton = document.getElementById('rotate_led');
+            if (rotateButton) {
+                rotateButton.addEventListener('click', function() {
+                    console.log('Bouton rotation cliqué');
+                    if (ledRotationSelect) {
+                        // Obtenir l'index actuel
+                        const currentIndex = ledRotationSelect.selectedIndex;
+                        // Calculer le prochain index (avec bouclage)
+                        const nextIndex = (currentIndex + 1) % ledRotationSelect.options.length;
+                        // Mettre à jour la sélection
+                        ledRotationSelect.selectedIndex = nextIndex;
+                        
+                        // Déclencher un événement pour mettre à jour la prévisualisation
+                        updatePreview();
+                    }
+                });
+            }
+        }
+        
+        // Configuration des événements pour les pads de manière dynamique
+        function setupPadSelectors() {
+            const padsContainer = document.getElementById('pads_container');
+            if (padsContainer) {
+                padsContainer.querySelectorAll('select').forEach(select => {
+                    select.addEventListener('change', updatePreview);
+                });
+                console.log('Écouteurs ajoutés pour les sélecteurs de pads');
+            } else {
+                console.warn('Container de pads non trouvé pour les écouteurs');
+            }
+        }
+        
+        // Configurer les écouteurs après création des pads
+        setTimeout(setupPadSelectors, 500);
+        
+        // Délégation d'événements pour gérer les sélecteurs de pads créés dynamiquement
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.classList.contains('pad-select')) {
+                console.log('Changement de valeur de pad détecté');
+                updatePreview();
+            }
         });
         
         // Bouton de génération du datasheet
         if (generateButton) {
             generateButton.addEventListener('click', generateDatasheet);
+        } else if (document.getElementById('generate_datasheet')) {
+            // Réessayer d'obtenir le bouton
+            setTimeout(() => {
+                const generateButtonRetry = document.getElementById('generate_datasheet');
+                if (generateButtonRetry) {
+                    generateButtonRetry.addEventListener('click', generateDatasheet);
+                }
+            }, 500);
         }
         
         // Initialiser l'affichage
         updatePadConfigs();
+        
+        // Initialiser une seconde fois après un délai pour s'assurer que tous les éléments sont chargés
+        setTimeout(updatePadConfigs, 1000);
     } else {
         console.warn('Éléments datasheet LED manquants');
     }

@@ -23,6 +23,7 @@ class ProduitCatalogue extends Model
         'cartes_reception_disponibles',
         'hubs_disponibles',
         'bains_couleur_disponibles',
+        'carte_reception',
     ];
 
     /**

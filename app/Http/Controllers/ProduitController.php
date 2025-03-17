@@ -9,14 +9,52 @@ use Illuminate\Http\Request;
 class ProduitController extends Controller
 {
     /**
-     * Afficher la liste des produits
+     * Afficher la liste des produits avec filtres optionnels
      */
-    public function index()
+    public function index(Request $request)
     {
         // Mettre à jour tous les produits qui ont INCONNU comme marque ou modèle
         $this->fixUnknownProducts();
         
-        $produits = Produit::with('chantier.client')->get();
+        $query = Produit::with(['chantier.client', 'dalles']);
+        
+        // Filtre par marque
+        if ($request->filled('marque')) {
+            $query->where('marque', $request->input('marque'));
+        }
+        
+        // Filtre par bain de couleur
+        if ($request->filled('bain_couleur')) {
+            $query->where('bain_couleur', $request->input('bain_couleur'));
+        }
+        
+        // Filtre par référence de chantier
+        if ($request->filled('reference')) {
+            $reference = $request->input('reference');
+            $query->whereHas('chantier', function($q) use ($reference) {
+                $q->where('reference', 'like', '%' . $reference . '%');
+            });
+        }
+        
+        // Filtre par garantie/achat
+        if ($request->filled('warranty')) {
+            $warranty = $request->input('warranty');
+            
+            if ($warranty === 'client_achat_1') {
+                // Si on cherche les achats chez nous
+                $query->whereHas('chantier', function($q) {
+                    $q->where('is_client_achat', true);
+                });
+            } else {
+                // Sinon on filtre par garantie
+                $isUnderWarranty = $warranty == '1';
+                $query->whereHas('chantier', function($q) use ($isUnderWarranty) {
+                    $q->where('is_under_warranty', $isUnderWarranty);
+                });
+            }
+        }
+        
+        $produits = $query->get();
         return view('produits.index', compact('produits'));
     }
     
@@ -80,6 +118,7 @@ class ProduitController extends Controller
             'electronique' => 'required|in:nova,linsn,dbstar,brompton,autre',
             'electronique_detail' => 'nullable|required_if:electronique,autre|string|max:255',
             'carte_reception' => 'nullable|string|max:255',
+            'type_carte_reception' => 'nullable|string|max:255',
             'hub' => 'nullable|string|max:255',
             'bain_couleur' => 'nullable|string|max:255',
             'create_variantes' => 'nullable|boolean',
@@ -100,6 +139,7 @@ class ProduitController extends Controller
             'electronique' => $validated['electronique'],
             'electronique_detail' => $validated['electronique_detail'] ?? null,
             'carte_reception' => $validated['carte_reception'] ?? null,
+            'type_carte_reception' => $validated['type_carte_reception'] ?? null,
             'hub' => $validated['hub'] ?? null,
             'bain_couleur' => $validated['bain_couleur'] ?? null,
             'is_variante' => false
@@ -117,6 +157,7 @@ class ProduitController extends Controller
                     'electronique' => $validated['electronique'],
                     'electronique_detail' => $validated['electronique_detail'] ?? null,
                     'carte_reception' => $variante['carte_reception'],
+                    'type_carte_reception' => $variante['type_carte_reception'],
                     'hub' => $variante['hub'],
                     'bain_couleur' => $variante['bain_couleur'],
                     'variante_id' => $produit->id,

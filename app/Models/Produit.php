@@ -24,7 +24,8 @@ class Produit extends Model
         'bain_couleur',
         'variante_id',
         'is_variante',
-        'variante_nom'
+        'variante_nom',
+        'led_datasheet_id'
     ];
 
     /**
@@ -82,6 +83,14 @@ class Produit extends Model
     }
     
     /**
+     * La fiche technique LED associée à ce produit
+     */
+    public function ledDatasheet(): BelongsTo
+    {
+        return $this->belongsTo(LedDatasheet::class);
+    }
+
+    /**
      * Obtenir les spécifications détaillées sous forme de tableau
      */
     public function getSpecificationsAttribute(): array
@@ -95,6 +104,7 @@ class Produit extends Model
             'Carte de réception' => $this->carte_reception ?: 'Non spécifiée',
             'Hub' => $this->hub ?: 'Non spécifié',
             'Bain de couleur' => $this->bain_couleur ?: 'Non spécifié',
+            'LED Datasheet' => $this->ledDatasheet ? $this->ledDatasheet->reference : 'Non spécifiée',
         ];
     }
 }

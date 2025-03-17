@@ -6,14 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Client extends Model
+class Client extends Authenticatable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Notifiable;
 
     protected $fillable = [
-        'nom', 'prenom', 'societe', 'adresse', 'code_postal', 
-        'ville', 'pays', 'email', 'telephone', 'notes'
+        'civilite', 'nom', 'prenom', 'societe', 'adresse', 'code_postal', 
+        'ville', 'pays', 'email', 'telephone', 'notes', 'password', 'remember_token'
+    ];
+    
+    protected $hidden = [
+        'password',
+        'remember_token',
     ];
 
     /**
@@ -28,6 +35,14 @@ class Client extends Model
      * Obtenir le nom complet du client
      */
     public function getNomCompletAttribute(): string
+    {
+        return $this->civilite . ' ' . $this->nom . ' ' . $this->prenom;
+    }
+    
+    /**
+     * Obtenir le nom complet sans redondance de civilité
+     */
+    public function getNomCompletSansDoublonAttribute(): string
     {
         return $this->nom . ' ' . $this->prenom;
     }

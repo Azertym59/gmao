@@ -46,13 +46,17 @@ class EmailService
             }
         }
         
+        // Générer le lien d'inscription
+        $lienInscription = url(route('client.register', [], false));
+        
         // Envoyer l'email
         Mail::send('emails.chantier_created', [
             'chantier' => $chantier, 
             'client' => $client,
             'produits' => $produits,
             'totalModules' => $totalModules,
-            'lienSuivi' => $lienSuivi
+            'lienSuivi' => $lienSuivi,
+            'lienInscription' => $lienInscription
         ], function ($message) use ($email, $nomClient, $chantier) {
             $message->to($email, $nomClient)
                 ->subject('Votre chantier de réparation #' . $chantier->reference . ' a été créé');
@@ -102,13 +106,17 @@ class EmailService
             }
         }
         
+        // Générer le lien d'inscription
+        $lienInscription = url(route('client.register', [], false));
+        
         // Envoyer l'email
         Mail::send('emails.interventions_started', [
             'chantier' => $chantier, 
             'client' => $client,
             'interventionsStarted' => $interventionsStarted,
             'totalModules' => $totalModules,
-            'lienSuivi' => $lienSuivi
+            'lienSuivi' => $lienSuivi,
+            'lienInscription' => $lienInscription
         ], function ($message) use ($email, $nomClient, $chantier) {
             $message->to($email, $nomClient)
                 ->subject('Les réparations ont commencé sur votre chantier #' . $chantier->reference);
@@ -116,7 +124,7 @@ class EmailService
     }
     
     /**
-     * Envoyer un email au client lorsque le chantier est terminé avec le rapport en pièce jointe
+     * Envoyer un email au client lorsque le chantier est terminé
      */
     public function sendChantierCompletedEmail(Chantier $chantier)
     {
@@ -135,13 +143,10 @@ class EmailService
         // Générer le lien de suivi
         $lienSuivi = url('/suivi/' . $chantier->token_suivi);
         
-        // Calcul des statistiques pour le PDF (même logique que dans RapportController)
+        // Calcul des statistiques de base pour l'email
         $totalModules = 0;
         $modulesTermines = 0;
         $tempsTotal = 0;
-        $totalLEDsRemplacees = 0;
-        $totalICsRemplaces = 0;
-        $totalMasquesRemplaces = 0;
         
         foreach($chantier->produits as $produit) {
             // Patch for INCONNU values
@@ -159,18 +164,10 @@ class EmailService
                 foreach($dalle->modules as $module) {
                     foreach($module->interventions as $intervention) {
                         $tempsTotal += $intervention->temps_total;
-                        
-                        if($intervention->reparation) {
-                            $totalLEDsRemplacees += $intervention->reparation->nb_leds_remplacees;
-                            $totalICsRemplaces += $intervention->reparation->nb_ic_remplaces;
-                            $totalMasquesRemplaces += $intervention->reparation->nb_masques_remplaces;
-                        }
                     }
                 }
             }
         }
-        
-        $pourcentageTermines = $totalModules > 0 ? round(($modulesTermines / $totalModules) * 100) : 0;
         
         // Formatage du temps total
         $heures = floor($tempsTotal / 3600);
@@ -178,36 +175,21 @@ class EmailService
         $secondes = $tempsTotal % 60;
         $tempsFormate = sprintf('%dh %02dm %02ds', $heures, $minutes, $secondes);
         
-        // Générer le PDF du rapport
-        $pdf = PDF::loadView('rapports.chantier', compact(
-            'chantier',
-            'totalModules',
-            'modulesTermines',
-            'pourcentageTermines',
-            'tempsTotal',
-            'tempsFormate',
-            'totalLEDsRemplacees',
-            'totalICsRemplaces',
-            'totalMasquesRemplaces'
-        ));
+        // Générer le lien d'inscription
+        $lienInscription = url(route('client.register', [], false));
         
-        $pdfContent = $pdf->output();
-        $filename = 'rapport-chantier-' . $chantier->reference . '.pdf';
-        
-        // Envoyer l'email avec la pièce jointe
+        // Envoyer l'email simple sans pièce jointe
         Mail::send('emails.chantier_completed', [
             'chantier' => $chantier, 
             'client' => $client,
             'totalModules' => $totalModules,
             'modulesTermines' => $modulesTermines,
             'tempsFormate' => $tempsFormate,
-            'lienSuivi' => $lienSuivi
-        ], function ($message) use ($email, $nomClient, $chantier, $pdfContent, $filename) {
+            'lienSuivi' => $lienSuivi,
+            'lienInscription' => $lienInscription
+        ], function ($message) use ($email, $nomClient, $chantier) {
             $message->to($email, $nomClient)
-                ->subject('Votre chantier #' . $chantier->reference . ' est terminé')
-                ->attachData($pdfContent, $filename, [
-                    'mime' => 'application/pdf',
-                ]);
+                ->subject('Votre chantier #' . $chantier->reference . ' est terminé');
         });
     }
 }

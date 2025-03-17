@@ -35,14 +35,28 @@ class InterventionRepository
     }
     
     /**
-     * Récupère les interventions paginées
+     * Récupère les interventions paginées avec filtrage optionnel
      */
-    public function getPaginated(int $perPage = 15): LengthAwarePaginator
+    public function getPaginated(int $perPage = 15, ?array $filters = null): LengthAwarePaginator
     {
-        return Intervention::with([
+        $query = Intervention::with([
             'module.dalle.produit.chantier',
             'technicien'
-        ])->orderBy('created_at', 'desc')->paginate($perPage);
+        ]);
+        
+        // Appliquer les filtres s'ils sont fournis
+        if ($filters) {
+            // Filtrage par statut (actif / terminé)
+            if (isset($filters['status'])) {
+                if ($filters['status'] === 'active') {
+                    $query->where('is_completed', false);
+                } elseif ($filters['status'] === 'completed') {
+                    $query->where('is_completed', true);
+                }
+            }
+        }
+        
+        return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
     
     /**
