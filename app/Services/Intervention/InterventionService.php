@@ -37,7 +37,7 @@ class InterventionService
         
         try {
             // Vérifier si le module est occupé par un technicien actuellement
-            if ($module->est_occupe && $module->technicien_id \!== null && $module->technicien_id \!== ($technicienId ?? Auth::id())) {
+            if ($module->est_occupe && $module->technicien_id !== null && $module->technicien_id !== ($technicienId ?? Auth::id())) {
                 throw new \Exception('Ce module est déjà en cours d\'intervention par un autre technicien');
             }
             
@@ -58,7 +58,7 @@ class InterventionService
             
             // Mettre à jour l'état du chantier si nécessaire
             $chantier = $module->dalle->produit->chantier;
-            if ($chantier->etat \!== 'en_cours') {
+            if ($chantier->etat !== 'en_cours') {
                 $chantier->etat = 'en_cours';
                 $chantier->save();
                 
@@ -91,7 +91,7 @@ class InterventionService
         
         try {
             // Mettre à jour le numéro de série du module si fourni
-            if (\!empty($diagnosticDTO->numero_serie)) {
+            if (!empty($diagnosticDTO->numero_serie)) {
                 $module = $intervention->module;
                 $module->update([
                     'numero_serie' => $diagnosticDTO->numero_serie
@@ -101,7 +101,7 @@ class InterventionService
             // Créer ou mettre à jour le diagnostic
             $diagnostic = $intervention->diagnostic;
             
-            if (\!$diagnostic) {
+            if (!$diagnostic) {
                 // Créer un nouveau diagnostic
                 $diagnostic = new Diagnostic($diagnosticDTO->toArray());
                 $diagnostic->intervention_id = $intervention->id;
@@ -145,7 +145,7 @@ class InterventionService
             // Créer ou mettre à jour la réparation
             $reparation = $intervention->reparation;
             
-            if (\!$reparation) {
+            if (!$reparation) {
                 // Créer une nouvelle réparation
                 $reparation = new Reparation($reparationDTO->toArray());
                 $reparation->intervention_id = $intervention->id;
@@ -182,7 +182,7 @@ class InterventionService
         
         try {
             // Vérifier que l'intervention a un diagnostic et une réparation
-            if (\!$intervention->diagnostic || \!$intervention->reparation) {
+            if (!$intervention->diagnostic || !$intervention->reparation) {
                 throw new \Exception("L'intervention doit avoir un diagnostic et une réparation pour être finalisée.");
             }
             
@@ -201,7 +201,7 @@ class InterventionService
             $chantier = $module->dalle->produit->chantier;
             $allModulesCompleted = $this->checkIfAllModulesCompleted($chantier);
             
-            if ($allModulesCompleted && $chantier->etat \!== 'termine') {
+            if ($allModulesCompleted && $chantier->etat !== 'termine') {
                 // Notifier un administrateur que tous les modules sont terminés
                 $this->notificationService->notifyChantierCompleted($chantier);
             }
@@ -239,7 +239,7 @@ class InterventionService
             ->first();
         
         // Si pas de modules, retourne false
-        if (\!$moduleCounts || $moduleCounts->total_modules === 0) {
+        if (!$moduleCounts || $moduleCounts->total_modules === 0) {
             return false;
         }
         
@@ -247,7 +247,7 @@ class InterventionService
         $allCompleted = ($moduleCounts->completed_modules === $moduleCounts->total_modules);
         
         // Log uniquement si tous les modules sont terminés et que le chantier n'est pas déjà marqué comme terminé
-        if ($allCompleted && $chantier->etat \!== 'termine') {
+        if ($allCompleted && $chantier->etat !== 'termine') {
             Log::info('Tous les modules du chantier #' . $chantier->id . ' sont terminés ou défaillants. Considérez marquer le chantier comme terminé.');
             
             // Créer une notification pour l'administrateur
@@ -296,7 +296,7 @@ class InterventionService
                 
                 // Remettre l'état précédent ou non_commence si non défini
                 // Si le module était défaillant, on le maintient dans cet état
-                if ($module->etat \!== 'defaillant') {
+                if ($module->etat !== 'defaillant') {
                     $module->etat = $module->etat_precedent ?? 'non_commence';
                 }
                 

@@ -236,8 +236,8 @@
                                         
                                         <!-- Modules individuels -->
                                         @if(!empty($dallesGrouped['individuel']))
-                                            <div class="glassmorphism border border-gray-700 rounded-xl p-4 mb-6">
-                                                <div class="flex justify-between items-center mb-3">
+                                            <div class="glassmorphism border border-gray-700 rounded-xl p-4 mb-6" x-data="{ open: true }">
+                                                <div @click="open = !open" class="flex justify-between items-center mb-3 cursor-pointer">
                                                     <h6 class="font-medium text-white flex items-center">
                                                         <span class="text-amber-400">Modules individuels</span>
                                                         
@@ -277,7 +277,7 @@
                                                         }">
                                                             <!-- Affichage si on a déjà un numéro -->
                                                             <template x-if="!isEditing && initialValue">
-                                                                <span @click="toggleEdit()" class="cursor-pointer group">
+                                                                <span @click.stop="toggleEdit()" class="cursor-pointer group">
                                                                     <span class="text-xs text-accent-blue">[N° <span x-text="initialValue"></span>]</span>
                                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline ml-1 text-gray-400 group-hover:text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -287,7 +287,7 @@
                                                             
                                                             <!-- Bouton pour ajouter un numéro si on n'en a pas -->
                                                             <template x-if="!isEditing && !initialValue">
-                                                                <button @click="toggleEdit()" class="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded flex items-center shadow-md transition-all duration-150 transform hover:scale-105 border border-purple-500">
+                                                                <button @click.stop="toggleEdit()" class="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded flex items-center shadow-md transition-all duration-150 transform hover:scale-105 border border-purple-500">
                                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                                                     </svg>
@@ -297,7 +297,7 @@
                                                             
                                                             <!-- Formulaire de saisie -->
                                                             <template x-if="isEditing">
-                                                                <span class="flex items-center">
+                                                                <span class="flex items-center" @click.stop>
                                                                     <input 
                                                                         type="text" 
                                                                         x-model="numeroValue" 
@@ -321,41 +321,127 @@
                                                         </span>
                                                         @endforeach
                                                     </h6>
-                                                    <div class="flex space-x-4 items-center">
-                                                        @foreach($dallesGrouped['individuel'] as $dalle)
-                                                            <div class="text-sm text-gray-300">
-                                                                <span class="mr-2">Progrès:</span>
-                                                                <span class="badge badge-success">
-                                                                    {{ $dalle->modules->where('etat', 'termine')->count() }}/{{ $dalle->modules->count() }}
-                                                                </span>
-                                                            </div>
-                                                            <a href="{{ route('dalles.show', $dalle) }}" class="text-xs text-accent-blue hover:text-blue-400">Détails</a>
-                                                        @endforeach
+                                                    <div class="flex items-center">
+                                                        <div class="flex space-x-4 items-center mr-4">
+                                                            @foreach($dallesGrouped['individuel'] as $dalle)
+                                                                <div class="text-sm text-gray-300">
+                                                                    <span class="mr-2">Progrès:</span>
+                                                                    <span class="badge badge-success">
+                                                                        {{ $dalle->modules->where('etat', 'termine')->count() }}/{{ $dalle->modules->count() }}
+                                                                    </span>
+                                                                </div>
+                                                                <a href="{{ route('dalles.show', $dalle) }}" class="text-xs text-accent-blue hover:text-blue-400">Détails</a>
+                                                            @endforeach
+                                                        </div>
+                                                        <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                        <svg x-show="open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                                        </svg>
                                                     </div>
                                                 </div>
+                                                
+                                                <div x-show="open" x-transition:enter="transition ease-out duration-200" 
+                                                     x-transition:enter-start="opacity-0 transform -translate-y-2" 
+                                                     x-transition:enter-end="opacity-100 transform translate-y-0"
+                                                     x-transition:leave="transition ease-in duration-200"
+                                                     x-transition:leave-start="opacity-100 transform translate-y-0"
+                                                     x-transition:leave-end="opacity-0 transform -translate-y-2"
                                                 
                                                 @foreach($dallesGrouped['individuel'] as $dalle)
                                                     <div class="flex flex-wrap gap-2 justify-center mt-3">
                                                         @foreach($dalle->modules as $module)
-                                                            <a href="{{ route('modules.show', $module) }}" 
-                                                               class="relative group">
+                                                            <div x-data="{ hover: false, showActions: false, moduleId: {{ $module->id }} }" 
+                                                               class="relative group module-container">
                                                                 <div class="aspect-square w-10 h-10 
                                                                     @if($module->etat == 'termine') bg-accent-green
                                                                     @elseif($module->etat == 'en_cours') bg-accent-yellow
                                                                     @elseif($module->etat == 'defaillant') bg-accent-red
                                                                     @else bg-gray-600
                                                                     @endif
-                                                                    rounded-sm border border-black/10 hover:brightness-110 transition-all hover:shadow-lg duration-150 transform hover:scale-105"
+                                                                    rounded-sm border border-black/10 transition-all hover:shadow-lg duration-150 transform hover:scale-105 cursor-pointer"
                                                                     title="Module #{{ $module->id }} - {{ ucfirst($module->etat) }}"
+                                                                    @mouseenter="hover = true; showActions = true; if(window.moduleTimeoutId) clearTimeout(window.moduleTimeoutId)"
+                                                                    @mouseleave="hover = false; window.moduleTimeoutId = setTimeout(() => showActions = false, 1000)"
+                                                                    @click="window.location.href='{{ route('modules.show', $module) }}'"
                                                                 >
                                                                     <div class="flex items-center justify-center h-full text-xs font-medium text-white/90">
                                                                         {{ preg_replace('/[^0-9]/', '', $module->reference_module) }}
                                                                     </div>
                                                                 </div>
-                                                                <div class="hidden group-hover:block absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
+                                                                
+                                                                <!-- Nom du module (au survol) -->
+                                                                <div x-show="hover" 
+                                                                     x-transition:enter="transition ease-out duration-200"
+                                                                     x-transition:enter-start="opacity-0 scale-95"
+                                                                     x-transition:enter-end="opacity-100 scale-100"
+                                                                     class="absolute top-[-20px] left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
                                                                     Module #{{ $module->id }}
                                                                 </div>
-                                                            </a>
+                                                                
+                                                                <!-- Actions popup -->
+                                                                <div x-show="showActions" 
+                                                                     x-transition:enter="transition ease-out duration-200"
+                                                                     x-transition:enter-start="opacity-0 scale-95"
+                                                                     x-transition:enter-end="opacity-100 scale-100"
+                                                                     x-transition:leave="transition ease-in duration-150"
+                                                                     x-transition:leave-start="opacity-100 scale-100"
+                                                                     x-transition:leave-end="opacity-0 scale-95"
+                                                                     class="absolute -top-20 -right-2 bg-gray-900/95 border border-gray-700 rounded-lg p-2 shadow-xl z-20 flex flex-col gap-2 min-w-[120px]"
+                                                                     
+                                                                     @click.away="showActions = false"
+                                                                     @keydown.escape.window="showActions = false">
+                                                                    
+                                                                    <!-- Marquer comme OK -->
+                                                                    <button @click.stop="
+                                                                        fetch('{{ route('modules.update', $module) }}', {
+                                                                            method: 'PATCH',
+                                                                            headers: {
+                                                                                'Content-Type': 'application/json',
+                                                                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                                                            },
+                                                                            body: JSON.stringify({
+                                                                                dalle_id: '{{ $module->dalle_id }}',
+                                                                                largeur: '{{ $module->largeur }}',
+                                                                                hauteur: '{{ $module->hauteur }}',
+                                                                                nb_pixels_largeur: '{{ $module->nb_pixels_largeur }}',
+                                                                                nb_pixels_hauteur: '{{ $module->nb_pixels_hauteur }}',
+                                                                                etat: 'termine',
+                                                                                reference_module: '{{ $module->reference_module }}',
+                                                                                numero_serie: '{{ $module->numero_serie }}',
+                                                                                technicien_id: '{{ $module->technicien_id }}',
+                                                                                position_x: '{{ $module->position_x }}',
+                                                                                position_y: '{{ $module->position_y }}',
+                                                                                position_lettre: '{{ $module->position_lettre }}',
+                                                                                carte_reception: '{{ $module->carte_reception }}',
+                                                                                hub: '{{ $module->hub }}',
+                                                                                driver: '{{ $module->driver }}',
+                                                                                shift_register: '{{ $module->shift_register }}',
+                                                                                buffer: '{{ $module->buffer }}'
+                                                                            })
+                                                                        })
+                                                                        .then(response => {
+                                                                            if (response.ok) {
+                                                                                window.location.reload();
+                                                                            }
+                                                                        });
+                                                                    " class="flex items-center text-left text-xs px-2 py-1 text-green-400 hover:bg-green-900/30 rounded">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                                        </svg>
+                                                                        <span>Marquer OK</span>
+                                                                    </button>
+                                                                    
+                                                                    <!-- Créer intervention -->
+                                                                    <a href="{{ route('interventions.create', ['module_id' => $module->id]) }}" @click.stop class="flex items-center text-left text-xs px-2 py-1 text-yellow-400 hover:bg-yellow-900/30 rounded">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                                        </svg>
+                                                                        <span>Intervention</span>
+                                                                    </a>
+                                                                </div>
+                                                            </div>
                                                         @endforeach
                                                     </div>
                                                     <div class="w-full mt-3">
@@ -373,15 +459,29 @@
                                         
                                         <!-- FlightCases -->
                                         @foreach($dallesGrouped['flightcases'] as $fcNumber => $dalles)
-                                            <div class="mb-6">
-                                                <div class="flex items-center bg-gray-800/50 p-2 rounded-t-xl border-t border-l border-r border-gray-700">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" />
+                                            <div class="mb-6" x-data="{ open: false }">
+                                                <div @click="open = !open" class="flex items-center justify-between bg-gray-800/50 p-2 rounded-t-xl border-t border-l border-r border-gray-700 cursor-pointer">
+                                                    <div class="flex items-center">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" />
+                                                        </svg>
+                                                        <h6 class="font-medium text-white">Flight Case #{{ $fcNumber }} - {{ count($dalles) }} dalles</h6>
+                                                    </div>
+                                                    <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                                     </svg>
-                                                    <h6 class="font-medium text-white">Flight Case #{{ $fcNumber }} - {{ count($dalles) }} dalles</h6>
+                                                    <svg x-show="open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                                    </svg>
                                                 </div>
                                                 
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-900/30 rounded-b-xl border-b border-l border-r border-gray-700">
+                                                <div x-show="open" x-transition:enter="transition ease-out duration-200" 
+                                                     x-transition:enter-start="opacity-0 transform -translate-y-2" 
+                                                     x-transition:enter-end="opacity-100 transform translate-y-0"
+                                                     x-transition:leave="transition ease-in duration-200"
+                                                     x-transition:leave-start="opacity-100 transform translate-y-0"
+                                                     x-transition:leave-end="opacity-0 transform -translate-y-2"
+                                                     class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-900/30 rounded-b-xl border-b border-l border-r border-gray-700">
                                                     @foreach($dalles as $dalle)
                                                         <div class="glassmorphism border border-gray-700 rounded-xl p-4">
                                                             <div class="flex justify-between items-center mb-3">
@@ -546,7 +646,7 @@
                                                                                             {{ $x }},{{ $y }}
                                                                                         </div>
                                                                                     </div>
-                                                                                    <div class="hidden group-hover:block absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
+                                                                                    <div class="block absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
                                                                                         Module #{{ $module->id }}
                                                                                     </div>
                                                                                 </a>
@@ -579,12 +679,24 @@
                                         
                                         <!-- Autres dalles -->
                                         @if(!empty($dallesGrouped['autres']))
-                                            <div class="mb-6">
-                                                <div class="flex items-center bg-gray-800/50 p-2 rounded-t-xl border-t border-l border-r border-gray-700">
+                                            <div class="mb-6" x-data="{ open: false }">
+                                                <div @click="open = !open" class="flex items-center justify-between bg-gray-800/50 p-2 rounded-t-xl border-t border-l border-r border-gray-700 cursor-pointer">
                                                     <h6 class="font-medium text-white">Dalles indépendantes ({{ count($dallesGrouped['autres']) }})</h6>
+                                                    <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                    <svg x-show="open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                                    </svg>
                                                 </div>
                                                 
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-900/30 rounded-b-xl border-b border-l border-r border-gray-700">
+                                                <div x-show="open" x-transition:enter="transition ease-out duration-200" 
+                                                     x-transition:enter-start="opacity-0 transform -translate-y-2" 
+                                                     x-transition:enter-end="opacity-100 transform translate-y-0"
+                                                     x-transition:leave="transition ease-in duration-200"
+                                                     x-transition:leave-start="opacity-100 transform translate-y-0"
+                                                     x-transition:leave-end="opacity-0 transform -translate-y-2"
+                                                     class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-900/30 rounded-b-xl border-b border-l border-r border-gray-700">
                                                     @foreach($dallesGrouped['autres'] as $dalle)
                                                         <div class="glassmorphism border border-gray-700 rounded-xl p-4">
                                                             <div class="flex justify-between items-center mb-3">
@@ -752,7 +864,7 @@
                                                                                             {{ $x }},{{ $y }}
                                                                                         </div>
                                                                                     </div>
-                                                                                    <div class="hidden group-hover:block absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
+                                                                                    <div class="block absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
                                                                                         Module #{{ $module->id }}
                                                                                     </div>
                                                                                 </a>

@@ -71,7 +71,7 @@ class InterventionController extends Controller
         if ($moduleId) {
             $module = $this->moduleRepository->findById($moduleId);
             
-            if (\!$module) {
+            if (!$module) {
                 return redirect()->route('interventions.index')->with('error', "Module non trouvé.");
             }
             
@@ -115,7 +115,7 @@ class InterventionController extends Controller
             $interventionId = $request->input('intervention_id');
             $intervention = $this->interventionRepository->findById($interventionId);
             
-            if (\!$intervention) {
+            if (!$intervention) {
                 return redirect()->route('interventions.index')
                     ->with('error', 'Intervention non trouvée.');
             }
@@ -130,7 +130,7 @@ class InterventionController extends Controller
             $moduleEtat = $request->input('module_etat', 'termine');
             $success = $this->interventionService->finalizeIntervention($intervention, $moduleEtat);
             
-            if (\!$success) {
+            if (!$success) {
                 return redirect()->back()
                     ->withInput()
                     ->with('error', 'Erreur lors de la finalisation de l\'intervention.');
@@ -237,7 +237,7 @@ class InterventionController extends Controller
     {
         $intervention = $this->interventionRepository->findById($intervention->id);
         
-        if (\!$intervention) {
+        if (!$intervention) {
             return redirect()->route('interventions.index')
                 ->with('error', 'Intervention non trouvée.');
         }
@@ -252,13 +252,13 @@ class InterventionController extends Controller
     {
         $intervention = $this->interventionRepository->findById($intervention->id);
         
-        if (\!$intervention) {
+        if (!$intervention) {
             return redirect()->route('interventions.index')
                 ->with('error', 'Intervention non trouvée.');
         }
         
         // Vérifier si l'intervention a un diagnostic associé
-        if (\!$intervention->diagnostic) {
+        if (!$intervention->diagnostic) {
             // Créer un diagnostic vide pour cette intervention via le service
             $diagnosticDTO = new DiagnosticDTO();
             $diagnosticDTO->intervention_id = $intervention->id;
@@ -275,7 +275,7 @@ class InterventionController extends Controller
         }
         
         // Vérifier si l'intervention a une réparation associée
-        if (\!$intervention->reparation) {
+        if (!$intervention->reparation) {
             // Créer une réparation vide pour cette intervention via le service
             $reparationDTO = new ReparationDTO();
             $reparationDTO->intervention_id = $intervention->id;
@@ -390,7 +390,7 @@ class InterventionController extends Controller
         $intervention = $this->interventionRepository->findById($intervention->id);
         $module = $intervention->module;
         
-        if (\!$intervention) {
+        if (!$intervention) {
             return redirect()->route('interventions.index')
                 ->with('error', 'Intervention non trouvée.');
         }
@@ -407,12 +407,12 @@ class InterventionController extends Controller
         $module = $intervention->module;
         $diagnostic = $intervention->diagnostic;
         
-        if (\!$intervention) {
+        if (!$intervention) {
             return redirect()->route('interventions.index')
                 ->with('error', 'Intervention non trouvée.');
         }
         
-        if (\!$diagnostic) {
+        if (!$diagnostic) {
             return redirect()->route('interventions.step1.diagnostic', $intervention)
                 ->with('error', 'Vous devez d\'abord compléter le diagnostic.');
         }
@@ -430,17 +430,17 @@ class InterventionController extends Controller
         $diagnostic = $intervention->diagnostic;
         $reparation = $intervention->reparation;
         
-        if (\!$intervention) {
+        if (!$intervention) {
             return redirect()->route('interventions.index')
                 ->with('error', 'Intervention non trouvée.');
         }
         
-        if (\!$diagnostic) {
+        if (!$diagnostic) {
             return redirect()->route('interventions.step1.diagnostic', $intervention)
                 ->with('error', 'Vous devez d\'abord compléter le diagnostic.');
         }
         
-        if (\!$reparation) {
+        if (!$reparation) {
             return redirect()->route('interventions.step2.reparation', $intervention)
                 ->with('error', 'Vous devez d\'abord compléter la réparation.');
         }

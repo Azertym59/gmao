@@ -931,7 +931,7 @@
                                 </svg>
                                 {{ __('Retour') }}
                             </a>
-                            <button type="submit" class="btn-action btn-primary">
+                            <button type="submit" id="submit-form-btn" class="btn-action btn-primary" form="productForm">
                                 {{ __('Continuer') }}
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -1107,6 +1107,29 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Script inline chargé - Formulaire création chantier étape 2');
             
+            // Correction du bug de soumission du formulaire
+            const submitBtn = document.getElementById('submit-form-btn');
+            const productForm = document.getElementById('productForm');
+            const fromCatalogue1Radio = document.getElementById('from_catalogue_1');
+            const catalogueIdField = document.getElementById('catalogue_id');
+            
+            if (submitBtn && productForm) {
+                submitBtn.addEventListener('click', function(e) {
+                    e.preventDefault(); // Empêcher la soumission par défaut
+                    
+                    // Vérifier si on est en mode catalogue et qu'un produit est sélectionné
+                    if (fromCatalogue1Radio && fromCatalogue1Radio.checked) {
+                        if (!catalogueIdField.value) {
+                            alert("Veuillez sélectionner un produit du catalogue avant de continuer.");
+                            return;
+                        }
+                    }
+                    
+                    // Soumettre le formulaire
+                    productForm.submit();
+                });
+            }
+            
             // Forcer les couleurs des titres
             document.querySelectorAll('.section-title, .subsection-title').forEach(el => {
                 // Forcer la couleur verte sur tous les éléments avec ces classes
@@ -1117,7 +1140,8 @@
             });
             
             // Gestion du basculement entre catalogue et nouveau produit
-            const fromCatalogue1Radio = document.getElementById('from_catalogue_1');
+            // Réutilisation de la variable fromCatalogue1Radio définie plus haut
+            // const fromCatalogue1Radio = document.getElementById('from_catalogue_1');
             const fromCatalogue0Radio = document.getElementById('from_catalogue_0');
             const catalogueForm = document.getElementById('catalogue_form');
             const nouveauForm = document.getElementById('nouveau_form');

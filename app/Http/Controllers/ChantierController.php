@@ -14,6 +14,7 @@ use App\Models\Diagnostic;
 use App\Models\Reparation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class ChantierController extends Controller
 {
@@ -393,7 +394,7 @@ class ChantierController extends Controller
         }
         
         // Debug - afficher la valeur
-        \Log::info('Type de projet:', ['type' => $type]);
+        \Illuminate\Support\Facades\Log::info('Type de projet:', ['type' => $type]);
         
         // Stocker le type dans la session
         session(['projet_type' => $type]);
@@ -1118,7 +1119,7 @@ class ChantierController extends Controller
             $produitRef = ProduitCatalogue::find($step2Data['produit_catalogue_id']);
             
             // Ajouter un log pour voir les valeurs
-            \Log::info('Données du produit catalogue:', [
+            \Illuminate\Support\Facades\Log::info('Données du produit catalogue:', [
                 'produitRef' => $produitRef ? 'trouvé' : 'non trouvé',
                 'id' => $step2Data['produit_catalogue_id'] ?? 'non défini',
                 'marque' => $produitRef->marque ?? 'non défini',
@@ -1149,7 +1150,7 @@ class ChantierController extends Controller
                         $produit->id
                     ]);
                 } catch (\Exception $e) {
-                    \Log::error('Erreur lors de la mise à jour du bain_couleur: ' . $e->getMessage());
+                    \Illuminate\Support\Facades\Log::error('Erreur lors de la mise à jour du bain_couleur: ' . $e->getMessage());
                 }
             }
             
@@ -1160,12 +1161,12 @@ class ChantierController extends Controller
                         $produit->id
                     ]);
                 } catch (\Exception $e) {
-                    \Log::error('Erreur lors de la mise à jour du hub: ' . $e->getMessage());
+                    \Illuminate\Support\Facades\Log::error('Erreur lors de la mise à jour du hub: ' . $e->getMessage());
                 }
             }
         } else {
             // Ajouter un log pour voir les valeurs
-            \Log::info('Données du produit avant création:', [
+            \Illuminate\Support\Facades\Log::info('Données du produit avant création:', [
                 'marque' => $step2Data['marque'] ?? 'non défini',
                 'modele' => $step2Data['modele'] ?? 'non défini',
                 'pitch' => $step2Data['pitch'] ?? 'non défini',
@@ -1230,7 +1231,7 @@ class ChantierController extends Controller
             
             // Vérifier si le mode tailles multiples est activé
             if (isset($step3Data['has_multiple_sizes']) && $step3Data['has_multiple_sizes']) {
-                \Log::info('Traitement en mode tailles multiples');
+                \Illuminate\Support\Facades\Log::info('Traitement en mode tailles multiples');
                 
                 // Traiter la configuration 1 (500x500)
                 if (isset($step3Data['config1']) && $step3Data['config1']['nb_flightcases'] > 0) {
@@ -1368,7 +1369,7 @@ class ChantierController extends Controller
                 $flightcasesDetails = $step3Data['flightcases_details'] ?? [];
                 
                 // Ajouter un log pour le débogage
-                \Log::info('Traitement FlightCase mode standard:', [
+                \Illuminate\Support\Facades\Log::info('Traitement FlightCase mode standard:', [
                     'flightcases_details' => $flightcasesDetails,
                 ]);
                 
@@ -1379,7 +1380,7 @@ class ChantierController extends Controller
                     
                     if ($fcDetails && isset($fcDetails['is_partial']) && $fcDetails['is_partial']) {
                         $nbDallesForThisFC = $fcDetails['nb_dalles'];
-                        \Log::info("FlightCase {$f} est partiel, création de {$nbDallesForThisFC} dalles au lieu de {$step3Data['nb_dalles_par_flightcase']}");
+                        \Illuminate\Support\Facades\Log::info("FlightCase {$f} est partiel, création de {$nbDallesForThisFC} dalles au lieu de {$step3Data['nb_dalles_par_flightcase']}");
                     }
                     
                     // Déterminer les dimensions de dalles en fonction du type sélectionné
@@ -1399,7 +1400,7 @@ class ChantierController extends Controller
                         $currentLargeurDalle = $currentDalleType['largeur'];
                         $currentHauteurDalle = $currentDalleType['hauteur'];
                         $currentDispositionModules = $currentDalleType['disposition'];
-                        \Log::info("FlightCase {$f} utilise dalle type {$currentDalleType['nom']} ({$currentLargeurDalle}x{$currentHauteurDalle}mm)");
+                        \Illuminate\Support\Facades\Log::info("FlightCase {$f} utilise dalle type {$currentDalleType['nom']} ({$currentLargeurDalle}x{$currentHauteurDalle}mm)");
                     } else {
                         $currentLargeurDalle = $largeurDalle;
                         $currentHauteurDalle = $hauteurDalle;
@@ -1641,7 +1642,7 @@ class ChantierController extends Controller
             $emailService = new \App\Services\EmailService();
             $emailService->sendChantierCreatedEmail($chantier);
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de l\'envoi de l\'email de création de chantier: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Erreur lors de l\'envoi de l\'email de création de chantier: ' . $e->getMessage());
         }
         
         if ($generateReport) {

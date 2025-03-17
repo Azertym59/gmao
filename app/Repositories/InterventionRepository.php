@@ -66,21 +66,21 @@ class InterventionRepository
             }
             
             // Filtrage par date (si présent)
-            if (isset($filters['date_debut']) && \!empty($filters['date_debut'])) {
+            if (isset($filters['date_debut']) && !empty($filters['date_debut'])) {
                 $query->whereDate('date_debut', '>=', $filters['date_debut']);
             }
             
-            if (isset($filters['date_fin']) && \!empty($filters['date_fin'])) {
+            if (isset($filters['date_fin']) && !empty($filters['date_fin'])) {
                 $query->whereDate('date_debut', '<=', $filters['date_fin']);
             }
             
             // Filtrage par technicien
-            if (isset($filters['technicien_id']) && \!empty($filters['technicien_id'])) {
+            if (isset($filters['technicien_id']) && !empty($filters['technicien_id'])) {
                 $query->where('technicien_id', $filters['technicien_id']);
             }
             
             // Filtrage par chantier
-            if (isset($filters['chantier_id']) && \!empty($filters['chantier_id'])) {
+            if (isset($filters['chantier_id']) && !empty($filters['chantier_id'])) {
                 $query->whereHas('module.dalle.produit.chantier', function ($q) use ($filters) {
                     $q->where('id', $filters['chantier_id']);
                 });
@@ -267,19 +267,19 @@ class InterventionRepository
             ->leftJoin('reparations', 'interventions.id', '=', 'reparations.intervention_id');
             
         // Appliquer les filtres
-        if (\!empty($filters['date_debut'])) {
+        if (!empty($filters['date_debut'])) {
             $query->whereDate('interventions.date_debut', '>=', $filters['date_debut']);
         }
         
-        if (\!empty($filters['date_fin'])) {
+        if (!empty($filters['date_fin'])) {
             $query->whereDate('interventions.date_fin', '<=', $filters['date_fin']);
         }
         
-        if (\!empty($filters['technicien_id'])) {
+        if (!empty($filters['technicien_id'])) {
             $query->where('interventions.technicien_id', $filters['technicien_id']);
         }
         
-        if (\!empty($filters['chantier_id'])) {
+        if (!empty($filters['chantier_id'])) {
             $query->where('chantiers.id', $filters['chantier_id']);
         }
         

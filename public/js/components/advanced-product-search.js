@@ -196,6 +196,10 @@ function advancedProductSearch() {
             this.selectedProduct = product;
             // Mettre à jour la valeur cachée pour le formulaire
             document.getElementById('catalogue_id').value = product.id;
+            
+            // On n'a plus besoin d'ajouter un écouteur au bouton submit
+            // car il est maintenant directement lié au formulaire avec form="productForm"
+            // et la validation se fait par le script en ligne dans le document
         },
         
         // Effacer la sélection

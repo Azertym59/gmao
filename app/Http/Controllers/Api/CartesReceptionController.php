@@ -15,7 +15,7 @@ class CartesReceptionController extends Controller
     {
         $electronique = $request->input('electronique');
         
-        if (\!$electronique) {
+        if (!$electronique) {
             return response()->json([
                 'error' => 'Le paramètre electronique est requis'
             ], 400);

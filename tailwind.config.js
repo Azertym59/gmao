@@ -75,23 +75,25 @@ module.exports = {
           800: '#1F2937',
           900: '#111827',
         },
-        // Application Theme Colors - Dark Mode
-        'app-bg': '#121212',
-        'card-bg': 'rgba(30, 30, 30, 0.6)',
-        'sidebar': '#181818',
-        'accent-blue': '#3B82F6',
-        'accent-green': '#10B981',
-        'accent-purple': '#8B5CF6',
-        'accent-pink': '#EC4899',
-        'accent-yellow': '#F59E0B',
-        'accent-red': '#EF4444',
-        'text-primary': '#F3F4F6',
-        'text-secondary': '#9CA3AF',
-        'border-dark': 'rgba(75, 85, 99, 0.3)',
-        'success': '#10B981',
-        'warning': '#F59E0B',
-        'error': '#EF4444',
-        'info': '#3B82F6',
+        // Application Theme Colors - RealtimeColors Theme (Sobriété)
+        'app-bg': '#181a1e',  // Dark background
+        'card-bg': '#242830',  // Dark gray for cards
+        'sidebar': '#0f1116',  // Darker background
+        'accent-primary': '#00d624',  // Green primary
+        'accent-secondary': '#0076d1',  // Blue secondary
+        'accent-tertiary': '#00b2ff',  // Light blue tertiary
+        'accent-green': '#00d624',  // Green accent
+        'accent-blue': '#0076d1',  // Blue accent
+        'accent-teal': '#00b2ff',  // Light blue accent
+        'text-primary': '#ffffff',  // White text on dark background
+        'text-secondary': '#b4b8be',  // Light gray text
+        'text-tertiary': '#8b949e',  // Medium gray text
+        'border-light': 'rgba(255, 255, 255, 0.1)',  // Subtle light border
+        'border-dark': 'rgba(255, 255, 255, 0.05)',  // Very subtle light border
+        'success': '#00d624',  // Success green
+        'warning': '#ffc107',  // Warning yellow
+        'error': '#dc3545',  // Error red
+        'info': '#0076d1',  // Info blue
       },
       borderRadius: {
         'sm': '0.25rem',
