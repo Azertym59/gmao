@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'database'),
+    'default' => env('CACHE_STORE', 'redis'),
 
     /*
     |--------------------------------------------------------------------------
@@ -104,5 +104,25 @@ return [
     */
 
     'prefix' => env('CACHE_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_cache_'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cache TTL Durations
+    |--------------------------------------------------------------------------
+    |
+    | Default TTL (time-to-live) values for different types of cached data.
+    | These values can be referenced in code for consistency.
+    |
+    */
+    
+    'ttl' => [
+        'short' => 60,             // 1 minute
+        'medium' => 600,           // 10 minutes
+        'long' => 3600,            // 1 hour
+        'very_long' => 86400,      // 1 day
+        'stats' => 300,            // 5 minutes for statistics
+        'queries' => 60,           // 1 minute for frequent queries
+        'reference_data' => 43200, // 12 hours for reference data
+    ],
 
 ];

@@ -105,24 +105,65 @@
                     </div>
 
                     <!-- Résumé du diagnostic -->
-                    <div class="mb-6 bg-blue-900/20 p-4 rounded-lg border border-blue-500/20">
-                        <h3 class="font-medium text-blue-300 mb-2">Diagnostic effectué</h3>
+                    <div id="diagnostic-summary" class="mb-6 bg-blue-900/20 p-4 rounded-lg border border-blue-500/20">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-medium text-blue-300">Diagnostic effectué</h3>
+                            <button id="replace-all-btn" type="button" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m-8 5H4m0 0l4 4m-4-4l4-4" />
+                                </svg>
+                                Remplacer tout
+                            </button>
+                        </div>
+                        
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <p class="text-gray-300"><span class="font-semibold">LEDs HS:</span> {{ $diagnostic->nb_leds_hs }}</p>
+                            <div class="p-3 bg-gray-800/50 rounded-lg border border-blue-500/30">
+                                <div class="text-2xl text-blue-400 font-bold leds-hs-value">{{ $diagnostic->nb_leds_hs }}</div>
+                                <p class="text-gray-300 text-sm">LEDs défectueuses</p>
                             </div>
-                            <div>
-                                <p class="text-gray-300"><span class="font-semibold">ICs HS:</span> {{ $diagnostic->nb_ic_hs }}</p>
+                            <div class="p-3 bg-gray-800/50 rounded-lg border border-purple-500/30">
+                                <div class="text-2xl text-purple-400 font-bold ics-hs-value">{{ $diagnostic->nb_ic_hs }}</div>
+                                <p class="text-gray-300 text-sm">ICs défectueux</p>
                             </div>
-                            <div>
-                                <p class="text-gray-300"><span class="font-semibold">Masques HS:</span> {{ $diagnostic->nb_masques_hs }}</p>
+                            <div class="p-3 bg-gray-800/50 rounded-lg border border-amber-500/30">
+                                <div class="text-2xl text-amber-400 font-bold masques-hs-value">{{ $diagnostic->nb_masques_hs }}</div>
+                                <p class="text-gray-300 text-sm">Masques défectueux</p>
                             </div>
                         </div>
-                        @if($diagnostic->remarques)
-                            <div class="mt-2">
-                                <p class="text-gray-300"><span class="font-semibold">Remarques:</span> {{ $diagnostic->remarques }}</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                            <div class="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Fake PCB nécessaire:</span>
+                                    <span class="font-bold {{ $diagnostic->pose_fake_pcb ? 'text-red-400' : 'text-gray-400' }} fake-pcb-needed">
+                                        {{ $diagnostic->pose_fake_pcb ? 'Oui' : 'Non' }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between mt-2">
+                                    <span class="text-gray-300">Cause identifiée:</span>
+                                    <span class="font-bold text-gray-300">
+                                        @if($diagnostic->cause === 'usure_normale')
+                                            Usure normale
+                                        @elseif($diagnostic->cause === 'choc')
+                                            Choc/Impact
+                                        @elseif($diagnostic->cause === 'defaut_usine')
+                                            Défaut d'usine
+                                        @elseif($diagnostic->cause === 'autre')
+                                            Autre cause
+                                        @else
+                                            Non précisée
+                                        @endif
+                                    </span>
+                                </div>
                             </div>
-                        @endif
+                            
+                            @if($diagnostic->remarques)
+                            <div class="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                                <p class="text-gray-400 text-sm">Remarques du diagnostic:</p>
+                                <p class="text-gray-300 mt-1">{{ $diagnostic->remarques }}</p>
+                            </div>
+                            @endif
+                        </div>
                     </div>
 
                     <!-- Chronomètre -->
@@ -154,32 +195,114 @@
                             <div>
                                 <h4 class="font-medium text-gray-300 mb-4">Réparations effectuées</h4>
                                 <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                        <div>
-                                            <x-input-label for="reparation_nb_leds_remplacees" :value="__('Nombre de LEDs remplacées')" class="text-gray-300" />
-                                            <input id="reparation_nb_leds_remplacees" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="reparation_nb_leds_remplacees" value="{{ old('reparation_nb_leds_remplacees', $intervention->reparation->nb_leds_remplacees ?? $diagnostic->nb_leds_hs ?? 0) }}" min="0" required />
-                                            <x-input-error :messages="$errors->get('reparation_nb_leds_remplacees')" class="mt-2" />
+                                    <!-- Compteurs visuels pour la réparation -->
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                        <!-- Compteur de LEDs remplacées -->
+                                        <div id="leds-replaced-counter" class="bg-gray-800/80 rounded-lg p-4 text-center border border-blue-600/30 shadow">
+                                            <h4 class="text-blue-400 font-semibold mb-2">LEDs Remplacées</h4>
+                                            <div class="flex items-center justify-center space-x-4">
+                                                <button type="button" class="decrement-btn bg-red-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-red-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                                    </svg>
+                                                </button>
+                                                <div class="counter-display text-4xl font-bold text-blue-500 w-16">
+                                                    {{ old('reparation_nb_leds_remplacees', $intervention->reparation->nb_leds_remplacees ?? $diagnostic->nb_leds_hs ?? 0) }}
+                                                </div>
+                                                <button type="button" class="increment-btn bg-green-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-green-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div class="text-xs text-gray-400 mt-2">Appuyez sur <kbd class="bg-gray-700 px-1 py-0.5 rounded">1</kbd> pour incrémenter</div>
+                                            <!-- Champ caché pour stocker la valeur -->
+                                            <input id="reparation_nb_leds_remplacees" type="hidden" name="reparation_nb_leds_remplacees" value="{{ old('reparation_nb_leds_remplacees', $intervention->reparation->nb_leds_remplacees ?? $diagnostic->nb_leds_hs ?? 0) }}" />
                                         </div>
 
-                                        <div>
-                                            <x-input-label for="reparation_nb_ic_remplaces" :value="__('Nombre d\'ICs remplacés')" class="text-gray-300" />
-                                            <input id="reparation_nb_ic_remplaces" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="reparation_nb_ic_remplaces" value="{{ old('reparation_nb_ic_remplaces', $intervention->reparation->nb_ic_remplaces ?? $diagnostic->nb_ic_hs ?? 0) }}" min="0" required />
-                                            <x-input-error :messages="$errors->get('reparation_nb_ic_remplaces')" class="mt-2" />
+                                        <!-- Compteur d'ICs remplacés -->
+                                        <div id="ics-replaced-counter" class="bg-gray-800/80 rounded-lg p-4 text-center border border-purple-600/30 shadow">
+                                            <h4 class="text-purple-400 font-semibold mb-2">ICs Remplacés</h4>
+                                            <div class="flex items-center justify-center space-x-4">
+                                                <button type="button" class="decrement-btn bg-red-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-red-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                                    </svg>
+                                                </button>
+                                                <div class="counter-display text-4xl font-bold text-purple-500 w-16">
+                                                    {{ old('reparation_nb_ic_remplaces', $intervention->reparation->nb_ic_remplaces ?? $diagnostic->nb_ic_hs ?? 0) }}
+                                                </div>
+                                                <button type="button" class="increment-btn bg-green-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-green-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div class="text-xs text-gray-400 mt-2">Appuyez sur <kbd class="bg-gray-700 px-1 py-0.5 rounded">2</kbd> pour incrémenter</div>
+                                            <!-- Champ caché pour stocker la valeur -->
+                                            <input id="reparation_nb_ic_remplaces" type="hidden" name="reparation_nb_ic_remplaces" value="{{ old('reparation_nb_ic_remplaces', $intervention->reparation->nb_ic_remplaces ?? $diagnostic->nb_ic_hs ?? 0) }}" />
                                         </div>
 
-                                        <div>
-                                            <x-input-label for="reparation_nb_masques_remplaces" :value="__('Nombre de masques remplacés')" class="text-gray-300" />
-                                            <input id="reparation_nb_masques_remplaces" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="reparation_nb_masques_remplaces" value="{{ old('reparation_nb_masques_remplaces', $intervention->reparation->nb_masques_remplaces ?? $diagnostic->nb_masques_hs ?? 0) }}" min="0" required />
-                                            <x-input-error :messages="$errors->get('reparation_nb_masques_remplaces')" class="mt-2" />
+                                        <!-- Compteur de Masques remplacés -->
+                                        <div id="masques-replaced-counter" class="bg-gray-800/80 rounded-lg p-4 text-center border border-amber-600/30 shadow">
+                                            <h4 class="text-amber-400 font-semibold mb-2">Masques Remplacés</h4>
+                                            <div class="flex items-center justify-center space-x-4">
+                                                <button type="button" class="decrement-btn bg-red-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-red-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                                    </svg>
+                                                </button>
+                                                <div class="counter-display text-4xl font-bold text-amber-500 w-16">
+                                                    {{ old('reparation_nb_masques_remplaces', $intervention->reparation->nb_masques_remplaces ?? $diagnostic->nb_masques_hs ?? 0) }}
+                                                </div>
+                                                <button type="button" class="increment-btn bg-green-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-green-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div class="text-xs text-gray-400 mt-2">Appuyez sur <kbd class="bg-gray-700 px-1 py-0.5 rounded">3</kbd> pour incrémenter</div>
+                                            <!-- Champ caché pour stocker la valeur -->
+                                            <input id="reparation_nb_masques_remplaces" type="hidden" name="reparation_nb_masques_remplaces" value="{{ old('reparation_nb_masques_remplaces', $intervention->reparation->nb_masques_remplaces ?? $diagnostic->nb_masques_hs ?? 0) }}" />
                                         </div>
                                     </div>
                                     
-                                    <div class="mb-4">
-                                        <label class="inline-flex items-center text-gray-300">
-                                            <input type="checkbox" id="reparation_fake_pcb_pose" name="reparation_fake_pcb_pose" value="1" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" 
-                                                {{ old('reparation_fake_pcb_pose', $intervention->reparation->fake_pcb_pose ?? $diagnostic->pose_fake_pcb ?? false) ? 'checked' : '' }}>
-                                            <span class="ml-2">Fake PCB posé</span>
-                                        </label>
+                                    <!-- Fake PCB -->
+                                    <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <!-- Checkbox Fake PCB posé -->
+                                        <div class="flex items-center p-3 border border-red-500/50 rounded-lg bg-red-900/20">
+                                            <label class="flex items-center text-gray-300 cursor-pointer w-full">
+                                                <input type="checkbox" id="reparation_fake_pcb_pose" name="reparation_fake_pcb_pose" value="1" class="h-6 w-6 rounded bg-gray-700 border-gray-600 text-red-600 focus:ring-red-500" 
+                                                    {{ old('reparation_fake_pcb_pose', $intervention->reparation->fake_pcb_pose ?? $diagnostic->pose_fake_pcb ?? false) ? 'checked' : '' }}>
+                                                <div class="ml-3">
+                                                    <span class="block text-white font-medium">Fake PCB posé</span>
+                                                    <span class="text-gray-400 text-sm">Cocher si un Fake PCB a été installé</span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                        
+                                        <!-- Compteur de Fake PCB -->
+                                        <div id="fake-pcb-counter" class="bg-gray-800/80 rounded-lg p-4 text-center border border-red-600/30 shadow">
+                                            <h4 class="text-red-400 font-semibold mb-2">Nombre de Fake PCB</h4>
+                                            <div class="flex items-center justify-center space-x-4">
+                                                <button type="button" class="decrement-btn bg-red-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-red-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                                    </svg>
+                                                </button>
+                                                <div class="counter-display text-4xl font-bold text-red-500 w-16">
+                                                    {{ old('reparation_fake_pcb_nb', $intervention->reparation->fake_pcb_nb ?? 0) }}
+                                                </div>
+                                                <button type="button" class="increment-btn bg-green-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-green-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div class="text-xs text-gray-400 mt-2">Appuyez sur <kbd class="bg-gray-700 px-1 py-0.5 rounded">4</kbd> pour incrémenter</div>
+                                            <!-- Champ caché pour stocker la valeur -->
+                                            <input id="reparation_fake_pcb_nb" type="hidden" name="reparation_fake_pcb_nb" value="{{ old('reparation_fake_pcb_nb', $intervention->reparation->fake_pcb_nb ?? 0) }}" />
+                                        </div>
                                     </div>
 
                                     <div>
@@ -306,21 +429,7 @@
                 // Assurer que le temps total est à jour
                 tempsTotal.value = secondes;
                 
-                // Forcer la conversion des champs numériques en nombres entiers
-                const nbLedsRemplacees = document.getElementById('reparation_nb_leds_remplacees');
-                const nbIcRemplaces = document.getElementById('reparation_nb_ic_remplaces');
-                const nbMasquesRemplaces = document.getElementById('reparation_nb_masques_remplaces');
-                
-                // Assurer que les valeurs sont des nombres positifs
-                nbLedsRemplacees.value = Math.max(0, parseInt(nbLedsRemplacees.value) || 0);
-                nbIcRemplaces.value = Math.max(0, parseInt(nbIcRemplaces.value) || 0);
-                nbMasquesRemplaces.value = Math.max(0, parseInt(nbMasquesRemplaces.value) || 0);
-                
-                // Debugger avec console
-                console.log('Soumission du formulaire de réparation avec valeurs:');
-                console.log('LEDs remplacées:', nbLedsRemplacees.value);
-                console.log('ICs remplacés:', nbIcRemplaces.value);
-                console.log('Masques remplacés:', nbMasquesRemplaces.value);
+                // Le reste de la validation se fait maintenant dans intervention-counters.js
             });
             
             // Toggle datasheet
@@ -343,4 +452,7 @@
             }
         });
     </script>
+    
+    <!-- Inclure notre script de compteurs -->
+    <script src="{{ asset('js/intervention-counters.js') }}"></script>
 </x-app-layout>

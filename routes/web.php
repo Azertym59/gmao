@@ -24,21 +24,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-// Route temporaire pour contourner le problème de CSRF
-Route::get('/temp-login', function () {
-    return view('temp-login');
-});
-
-Route::post('/temp-login', function (Request $request) {
-    $credentials = $request->only('email', 'password');
-    
-    if (Auth::attempt($credentials)) {
-        $request->session()->regenerate();
-        return redirect('/dashboard');
-    }
-    
-    return back()->with('error', 'Email ou mot de passe incorrect.');
-});
+// Routes temporaires supprimées
 
 // Routes publiques
 // Route d'accès direct sans authentification (TEMPORAIRE)

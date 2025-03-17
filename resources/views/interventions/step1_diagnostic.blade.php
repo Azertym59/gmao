@@ -141,33 +141,144 @@
                                 <h4 class="font-medium text-gray-300 mb-4">Diagnostic visuel</h4>
                                 
                                 <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                        <div>
-                                            <x-input-label for="diagnostic_nb_leds_hs" :value="__('Nombre de LEDs HS')" class="text-gray-300" />
-                                            <input id="diagnostic_nb_leds_hs" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="diagnostic_nb_leds_hs" value="{{ old('diagnostic_nb_leds_hs', $intervention->diagnostic->nb_leds_hs ?? 0) }}" min="0" required />
-                                            <x-input-error :messages="$errors->get('diagnostic_nb_leds_hs')" class="mt-2" />
+                                    <!-- Compteurs visuels pour le diagnostic -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                    <!-- Compteur de LEDs HS -->
+                                    <div id="leds-counter" class="bg-gray-800/80 rounded-lg p-4 text-center border border-blue-600/30 shadow">
+                                        <h4 class="text-blue-400 font-semibold mb-2">LEDs Défectueuses</h4>
+                                        <div class="flex items-center justify-center space-x-4">
+                                            <button type="button" class="decrement-btn bg-red-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-red-700">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                                </svg>
+                                            </button>
+                                            <div class="counter-display text-4xl font-bold text-blue-500 w-16">
+                                                {{ old('diagnostic_nb_leds_hs', $intervention->diagnostic->nb_leds_hs ?? 0) }}
+                                            </div>
+                                            <button type="button" class="increment-btn bg-green-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-green-700">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                            </button>
                                         </div>
-
-                                        <div>
-                                            <x-input-label for="diagnostic_nb_ic_hs" :value="__('Nombre d\'ICs HS')" class="text-gray-300" />
-                                            <input id="diagnostic_nb_ic_hs" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="diagnostic_nb_ic_hs" value="{{ old('diagnostic_nb_ic_hs', $intervention->diagnostic->nb_ic_hs ?? 0) }}" min="0" required />
-                                            <x-input-error :messages="$errors->get('diagnostic_nb_ic_hs')" class="mt-2" />
-                                        </div>
-
-                                        <div>
-                                            <x-input-label for="diagnostic_nb_masques_hs" :value="__('Nombre de masques HS')" class="text-gray-300" />
-                                            <input id="diagnostic_nb_masques_hs" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50" type="number" name="diagnostic_nb_masques_hs" value="{{ old('diagnostic_nb_masques_hs', $intervention->diagnostic->nb_masques_hs ?? 0) }}" min="0" required />
-                                            <x-input-error :messages="$errors->get('diagnostic_nb_masques_hs')" class="mt-2" />
-                                        </div>
+                                        <div class="text-xs text-gray-400 mt-2">Appuyez sur <kbd class="bg-gray-700 px-1 py-0.5 rounded">1</kbd> pour incrémenter</div>
+                                        <!-- Champ caché pour stocker la valeur -->
+                                        <input id="diagnostic_nb_leds_hs" type="hidden" name="diagnostic_nb_leds_hs" value="{{ old('diagnostic_nb_leds_hs', $intervention->diagnostic->nb_leds_hs ?? 0) }}" />
                                     </div>
+
+                                    <!-- Compteur d'ICs HS -->
+                                    <div id="ics-counter" class="bg-gray-800/80 rounded-lg p-4 text-center border border-purple-600/30 shadow">
+                                        <h4 class="text-purple-400 font-semibold mb-2">ICs Défectueux</h4>
+                                        <div class="flex items-center justify-center space-x-4">
+                                            <button type="button" class="decrement-btn bg-red-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-red-700">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                                </svg>
+                                            </button>
+                                            <div class="counter-display text-4xl font-bold text-purple-500 w-16">
+                                                {{ old('diagnostic_nb_ic_hs', $intervention->diagnostic->nb_ic_hs ?? 0) }}
+                                            </div>
+                                            <button type="button" class="increment-btn bg-green-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-green-700">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div class="text-xs text-gray-400 mt-2">Appuyez sur <kbd class="bg-gray-700 px-1 py-0.5 rounded">2</kbd> pour incrémenter</div>
+                                        <!-- Champ caché pour stocker la valeur -->
+                                        <input id="diagnostic_nb_ic_hs" type="hidden" name="diagnostic_nb_ic_hs" value="{{ old('diagnostic_nb_ic_hs', $intervention->diagnostic->nb_ic_hs ?? 0) }}" />
+                                    </div>
+
+                                    <!-- Compteur de Masques HS -->
+                                    <div id="masques-counter" class="bg-gray-800/80 rounded-lg p-4 text-center border border-amber-600/30 shadow">
+                                        <h4 class="text-amber-400 font-semibold mb-2">Masques Défectueux</h4>
+                                        <div class="flex items-center justify-center space-x-4">
+                                            <button type="button" class="decrement-btn bg-red-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-red-700">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                                </svg>
+                                            </button>
+                                            <div class="counter-display text-4xl font-bold text-amber-500 w-16">
+                                                {{ old('diagnostic_nb_masques_hs', $intervention->diagnostic->nb_masques_hs ?? 0) }}
+                                            </div>
+                                            <button type="button" class="increment-btn bg-green-600 text-white h-10 w-10 rounded-full flex items-center justify-center focus:outline-none hover:bg-green-700">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div class="text-xs text-gray-400 mt-2">Appuyez sur <kbd class="bg-gray-700 px-1 py-0.5 rounded">3</kbd> pour incrémenter</div>
+                                        <!-- Champ caché pour stocker la valeur -->
+                                        <input id="diagnostic_nb_masques_hs" type="hidden" name="diagnostic_nb_masques_hs" value="{{ old('diagnostic_nb_masques_hs', $intervention->diagnostic->nb_masques_hs ?? 0) }}" />
+                                    </div>
+                                </div>
+                                
+                                <!-- Problèmes courants - Cases à cocher -->
+                                <div class="mb-6">
+                                    <h4 class="text-gray-300 font-medium mb-3">Problèmes courants identifiés:</h4>
                                     
-                                    <div class="mb-4">
-                                        <label class="inline-flex items-center text-gray-300">
-                                            <input type="checkbox" id="diagnostic_pose_fake_pcb" name="diagnostic_pose_fake_pcb" value="1" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" 
-                                                {{ old('diagnostic_pose_fake_pcb', $intervention->diagnostic->pose_fake_pcb ?? false) ? 'checked' : '' }}>
-                                            <span class="ml-2">Pose de Fake PCB nécessaire</span>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <label class="bg-gray-800/50 p-3 rounded-lg border border-gray-700 flex items-start hover:bg-gray-800 cursor-pointer">
+                                            <input type="checkbox" name="problemes[]" value="pads_arraches" class="mt-1 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                                            <div class="ml-2">
+                                                <span class="block text-white font-medium">Pads arrachés</span>
+                                                <span class="text-gray-400 text-xs">Points de connexion endommagés</span>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="bg-gray-800/50 p-3 rounded-lg border border-gray-700 flex items-start hover:bg-gray-800 cursor-pointer">
+                                            <input type="checkbox" name="problemes[]" value="pistes_coupees" class="mt-1 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                                            <div class="ml-2">
+                                                <span class="block text-white font-medium">Pistes coupées</span>
+                                                <span class="text-gray-400 text-xs">Traces du circuit interrompues</span>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="bg-gray-800/50 p-3 rounded-lg border border-gray-700 flex items-start hover:bg-gray-800 cursor-pointer">
+                                            <input type="checkbox" name="problemes[]" value="carre_couleur" class="mt-1 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                                            <div class="ml-2">
+                                                <span class="block text-white font-medium">Carré de couleur</span>
+                                                <span class="text-gray-400 text-xs">Zone rectangulaire affectée</span>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="bg-gray-800/50 p-3 rounded-lg border border-gray-700 flex items-start hover:bg-gray-800 cursor-pointer">
+                                            <input type="checkbox" name="problemes[]" value="colonne_couleur" class="mt-1 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                                            <div class="ml-2">
+                                                <span class="block text-white font-medium">Colonne de couleur</span>
+                                                <span class="text-gray-400 text-xs">Ligne verticale de pixels affectés</span>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="bg-gray-800/50 p-3 rounded-lg border border-gray-700 flex items-start hover:bg-gray-800 cursor-pointer">
+                                            <input type="checkbox" name="problemes[]" value="ligne_couleur" class="mt-1 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                                            <div class="ml-2">
+                                                <span class="block text-white font-medium">Ligne de couleur</span>
+                                                <span class="text-gray-400 text-xs">Ligne horizontale de pixels affectés</span>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="bg-gray-800/50 p-3 rounded-lg border border-gray-700 flex items-start hover:bg-gray-800 cursor-pointer">
+                                            <input type="checkbox" name="problemes[]" value="soudures_defectueuses" class="mt-1 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                                            <div class="ml-2">
+                                                <span class="block text-white font-medium">Soudures défectueuses</span>
+                                                <span class="text-gray-400 text-xs">Joints de soudure à refaire</span>
+                                            </div>
                                         </label>
                                     </div>
+                                </div>
+                                    
+                                <!-- Fake PCB nécessaire -->
+                                <div class="mb-4">
+                                    <label class="flex items-center p-3 border border-red-500/50 rounded-lg bg-red-900/20 hover:bg-red-900/30 cursor-pointer">
+                                        <input type="checkbox" id="diagnostic_pose_fake_pcb" name="diagnostic_pose_fake_pcb" value="1" class="h-6 w-6 rounded bg-gray-700 border-gray-600 text-red-600 focus:ring-red-500" 
+                                            {{ old('diagnostic_pose_fake_pcb', $intervention->diagnostic->pose_fake_pcb ?? false) ? 'checked' : '' }}>
+                                        <div class="ml-3">
+                                            <span class="block text-white font-medium text-lg">Pose de Fake PCB nécessaire</span>
+                                            <span class="text-gray-300 text-sm">Un remplacement complet du PCB est requis pour ce module</span>
+                                        </div>
+                                    </label>
+                                </div>
                                     
                                     <div class="mb-4">
                                         <x-input-label for="diagnostic_cause" :value="__('Cause du problème')" class="text-gray-300 mb-2" />
@@ -343,22 +454,11 @@
                 // Assurer que le temps total est à jour
                 tempsTotal.value = secondes;
                 
-                // Forcer la conversion des champs numériques en nombres entiers
-                const nbLedsHs = document.getElementById('diagnostic_nb_leds_hs');
-                const nbIcHs = document.getElementById('diagnostic_nb_ic_hs');
-                const nbMasquesHs = document.getElementById('diagnostic_nb_masques_hs');
-                
-                // Assurer que les valeurs sont des nombres positifs
-                nbLedsHs.value = Math.max(0, parseInt(nbLedsHs.value) || 0);
-                nbIcHs.value = Math.max(0, parseInt(nbIcHs.value) || 0);
-                nbMasquesHs.value = Math.max(0, parseInt(nbMasquesHs.value) || 0);
-                
-                // Debugger avec console
-                console.log('Soumission du formulaire avec valeurs:');
-                console.log('LEDs HS:', nbLedsHs.value);
-                console.log('ICs HS:', nbIcHs.value);
-                console.log('Masques HS:', nbMasquesHs.value);
+                // Le reste de la validation se fait maintenant dans intervention-counters.js
             });
         });
     </script>
+    
+    <!-- Inclure notre script de compteurs -->
+    <script src="{{ asset('js/intervention-counters.js') }}"></script>
 </x-app-layout>

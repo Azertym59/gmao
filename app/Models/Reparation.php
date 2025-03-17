@@ -20,7 +20,8 @@ class Reparation extends Model
         'actions',
         'pieces_remplacees',
         'resultat',
-        'fake_pcb_pose'
+        'fake_pcb_pose',
+        'fake_pcb_nb'
     ];
 
     /**

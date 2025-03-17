@@ -1,3 +1,7 @@
+<?php
+    use Illuminate\Support\Facades\Auth;
+?>
+
 <!-- Sidebar / Menu latéral -->
 <div id="sidebar" class="bg-sidebar flex-shrink-0 w-64 fixed h-full z-20 transition-all duration-300 shadow-xl">
     <div class="flex flex-col h-full">

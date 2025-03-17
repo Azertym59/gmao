@@ -20,6 +20,10 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 // Capture la requête
 $request = Request::capture();
 
-// Redirection vers le formulaire temporaire supprimée
+// Rediriger les demandes de login vers notre formulaire temporaire
+if ($request->getPathInfo() == '/login') {
+    header('Location: /temp-login');
+    exit;
+}
 
 $app->handleRequest($request);
