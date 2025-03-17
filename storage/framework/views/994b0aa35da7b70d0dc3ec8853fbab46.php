@@ -22,6 +22,12 @@
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-semibold text-white"><?php echo e($chantier->nom); ?></h3>
                         <div class="flex space-x-2">
+                            <a href="<?php echo e(route('etiquettes.chantier', $chantier->id)); ?>" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg shadow transition-all duration-300 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                Imprimer étiquette
+                            </a>
                             <?php if (isset($component)) { $__componentOriginal8417baeedcb6c131165d53e37e61cc07 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal8417baeedcb6c131165d53e37e61cc07 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.edit-button','data' => ['route' => route('chantiers.edit', $chantier)]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -66,19 +72,18 @@
                     </div>
                     
                     <!-- Boutons d'envoi d'email -->
-                    <div class="mt-4 mb-6 flex space-x-2 justify-end">
+                    <div class="mt-4 mb-6 flex space-x-3 justify-end">
                         <?php if (isset($component)) { $__componentOriginalc4709a7f0659e5bc620ccc45265cff75 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc4709a7f0659e5bc620ccc45265cff75 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.email-button','data' => ['chantier' => $chantier,'type' => 'created','class' => 'btn-glow']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.email-button','data' => ['chantier' => $chantier,'type' => 'created','buttonType' => 'info']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('email-button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['chantier' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier),'type' => 'created','class' => 'btn-glow']); ?>
-                            Email création
-                         <?php echo $__env->renderComponent(); ?>
+<?php $component->withAttributes(['chantier' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier),'type' => 'created','buttonType' => 'info']); ?>
+<?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc4709a7f0659e5bc620ccc45265cff75)): ?>
 <?php $attributes = $__attributesOriginalc4709a7f0659e5bc620ccc45265cff75; ?>
@@ -90,16 +95,15 @@
 <?php endif; ?>
                         <?php if (isset($component)) { $__componentOriginalc4709a7f0659e5bc620ccc45265cff75 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc4709a7f0659e5bc620ccc45265cff75 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.email-button','data' => ['chantier' => $chantier,'type' => 'started','class' => 'pulse-primary']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.email-button','data' => ['chantier' => $chantier,'type' => 'started','buttonType' => 'warning']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('email-button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['chantier' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier),'type' => 'started','class' => 'pulse-primary']); ?>
-                            Email interventions
-                         <?php echo $__env->renderComponent(); ?>
+<?php $component->withAttributes(['chantier' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier),'type' => 'started','buttonType' => 'warning']); ?>
+<?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc4709a7f0659e5bc620ccc45265cff75)): ?>
 <?php $attributes = $__attributesOriginalc4709a7f0659e5bc620ccc45265cff75; ?>
@@ -111,16 +115,15 @@
 <?php endif; ?>
                         <?php if (isset($component)) { $__componentOriginalc4709a7f0659e5bc620ccc45265cff75 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc4709a7f0659e5bc620ccc45265cff75 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.email-button','data' => ['chantier' => $chantier,'type' => 'completed','class' => 'btn-rainbow']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.email-button','data' => ['chantier' => $chantier,'type' => 'completed','buttonType' => 'success']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('email-button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['chantier' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier),'type' => 'completed','class' => 'btn-rainbow']); ?>
-                            Email finalisation
-                         <?php echo $__env->renderComponent(); ?>
+<?php $component->withAttributes(['chantier' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier),'type' => 'completed','buttonType' => 'success']); ?>
+<?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc4709a7f0659e5bc620ccc45265cff75)): ?>
 <?php $attributes = $__attributesOriginalc4709a7f0659e5bc620ccc45265cff75; ?>
@@ -130,92 +133,6 @@
 <?php $component = $__componentOriginalc4709a7f0659e5bc620ccc45265cff75; ?>
 <?php unset($__componentOriginalc4709a7f0659e5bc620ccc45265cff75); ?>
 <?php endif; ?>
-                        
-                        <div class="ml-2 flex space-x-1">
-                            <?php if (isset($component)) { $__componentOriginal658398a0e73a18931bb7def04d911f42 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal658398a0e73a18931bb7def04d911f42 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon-button','data' => ['tag' => 'button','type' => 'info','tooltip' => 'Email création','tooltipPosition' => 'top','size' => 'sm','class' => 'rotate-icon','onclick' => 'document.getElementById(\'email-created-form\').submit();']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('icon-button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['tag' => 'button','type' => 'info','tooltip' => 'Email création','tooltipPosition' => 'top','size' => 'sm','class' => 'rotate-icon','onclick' => 'document.getElementById(\'email-created-form\').submit();']); ?>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                             <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal658398a0e73a18931bb7def04d911f42)): ?>
-<?php $attributes = $__attributesOriginal658398a0e73a18931bb7def04d911f42; ?>
-<?php unset($__attributesOriginal658398a0e73a18931bb7def04d911f42); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal658398a0e73a18931bb7def04d911f42)): ?>
-<?php $component = $__componentOriginal658398a0e73a18931bb7def04d911f42; ?>
-<?php unset($__componentOriginal658398a0e73a18931bb7def04d911f42); ?>
-<?php endif; ?>
-                            <form id="email-created-form" action="<?php echo e(route('emails.chantier', $chantier)); ?>" method="POST" class="hidden">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="email_type" value="created">
-                            </form>
-                            
-                            <?php if (isset($component)) { $__componentOriginal658398a0e73a18931bb7def04d911f42 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal658398a0e73a18931bb7def04d911f42 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon-button','data' => ['tag' => 'button','type' => 'warning','tooltip' => 'Email interventions','tooltipPosition' => 'top','size' => 'sm','class' => 'rotate-icon','onclick' => 'document.getElementById(\'email-started-form\').submit();']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('icon-button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['tag' => 'button','type' => 'warning','tooltip' => 'Email interventions','tooltipPosition' => 'top','size' => 'sm','class' => 'rotate-icon','onclick' => 'document.getElementById(\'email-started-form\').submit();']); ?>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                             <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal658398a0e73a18931bb7def04d911f42)): ?>
-<?php $attributes = $__attributesOriginal658398a0e73a18931bb7def04d911f42; ?>
-<?php unset($__attributesOriginal658398a0e73a18931bb7def04d911f42); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal658398a0e73a18931bb7def04d911f42)): ?>
-<?php $component = $__componentOriginal658398a0e73a18931bb7def04d911f42; ?>
-<?php unset($__componentOriginal658398a0e73a18931bb7def04d911f42); ?>
-<?php endif; ?>
-                            <form id="email-started-form" action="<?php echo e(route('emails.chantier', $chantier)); ?>" method="POST" class="hidden">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="email_type" value="started">
-                            </form>
-                            
-                            <?php if (isset($component)) { $__componentOriginal658398a0e73a18931bb7def04d911f42 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal658398a0e73a18931bb7def04d911f42 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon-button','data' => ['tag' => 'button','type' => 'success','tooltip' => 'Email finalisation','tooltipPosition' => 'top','size' => 'sm','class' => 'rotate-icon','onclick' => 'document.getElementById(\'email-completed-form\').submit();']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('icon-button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['tag' => 'button','type' => 'success','tooltip' => 'Email finalisation','tooltipPosition' => 'top','size' => 'sm','class' => 'rotate-icon','onclick' => 'document.getElementById(\'email-completed-form\').submit();']); ?>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                             <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal658398a0e73a18931bb7def04d911f42)): ?>
-<?php $attributes = $__attributesOriginal658398a0e73a18931bb7def04d911f42; ?>
-<?php unset($__attributesOriginal658398a0e73a18931bb7def04d911f42); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal658398a0e73a18931bb7def04d911f42)): ?>
-<?php $component = $__componentOriginal658398a0e73a18931bb7def04d911f42; ?>
-<?php unset($__componentOriginal658398a0e73a18931bb7def04d911f42); ?>
-<?php endif; ?>
-                            <form id="email-completed-form" action="<?php echo e(route('emails.chantier', $chantier)); ?>" method="POST" class="hidden">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="email_type" value="completed">
-                            </form>
-                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -239,48 +156,91 @@
                                 </div>
                                 <div class="flex items-center">
                                     <span class="font-semibold mr-2">État:</span> 
-                                    <?php if($chantier->etat == 'non_commence'): ?>
-                                        <span class="badge badge-info">Non commencé</span>
-                                    <?php elseif($chantier->etat == 'en_cours'): ?>
-                                        <span class="badge badge-warning">En cours</span>
-                                    <?php else: ?>
-                                        <span class="badge badge-success">Terminé</span>
-                                    <?php endif; ?>
+                                    <?php if (isset($component)) { $__componentOriginal8c81617a70e11bcf247c4db924ab1b62 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal8c81617a70e11bcf247c4db924ab1b62 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.status-badge','data' => ['status' => $chantier->etat]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('status-badge'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['status' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier->etat)]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal8c81617a70e11bcf247c4db924ab1b62)): ?>
+<?php $attributes = $__attributesOriginal8c81617a70e11bcf247c4db924ab1b62; ?>
+<?php unset($__attributesOriginal8c81617a70e11bcf247c4db924ab1b62); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal8c81617a70e11bcf247c4db924ab1b62)): ?>
+<?php $component = $__componentOriginal8c81617a70e11bcf247c4db924ab1b62; ?>
+<?php unset($__componentOriginal8c81617a70e11bcf247c4db924ab1b62); ?>
+<?php endif; ?>
                                     
                                     <!-- Boutons de changement d'état rapide -->
                                     <div class="ml-4 flex space-x-1">
-                                        <?php if($chantier->etat != 'non_commence'): ?>
-                                            <form action="<?php echo e(route('chantiers.update.state', $chantier)); ?>" method="POST" class="inline">
-                                                <?php echo csrf_field(); ?>
-                                                <?php echo method_field('PATCH'); ?>
-                                                <input type="hidden" name="etat" value="non_commence">
-                                                <button type="submit" class="text-xs px-2 py-1 bg-gray-600 hover:bg-gray-500 text-white rounded">
-                                                    Non commencé
-                                                </button>
-                                            </form>
-                                        <?php endif; ?>
+                                        <?php if (isset($component)) { $__componentOriginalf2415a46b16b964ec123004a260132ba = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalf2415a46b16b964ec123004a260132ba = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.state-button','data' => ['state' => 'non_commence','route' => route('chantiers.update.state', $chantier),'model' => $chantier,'currentState' => $chantier->etat]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('state-button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['state' => 'non_commence','route' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('chantiers.update.state', $chantier)),'model' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier),'currentState' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier->etat)]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalf2415a46b16b964ec123004a260132ba)): ?>
+<?php $attributes = $__attributesOriginalf2415a46b16b964ec123004a260132ba; ?>
+<?php unset($__attributesOriginalf2415a46b16b964ec123004a260132ba); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalf2415a46b16b964ec123004a260132ba)): ?>
+<?php $component = $__componentOriginalf2415a46b16b964ec123004a260132ba; ?>
+<?php unset($__componentOriginalf2415a46b16b964ec123004a260132ba); ?>
+<?php endif; ?>
                                         
-                                        <?php if($chantier->etat != 'en_cours'): ?>
-                                            <form action="<?php echo e(route('chantiers.update.state', $chantier)); ?>" method="POST" class="inline">
-                                                <?php echo csrf_field(); ?>
-                                                <?php echo method_field('PATCH'); ?>
-                                                <input type="hidden" name="etat" value="en_cours">
-                                                <button type="submit" class="text-xs px-2 py-1 bg-yellow-600 hover:bg-yellow-500 text-white rounded">
-                                                    En cours
-                                                </button>
-                                            </form>
-                                        <?php endif; ?>
+                                        <?php if (isset($component)) { $__componentOriginalf2415a46b16b964ec123004a260132ba = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalf2415a46b16b964ec123004a260132ba = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.state-button','data' => ['state' => 'en_cours','route' => route('chantiers.update.state', $chantier),'model' => $chantier,'currentState' => $chantier->etat]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('state-button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['state' => 'en_cours','route' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('chantiers.update.state', $chantier)),'model' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier),'currentState' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier->etat)]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalf2415a46b16b964ec123004a260132ba)): ?>
+<?php $attributes = $__attributesOriginalf2415a46b16b964ec123004a260132ba; ?>
+<?php unset($__attributesOriginalf2415a46b16b964ec123004a260132ba); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalf2415a46b16b964ec123004a260132ba)): ?>
+<?php $component = $__componentOriginalf2415a46b16b964ec123004a260132ba; ?>
+<?php unset($__componentOriginalf2415a46b16b964ec123004a260132ba); ?>
+<?php endif; ?>
                                         
-                                        <?php if($chantier->etat != 'termine'): ?>
-                                            <form action="<?php echo e(route('chantiers.update.state', $chantier)); ?>" method="POST" class="inline">
-                                                <?php echo csrf_field(); ?>
-                                                <?php echo method_field('PATCH'); ?>
-                                                <input type="hidden" name="etat" value="termine">
-                                                <button type="submit" class="text-xs px-2 py-1 bg-green-600 hover:bg-green-500 text-white rounded">
-                                                    Terminé
-                                                </button>
-                                            </form>
-                                        <?php endif; ?>
+                                        <?php if (isset($component)) { $__componentOriginalf2415a46b16b964ec123004a260132ba = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalf2415a46b16b964ec123004a260132ba = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.state-button','data' => ['state' => 'termine','route' => route('chantiers.update.state', $chantier),'model' => $chantier,'currentState' => $chantier->etat]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('state-button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['state' => 'termine','route' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('chantiers.update.state', $chantier)),'model' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier),'currentState' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier->etat)]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalf2415a46b16b964ec123004a260132ba)): ?>
+<?php $attributes = $__attributesOriginalf2415a46b16b964ec123004a260132ba; ?>
+<?php unset($__attributesOriginalf2415a46b16b964ec123004a260132ba); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalf2415a46b16b964ec123004a260132ba)): ?>
+<?php $component = $__componentOriginalf2415a46b16b964ec123004a260132ba; ?>
+<?php unset($__componentOriginalf2415a46b16b964ec123004a260132ba); ?>
+<?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -1049,60 +1009,195 @@
                             </div>
                         <?php endif; ?>
                     </div>
-                    <!-- Bouton QR Code -->
-                    <div class="text-center mt-6">
-                        <?php if (isset($component)) { $__componentOriginald411d1792bd6cc877d687758b753742c = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginald411d1792bd6cc877d687758b753742c = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.primary-button','data' => ['tag' => 'a','href' => ''.e(route('qrcode.chantier.print', $chantier->id)).'','class' => 'flex items-center btn-3d']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('primary-button'); ?>
+                    <!-- Boutons d'impression et QR Code -->
+                    <div class="flex justify-center mt-6 space-x-4">
+                        <?php if (isset($component)) { $__componentOriginal653ad55244738a059739a51a5163a501 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal653ad55244738a059739a51a5163a501 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.print-button','data' => ['tag' => 'a','route' => ''.e(route('qrcode.chantier.print', $chantier->id)).'','type' => 'qrcode','buttonStyle' => 'font-semibold btn-3d']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('print-button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['tag' => 'a','href' => ''.e(route('qrcode.chantier.print', $chantier->id)).'','class' => 'flex items-center btn-3d']); ?>
+<?php $component->withAttributes(['tag' => 'a','route' => ''.e(route('qrcode.chantier.print', $chantier->id)).'','type' => 'qrcode','buttonStyle' => 'font-semibold btn-3d']); ?>
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4M4 8h16V5a1 1 0 00-1-1H5a1 1 0 00-1 1v3zm16 4v7a1 1 0 01-1 1H5a1 1 0 01-1-1v-7" />
                             </svg>
                             Générer QR Code
                          <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginald411d1792bd6cc877d687758b753742c)): ?>
-<?php $attributes = $__attributesOriginald411d1792bd6cc877d687758b753742c; ?>
-<?php unset($__attributesOriginald411d1792bd6cc877d687758b753742c); ?>
+<?php if (isset($__attributesOriginal653ad55244738a059739a51a5163a501)): ?>
+<?php $attributes = $__attributesOriginal653ad55244738a059739a51a5163a501; ?>
+<?php unset($__attributesOriginal653ad55244738a059739a51a5163a501); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginald411d1792bd6cc877d687758b753742c)): ?>
-<?php $component = $__componentOriginald411d1792bd6cc877d687758b753742c; ?>
-<?php unset($__componentOriginald411d1792bd6cc877d687758b753742c); ?>
+<?php if (isset($__componentOriginal653ad55244738a059739a51a5163a501)): ?>
+<?php $component = $__componentOriginal653ad55244738a059739a51a5163a501; ?>
+<?php unset($__componentOriginal653ad55244738a059739a51a5163a501); ?>
 <?php endif; ?>
                         
-                        <?php if (isset($component)) { $__componentOriginal658398a0e73a18931bb7def04d911f42 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal658398a0e73a18931bb7def04d911f42 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon-button','data' => ['tag' => 'a','href' => ''.e(route('qrcode.chantier.print', $chantier->id)).'','type' => 'primary','tooltip' => 'Générer QR Code','tooltipPosition' => 'top','size' => 'lg','class' => 'ml-3']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('icon-button'); ?>
+                        <?php if (isset($component)) { $__componentOriginal653ad55244738a059739a51a5163a501 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal653ad55244738a059739a51a5163a501 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.print-button','data' => ['type' => 'brother','onclick' => 'printBrotherDirectly(\''.e(route('etiquettes.chantier.ptouch', $chantier->id)).'\');','buttonStyle' => 'font-semibold']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('print-button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['tag' => 'a','href' => ''.e(route('qrcode.chantier.print', $chantier->id)).'','type' => 'primary','tooltip' => 'Générer QR Code','tooltipPosition' => 'top','size' => 'lg','class' => 'ml-3']); ?>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4M4 8h16V5a1 1 0 00-1-1H5a1 1 0 00-1 1v3zm16 4v7a1 1 0 01-1 1H5a1 1 0 01-1-1v-7" />
+<?php $component->withAttributes(['type' => 'brother','onclick' => 'printBrotherDirectly(\''.e(route('etiquettes.chantier.ptouch', $chantier->id)).'\');','buttonStyle' => 'font-semibold']); ?>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                             </svg>
+                            Imprimer Brother
                          <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginal658398a0e73a18931bb7def04d911f42)): ?>
-<?php $attributes = $__attributesOriginal658398a0e73a18931bb7def04d911f42; ?>
-<?php unset($__attributesOriginal658398a0e73a18931bb7def04d911f42); ?>
+<?php if (isset($__attributesOriginal653ad55244738a059739a51a5163a501)): ?>
+<?php $attributes = $__attributesOriginal653ad55244738a059739a51a5163a501; ?>
+<?php unset($__attributesOriginal653ad55244738a059739a51a5163a501); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginal658398a0e73a18931bb7def04d911f42)): ?>
-<?php $component = $__componentOriginal658398a0e73a18931bb7def04d911f42; ?>
-<?php unset($__componentOriginal658398a0e73a18931bb7def04d911f42); ?>
+<?php if (isset($__componentOriginal653ad55244738a059739a51a5163a501)): ?>
+<?php $component = $__componentOriginal653ad55244738a059739a51a5163a501; ?>
+<?php unset($__componentOriginal653ad55244738a059739a51a5163a501); ?>
 <?php endif; ?>
+                    </div>
+                    
+                    <!-- Boutons d'envoi d'email -->
+                    <div class="flex flex-col items-center mt-6">
+                        <h5 class="font-medium text-gray-300 mb-3">Envoyer des emails au client</h5>
+                        <div class="flex space-x-4">
+                            <button type="button" 
+                                onclick="document.getElementById('email-created-form').submit();" 
+                                class="flex items-center px-4 py-2 rounded-lg shadow bg-indigo-600 hover:bg-indigo-700 text-white transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                Email de création du chantier
+                            </button>
+                            <form id="email-created-form" action="<?php echo e(route('emails.chantier', $chantier)); ?>" method="POST" class="hidden">
+                                <?php echo csrf_field(); ?>
+                                <input type="hidden" name="email_type" value="created">
+                            </form>
+                            
+                            <button type="button" 
+                                onclick="document.getElementById('email-started-form').submit();" 
+                                class="flex items-center px-4 py-2 rounded-lg shadow bg-yellow-600 hover:bg-yellow-700 text-white transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                Email de début des interventions
+                            </button>
+                            <form id="email-started-form" action="<?php echo e(route('emails.chantier', $chantier)); ?>" method="POST" class="hidden">
+                                <?php echo csrf_field(); ?>
+                                <input type="hidden" name="email_type" value="started">
+                            </form>
+                            
+                            <button type="button" 
+                                onclick="document.getElementById('email-completed-form').submit();" 
+                                class="flex items-center px-4 py-2 rounded-lg shadow bg-green-600 hover:bg-green-700 text-white transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                Email de finalisation du chantier
+                            </button>
+                            <form id="email-completed-form" action="<?php echo e(route('emails.chantier', $chantier)); ?>" method="POST" class="hidden">
+                                <?php echo csrf_field(); ?>
+                                <input type="hidden" name="email_type" value="completed">
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <?php $__env->startPush('scripts'); ?>
+    <script>
+        function printBrotherDirectly(url) {
+            // Afficher un indicateur de chargement
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.style.position = 'fixed';
+            loadingIndicator.style.top = '50%';
+            loadingIndicator.style.left = '50%';
+            loadingIndicator.style.transform = 'translate(-50%, -50%)';
+            loadingIndicator.style.padding = '20px';
+            loadingIndicator.style.backgroundColor = 'rgba(0,0,0,0.8)';
+            loadingIndicator.style.color = 'white';
+            loadingIndicator.style.borderRadius = '10px';
+            loadingIndicator.style.zIndex = '9999';
+            loadingIndicator.style.fontWeight = 'bold';
+            loadingIndicator.innerHTML = '<div style="text-align: center;"><svg xmlns="http://www.w3.org/2000/svg" class="animate-pulse" style="display: inline-block; margin-bottom: 10px;" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg><div>Envoi vers l\'imprimante Brother...</div></div>';
+            document.body.appendChild(loadingIndicator);
+            
+            // Envoyer la requête à l'API
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Supprimer l'indicateur de chargement
+                document.body.removeChild(loadingIndicator);
+                
+                // Afficher le message de succès ou d'erreur
+                const messageBox = document.createElement('div');
+                messageBox.style.position = 'fixed';
+                messageBox.style.top = '50%';
+                messageBox.style.left = '50%';
+                messageBox.style.transform = 'translate(-50%, -50%)';
+                messageBox.style.padding = '20px';
+                messageBox.style.borderRadius = '10px';
+                messageBox.style.zIndex = '9999';
+                messageBox.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                
+                if (data.success) {
+                    messageBox.style.backgroundColor = 'rgba(46, 125, 50, 0.9)';
+                    messageBox.style.color = 'white';
+                    messageBox.innerHTML = '<div style="text-align: center;"><svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block; margin-bottom: 10px;" width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg><div>Étiquette envoyée avec succès à l\'imprimante ' + data.printer + '</div></div>';
+                } else {
+                    messageBox.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
+                    messageBox.style.color = 'white';
+                    messageBox.innerHTML = '<div style="text-align: center;"><svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block; margin-bottom: 10px;" width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg><div>Erreur: ' + data.message + '</div></div>';
+                }
+                
+                document.body.appendChild(messageBox);
+                
+                // Supprimer le message après 5 secondes
+                setTimeout(() => {
+                    document.body.removeChild(messageBox);
+                }, 5000);
+            })
+            .catch(error => {
+                // Supprimer l'indicateur de chargement
+                document.body.removeChild(loadingIndicator);
+                
+                // Afficher le message d'erreur
+                const errorBox = document.createElement('div');
+                errorBox.style.position = 'fixed';
+                errorBox.style.top = '50%';
+                errorBox.style.left = '50%';
+                errorBox.style.transform = 'translate(-50%, -50%)';
+                errorBox.style.padding = '20px';
+                errorBox.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
+                errorBox.style.color = 'white';
+                errorBox.style.borderRadius = '10px';
+                errorBox.style.zIndex = '9999';
+                errorBox.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                errorBox.innerHTML = '<div style="text-align: center;"><svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block; margin-bottom: 10px;" width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg><div>Erreur de connexion: ' + error.message + '</div></div>';
+                
+                document.body.appendChild(errorBox);
+                
+                // Supprimer le message après 5 secondes
+                setTimeout(() => {
+                    document.body.removeChild(errorBox);
+                }, 5000);
+            });
+        }
+    </script>
+    <?php $__env->stopPush(); ?>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54)): ?>

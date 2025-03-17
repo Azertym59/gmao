@@ -87,6 +87,22 @@ Route::get('/produits/catalogue', [ProduitController::class, 'catalogue']);
 // Routes API pour les cartes de réception
 Route::get('/cartes-reception', [CartesReceptionController::class, 'getCartesForElectronique']);
 
+// Route API pour récupérer un datasheet LED par ID
+Route::get('/led-datasheet/{id}', function (Request $request, $id) {
+    $datasheet = \App\Models\LedDatasheet::findOrFail($id);
+    return response()->json([
+        'id' => $datasheet->id,
+        'type' => $datasheet->type,
+        'color' => $datasheet->color,
+        'reference' => $datasheet->reference,
+        'nb_poles' => $datasheet->nb_poles,
+        'disposition' => $datasheet->disposition,
+        'position_chanfrein' => $datasheet->position_chanfrein,
+        'notes' => $datasheet->notes,
+        'image_data' => $datasheet->image_data
+    ]);
+});
+
 // API pour l'autocomplétion des marques et modèles
 Route::get('/marques', function(Request $request) {
     $term = $request->input('term', '');

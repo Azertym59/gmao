@@ -10,6 +10,29 @@ return [
     // Intervalle de polling en secondes
     'polling_interval' => env('PRINT_POLLING_INTERVAL', 5),
     
+    // PrintNode Configuration
+    'printnode_api_key' => env('PRINTNODE_API_KEY', null),
+    'printnode_printer_id' => env('PRINTNODE_PRINTER_ID', null),
+    
+    // Configuration pour Brother b-PAC SDK
+    'bpac' => [
+        'enabled' => env('BPAC_ENABLED', true),
+        'dll_path' => env('BPAC_DLL_PATH', null),
+        'template_path' => env('BPAC_TEMPLATE_PATH', storage_path('app/templates/brother')),
+        // Correspondance entre modèles et ID de template
+        'models' => [
+            'QL-820NWB' => [
+                'DK22205' => '62mm_continuous',
+                'DK22210' => '29mm_continuous',
+                'DK22214' => '12mm_continuous',
+                'DK11201' => '29x90mm_address',
+                'DK11202' => '62x100mm_shipping',
+                'DK11208' => '38x90mm_label',
+                'DK11209' => '62x29mm_address_small',
+            ]
+        ],
+    ],
+    
     // Paramètres pour QZ Tray
     'qz_tray' => [
         // Activer ou désactiver QZ Tray
@@ -47,6 +70,19 @@ return [
             'paper_size' => 'A4',
             'orientation' => 'portrait',
         ],
+        'brother_label' => [
+            'dpi' => 300,
+            'width' => 62,
+            'height' => 100,
+            'orientation' => 'portrait',
+            // Simplifier les options de PrintNode pour éviter les erreurs
+            'media_type' => 'na_letter',
+            'paper_size' => 'A4',
+            'use_bpac' => true,
+            'bpac_model' => 'QL-820NWB',
+            'bpac_tape_type' => 'DK22205',
+            'bpac_format' => 'raster'
+        ]
     ],
     
     // Paramètres de file d'attente d'impression

@@ -15,7 +15,13 @@
     <!-- Scripts -->
     <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <link rel="stylesheet" href="<?php echo e(asset('css/fixes.css')); ?>">
-    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2/qz-tray.js"></script>
+    
+    <!-- QZ Tray -->
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.0/qz-tray.js"></script>
+    <script src="<?php echo e(asset('js/qz-tray.js')); ?>?v=<?php echo e(time()); ?>"></script>
+    
+    <!-- Stack pour Meta Tags -->
+    <?php echo $__env->yieldPushContent('meta'); ?>
     
     <!-- Style force prioritaire pour le menu latéral -->
     <style>

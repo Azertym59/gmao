@@ -52,25 +52,36 @@ class PrinterController extends Controller
     {
         $validationRules = [
             'name' => 'required|string|max:255',
-            'model' => 'required|string|max:255',
-            'connection_type' => 'nullable|string',
-            'ip_address' => 'nullable|string|max:45',
+            'type' => 'nullable|string|in:thermal,label,standard,brother_label',
             'is_default' => 'boolean',
-            'dpi' => 'nullable|numeric',
-            'type' => 'nullable|string|in:thermal,label,standard',
         ];
-
-        // Ajouter des règles conditionnelles pour les dimensions
-        if ($request->input('label_format') === 'custom') {
-            $validationRules['label_width'] = 'required|numeric|min:1';
-            $validationRules['label_height'] = 'required|numeric|min:1';
-        } else {
-            $validationRules['label_width'] = 'nullable|numeric';
-            $validationRules['label_height'] = 'nullable|numeric';
-        }
 
         // Effectuer la validation
         $validatedData = $request->validate($validationRules);
+        
+        // S'assurer que le type a une valeur par défaut
+        if (!isset($validatedData['type']) || empty($validatedData['type'])) {
+            $validatedData['type'] = 'thermal'; // On utilise thermal comme valeur par défaut pour les imprimantes d'étiquettes
+        }
+        
+        // Stocker les autres informations comme options JSON
+        $options = [
+            'model' => $request->input('model'),
+            'connection_type' => $request->input('connection_type'),
+            'ip_address' => $request->input('ip_address'),
+            'dpi' => $request->input('dpi'),
+            'label_width' => $request->input('label_width'),
+            'label_height' => $request->input('label_height'),
+            'label_format' => $request->input('label_format'),
+            'brother_roll' => $request->input('brother_roll'), // Stocker la référence du rouleau Brother
+            'printnode_id' => $request->input('printnode_id'), // ID de l'imprimante dans PrintNode
+            'print_mode' => $request->input('print_mode'), // Mode d'impression (raster, template, escp)
+            'use_bpac' => $request->has('use_bpac'), // Utiliser le SDK Brother b-PAC
+            'bpac_model' => $request->input('model'), // Modèle pour b-PAC
+            'bpac_tape_type' => $request->input('brother_roll'), // Type de ruban pour b-PAC
+        ];
+        
+        $validatedData['options'] = json_encode($options);
 
         // Si cette imprimante est définie comme par défaut, retirer le statut par défaut des autres
         if ($request->has('is_default') && $request->is_default) {
@@ -105,16 +116,39 @@ class PrinterController extends Controller
      */
     public function update(Request $request, Printer $printer)
     {
-        $request->validate([
+        $validationRules = [
             'name' => 'required|string|max:255',
-            'model' => 'required|string|max:255',
-            'ip_address' => 'nullable|string|max:45',
-            'port' => 'nullable|numeric',
-            'label_width' => 'required|numeric',
-            'label_height' => 'required|numeric',
+            'type' => 'nullable|string|in:thermal,label,standard,brother_label',
             'is_default' => 'boolean',
-            'type' => 'nullable|string|in:thermal,label,standard',
-        ]);
+        ];
+
+        // Effectuer la validation
+        $validatedData = $request->validate($validationRules);
+        
+        // S'assurer que le type a une valeur par défaut
+        if (!isset($validatedData['type']) || empty($validatedData['type'])) {
+            $validatedData['type'] = 'thermal'; // On utilise thermal comme valeur par défaut pour les imprimantes d'étiquettes
+        }
+        
+        // Stocker les autres informations comme options JSON
+        $options = [
+            'model' => $request->input('model'),
+            'connection_type' => $request->input('connection_type'),
+            'ip_address' => $request->input('ip_address'),
+            'port' => $request->input('port'),
+            'dpi' => $request->input('dpi'),
+            'label_width' => $request->input('label_width'),
+            'label_height' => $request->input('label_height'),
+            'label_format' => $request->input('label_format'),
+            'brother_roll' => $request->input('brother_roll'), // Stocker la référence du rouleau Brother
+            'printnode_id' => $request->input('printnode_id'), // ID de l'imprimante dans PrintNode
+            'print_mode' => $request->input('print_mode'), // Mode d'impression (raster, template, escp)
+            'use_bpac' => $request->has('use_bpac'), // Utiliser le SDK Brother b-PAC
+            'bpac_model' => $request->input('model'), // Modèle pour b-PAC
+            'bpac_tape_type' => $request->input('brother_roll'), // Type de ruban pour b-PAC
+        ];
+        
+        $validatedData['options'] = json_encode($options);
 
         // Si cette imprimante est définie comme par défaut, retirer le statut par défaut des autres
         if ($request->has('is_default') && $request->is_default) {
@@ -123,7 +157,7 @@ class PrinterController extends Controller
                   ->update(['is_default' => false]);
         }
 
-        $printer->update($request->all());
+        $printer->update($validatedData);
 
         return redirect()->route('printers.index')
             ->with('success', 'Imprimante mise à jour avec succès');
@@ -379,9 +413,15 @@ class PrinterController extends Controller
             $selectedPrinter = Printer::find($request->printer_id);
         }
         
+        // Si aucune imprimante n'est sélectionnée, prendre celle par défaut
+        if (!$selectedPrinter) {
+            $selectedPrinter = Printer::getDefault();
+        }
+        
         return view('printers.test', [
             'printers' => $printers,
-            'selectedPrinter' => $selectedPrinter
+            'selectedPrinter' => $selectedPrinter,
+            'qzTrayService' => $this->qzTrayService
         ]);
     }
 
@@ -471,20 +511,198 @@ class PrinterController extends Controller
      */
     private function getPaperSizeByPrinterType(Printer $printer)
     {
+        // Récupérer les options si disponibles
+        $options = $printer->options ?? [];
+        $labelWidth = $options['label_width'] ?? null;
+        $labelHeight = $options['label_height'] ?? null;
+        
         switch ($printer->type) {
             case 'thermal':
                 // Utiliser la largeur spécifique si disponible, sinon valeur par défaut
-                return $printer->label_width ? "{$printer->label_width}mm" : '57mm';
+                return $labelWidth ? "{$labelWidth}mm" : '57mm';
                 
             case 'label':
                 // Format pour étiquettes
-                return $printer->label_width && $printer->label_height 
-                       ? "{$printer->label_width}mm x {$printer->label_height}mm" 
+                return $labelWidth && $labelHeight 
+                       ? "{$labelWidth}mm x {$labelHeight}mm" 
                        : '62mm x 29mm';
                 
             default:
                 // Format standard pour imprimantes normales
                 return 'A4';
         }
+    }
+    
+    /**
+     * Afficher la page de test d'étiquettes
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function testLabels(Request $request)
+    {
+        try {
+            \Log::info('Démarrage du test d\'étiquettes', [
+                'printer_id' => $request->printer_id ?? 'default',
+                'user_id' => auth()->id() ?? 'guest',
+                'user_agent' => $request->userAgent()
+            ]);
+            
+            $printer = null;
+            
+            // Liste toutes les imprimantes disponibles pour vérification
+            $allPrinters = Printer::all();
+            \Log::info('Imprimantes disponibles:', [
+                'count' => $allPrinters->count(),
+                'ids' => $allPrinters->pluck('id')->toArray(),
+                'names' => $allPrinters->pluck('name')->toArray()
+            ]);
+            
+            // Si un ID d'imprimante est fourni, récupérer l'imprimante
+            if ($request->has('printer_id')) {
+                $printerId = $request->printer_id;
+                \Log::info('Recherche d\'imprimante par ID', ['printer_id' => $printerId]);
+                
+                // Utiliser first() au lieu de findOrFail pour éviter une exception
+                $printer = Printer::where('id', $printerId)->first();
+                
+                if (!$printer) {
+                    \Log::warning('Imprimante non trouvée', ['printer_id' => $printerId]);
+                    
+                    // Utiliser l'imprimante par défaut si celle demandée n'existe pas
+                    $printer = Printer::where('is_default', true)->first();
+                    if ($printer) {
+                        \Log::info('Utilisation de l\'imprimante par défaut à la place', ['default_id' => $printer->id]);
+                    }
+                }
+            } else {
+                // Sinon, récupérer l'imprimante par défaut
+                \Log::info('Aucun ID d\'imprimante fourni, recherche de l\'imprimante par défaut');
+                $printer = Printer::where('is_default', true)->first();
+            }
+            
+            // Si aucune imprimante n'est trouvée, utiliser la première disponible
+            if (!$printer && $allPrinters->count() > 0) {
+                $printer = $allPrinters->first();
+                \Log::info('Aucune imprimante par défaut, utilisation de la première disponible', ['printer_id' => $printer->id]);
+            }
+            
+            // Si toujours aucune imprimante trouvée, rediriger vers la page de gestion
+            if (!$printer) {
+                \Log::warning('Aucune imprimante disponible');
+                return redirect()->route('printers.index')
+                    ->with('error', 'Aucune imprimante trouvée. Veuillez en configurer une.');
+            }
+            
+            \Log::info('Imprimante sélectionnée pour le test:', [
+                'id' => $printer->id,
+                'name' => $printer->name,
+                'is_default' => $printer->is_default
+            ]);
+            
+            // Générer les données pour les trois formats d'étiquettes
+            $testData = [
+                'module' => "Test d'étiquette Module - " . now()->format('Y-m-d H:i:s'),
+                'dalle' => "Test d'étiquette Dalle - " . now()->format('Y-m-d H:i:s'),
+                'flightcase' => "Test d'étiquette FlightCase - " . now()->format('Y-m-d H:i:s')
+            ];
+            
+            \Log::info('Génération des QR codes');
+            
+            // Générer les QR codes
+            $moduleQrBase64 = base64_encode($this->qzTrayService->generateQrCode($testData['module'], 200, 'H')->getData());
+            $dalleQrBase64 = base64_encode($this->qzTrayService->generateQrCode($testData['dalle'], 250, 'H')->getData());
+            $flightcaseQrBase64 = base64_encode($this->qzTrayService->generateQrCode($testData['flightcase'], 300, 'H')->getData());
+            
+            \Log::info('Préparation des données d\'impression');
+            
+            // Préparer les données d'impression pour chaque format
+            $modulePrintData = $this->qzTrayService->prepareQrCodePrint(
+                $printer->name,
+                $testData['module'],
+                ['size' => 200, 'errorCorrection' => 'H'],
+                [
+                    'size' => '29mm',
+                    'height' => '90mm',
+                    'copies' => 1,
+                    'dpi' => $printer->options['dpi'] ?? 300
+                ]
+            );
+            
+            $dallePrintData = $this->qzTrayService->prepareQrCodePrint(
+                $printer->name,
+                $testData['dalle'],
+                ['size' => 250, 'errorCorrection' => 'H'],
+                [
+                    'size' => '38mm',
+                    'height' => '90mm',
+                    'copies' => 1,
+                    'dpi' => $printer->options['dpi'] ?? 300
+                ]
+            );
+            
+            $flightcasePrintData = $this->qzTrayService->prepareQrCodePrint(
+                $printer->name,
+                $testData['flightcase'],
+                ['size' => 300, 'errorCorrection' => 'H'],
+                [
+                    'size' => '62mm',
+                    'height' => '100mm',
+                    'copies' => 1,
+                    'dpi' => $printer->options['dpi'] ?? 300
+                ]
+            );
+            
+            \Log::info('Rendu de la vue');
+            
+            // Vérifier si le fichier de vue existe pour aider au débogage
+            $viewPath = resource_path('views/printers/label_test.blade.php');
+            if (!file_exists($viewPath)) {
+                \Log::error('Le fichier de vue n\'existe pas', ['path' => $viewPath]);
+                throw new \Exception("Le fichier de vue printers.label_test n'existe pas à l'emplacement attendu.");
+            }
+            
+            return view('printers.label_test', [
+                'printer' => $printer,
+                'moduleQrBase64' => $moduleQrBase64,
+                'dalleQrBase64' => $dalleQrBase64,
+                'flightcaseQrBase64' => $flightcaseQrBase64,
+                'modulePrintData' => $modulePrintData,
+                'dallePrintData' => $dallePrintData,
+                'flightcasePrintData' => $flightcasePrintData,
+                'qzTrayService' => $this->qzTrayService
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors du chargement de la page de test d\'étiquettes: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'printer_id' => $request->printer_id ?? 'default'
+            ]);
+            
+            return redirect()->route('printers.index')
+                ->with('error', 'Erreur lors du chargement de la page de test d\'étiquettes: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Traiter la demande d'impression de test d'étiquettes
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function processTestLabels(Request $request)
+    {
+        $request->validate([
+            'printer_id' => 'required|exists:printers,id',
+            'test_formats' => 'required|array',
+            'test_formats.*' => 'in:module,dalle,flightcase'
+        ]);
+        
+        $printer = Printer::findOrFail($request->printer_id);
+        
+        // Rediriger vers la page de test d'étiquettes
+        return redirect()->route('printers.test-labels', ['printer_id' => $printer->id])
+            ->with('formats', $request->test_formats);
     }
 }

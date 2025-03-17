@@ -68,14 +68,19 @@ class ChantierQrCodeController extends Controller
             // Generate QR code URL
             $url = route('qrcode.chantier.show', $chantier->id);
             
-            // Prepare print data
+            // Prepare print data for a Brother DK-22205 continuous 62mm roll
             $printData = $this->qzTrayService->prepareQrCodePrint(
                 $printer->name,
                 $url,
-                ['size' => 300],
+                ['size' => 300, 'errorCorrection' => 'H'],
                 [
                     'copies' => $request->input('copies', 1),
-                    'size' => $printer->type === 'thermal' ? '57mm' : 'A4'
+                    'size' => '62mm',       // Largeur fixe du rouleau
+                    'height' => '100mm',    // Hauteur pour les étiquettes de chantier
+                    'roll_type' => 'DK-22205',
+                    'mediaType' => 'Continuous',
+                    'ignoreHeight' => false,
+                    'dpi' => $printer->options['dpi'] ?? 300
                 ]
             );
             

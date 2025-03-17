@@ -50,9 +50,31 @@ class Chantier extends Model
         $prefix = 'TCA-'; // TecaLED Assistance
         $year = now()->format('y'); // Année sur 2 chiffres
         $month = now()->format('m'); // Mois
-        $count = self::whereDate('created_at', today())->count() + 1;
         
-        return $prefix . $year . $month . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        // Trouver le numéro le plus élevé pour aujourd'hui
+        $latestRef = self::whereDate('created_at', today())
+            ->where('reference', 'LIKE', $prefix . $year . $month . '-%')
+            ->orderBy('reference', 'desc')
+            ->first();
+            
+        if ($latestRef) {
+            // Extraire le numéro de la dernière référence
+            $parts = explode('-', $latestRef->reference);
+            $lastCount = (int)end($parts);
+            $count = $lastCount + 1;
+        } else {
+            $count = 1;
+        }
+        
+        $newRef = $prefix . $year . $month . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        
+        // Vérifier si cette référence existe déjà (pour être sûr)
+        while (self::where('reference', $newRef)->exists()) {
+            $count++;
+            $newRef = $prefix . $year . $month . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        }
+        
+        return $newRef;
     }
     
     /**

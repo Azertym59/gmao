@@ -1,23 +1,23 @@
 <?php
-// Script de test de l'API pour l'autocomplétion des marques
+// Script de test de l'API pour l'autocomplÃ©tion des marques
 
 // Activer l'affichage des erreurs
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// CORS headers pour permettre les requêtes 
+// CORS headers pour permettre les requÃªtes 
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET");
 
-// Récupérer le terme de recherche de l'URL
+// RÃ©cupÃ©rer le terme de recherche de l'URL
 $term = $_GET['term'] ?? '';
 
-// Connexion à la base de données SQLite
+// Connexion Ã  la base de donnÃ©es SQLite
 $dbPath = __DIR__ . '/../database/database.sqlite';
 
-// Vérifier si le fichier existe
+// VÃ©rifier si le fichier existe
 if (!file_exists($dbPath)) {
     echo json_encode(['error' => 'Database file not found', 'path' => $dbPath]);
     exit();
@@ -42,7 +42,7 @@ try {
         ];
     }
     
-    // Retourner les résultats au format JSON
+    // Retourner les rÃ©sultats au format JSON
     echo json_encode($marques);
     
 } catch (PDOException $e) {

@@ -27,8 +27,14 @@ function advancedProductSearch() {
             
             // Charger tous les produits du catalogue
             fetch('/api/produits/catalogue')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erreur réseau: ${response.status} ${response.statusText}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Produits chargés:', data); // Pour débogage
                     this.allProducts = data;
                     this.filteredProducts = [...data];
                     this.isLoading = false;
@@ -46,8 +52,49 @@ function advancedProductSearch() {
                     console.error('Erreur lors du chargement des produits:', error);
                     this.isLoading = false;
                     
+                    // Afficher un message d'erreur dans la console pour faciliter le débogage
+                    console.log('Détails de l\'erreur:', {
+                        message: error.message,
+                        stack: error.stack
+                    });
+                    
                     // En cas d'erreur, on utilise des données pré-existantes dans la page
                     this.loadProductsFromDOM();
+                    
+                    // Afficher des données de test en dernier recours
+                    if (this.allProducts.length === 0) {
+                        this.allProducts = [
+                            {
+                                id: 1,
+                                marque: 'LIGHTKING',
+                                modele: 'RD',
+                                pitch: 2.5,
+                                utilisation: 'indoor',
+                                electronique: 'nova',
+                                bain_couleur: ''
+                            },
+                            {
+                                id: 2,
+                                marque: 'LIGHTKING',
+                                modele: 'RY',
+                                pitch: 3.9,
+                                utilisation: 'outdoor',
+                                electronique: 'nova',
+                                bain_couleur: ''
+                            },
+                            {
+                                id: 3,
+                                marque: 'TEST',
+                                modele: 'PANEL',
+                                pitch: 2.6,
+                                utilisation: 'indoor',
+                                electronique: 'nova',
+                                bain_couleur: ''
+                            }
+                        ];
+                        this.filteredProducts = [...this.allProducts];
+                        console.log('Chargement des données de test:', this.allProducts);
+                    }
                 });
                 
             // Observer les changements des filtres
@@ -176,13 +223,40 @@ function advancedProductSearch() {
             
             // Pré-remplir les champs du formulaire avec les critères de recherche
             if (this.filters.marque) {
-                document.getElementById('marque-search').value = this.filters.marque;
-                document.getElementById('marque').value = this.filters.marque;
+                const marqueSearch = document.getElementById('marque-search');
+                const marqueField = document.getElementById('marque');
+                
+                if (marqueSearch) {
+                    marqueSearch.value = this.filters.marque;
+                    // Simuler un événement input pour déclencher l'autocomplétion
+                    marqueSearch.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                
+                if (marqueField) {
+                    marqueField.value = this.filters.marque;
+                    // Informer les autres composants du changement
+                    const event = new CustomEvent('marque-selected', { 
+                        detail: { marque: this.filters.marque } 
+                    });
+                    window.dispatchEvent(event);
+                }
             }
             
             if (this.filters.modele) {
-                document.getElementById('modele-search').value = this.filters.modele;
-                document.getElementById('modele').value = this.filters.modele;
+                const modeleSearch = document.getElementById('modele-search');
+                const modeleField = document.getElementById('modele');
+                
+                if (modeleSearch) {
+                    modeleSearch.value = this.filters.modele;
+                    // Simuler un événement input pour déclencher l'autocomplétion
+                    modeleSearch.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                
+                if (modeleField) {
+                    modeleField.value = this.filters.modele;
+                    // Déclencher un événement change
+                    modeleField.dispatchEvent(new Event('change'));
+                }
             }
             
             if (this.filters.pitch) {

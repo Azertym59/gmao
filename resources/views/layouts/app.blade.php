@@ -15,7 +15,13 @@
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="{{ asset('css/fixes.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2/qz-tray.js"></script>
+    
+    <!-- QZ Tray -->
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.0/qz-tray.js"></script>
+    <script src="{{ asset('js/qz-tray.js') }}?v={{ time() }}"></script>
+    
+    <!-- Stack pour Meta Tags -->
+    @stack('meta')
     
     <!-- Style force prioritaire pour le menu latéral -->
     <style>

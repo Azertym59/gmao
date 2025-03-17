@@ -44,7 +44,13 @@
     </div>
     
     <div class="content">
-        <p>Bonjour {{ $client->prenom }} {{ $client->nom }},</p>
+        <div style="background-color: #ffe7e6; padding: 15px; border-radius: 5px; margin: 0 0 20px 0; border-left: 4px solid #ff9999;">
+            <strong>⚠️ Information importante</strong><br>
+            Notre système de gestion est actuellement en cours de développement. Certains bugs peuvent exister.
+            Nous vous remercions pour votre compréhension.
+        </div>
+
+        <p>Bonjour {{ $client->civilite ?? 'M.' }} {{ $client->prenom }} {{ strtoupper($client->nom) }},</p>
         
         <p>Nous vous informons que les réparations ont commencé sur votre chantier <strong>{{ $chantier->reference }}</strong> - {{ $chantier->nom }}.</p>
         

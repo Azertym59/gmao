@@ -1026,46 +1026,27 @@ unset($__errorArgs, $__bag); ?>
                                     <h4 class="text-md subsection-title mb-3">Composants électroniques</h4>
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
-                                            <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'driver','value' => __('Driver (IC de commande)'),'class' => 'text-gray-300']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('input-label'); ?>
+                                            <?php if (isset($component)) { $__componentOriginal1268156e315f5530e556d97bf1215e11 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal1268156e315f5530e556d97bf1215e11 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.driver-autocomplete','data' => ['label' => 'Driver (IC de commande)','placeholder' => 'Recherchez ou saisissez un driver...','required' => 'false']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('driver-autocomplete'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['for' => 'driver','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Driver (IC de commande)')),'class' => 'text-gray-300']); ?>
+<?php $component->withAttributes(['label' => 'Driver (IC de commande)','placeholder' => 'Recherchez ou saisissez un driver...','required' => 'false']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581)): ?>
-<?php $attributes = $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581; ?>
-<?php unset($__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581); ?>
+<?php if (isset($__attributesOriginal1268156e315f5530e556d97bf1215e11)): ?>
+<?php $attributes = $__attributesOriginal1268156e315f5530e556d97bf1215e11; ?>
+<?php unset($__attributesOriginal1268156e315f5530e556d97bf1215e11); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581)): ?>
-<?php $component = $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581; ?>
-<?php unset($__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581); ?>
+<?php if (isset($__componentOriginal1268156e315f5530e556d97bf1215e11)): ?>
+<?php $component = $__componentOriginal1268156e315f5530e556d97bf1215e11; ?>
+<?php unset($__componentOriginal1268156e315f5530e556d97bf1215e11); ?>
 <?php endif; ?>
-                                            <?php if (isset($component)) { $__componentOriginal18c21970322f9e5c938bc954620c12bb = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal18c21970322f9e5c938bc954620c12bb = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.text-input','data' => ['id' => 'driver','class' => 'block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50','type' => 'text','name' => 'driver','value' => old('driver')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('text-input'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['id' => 'driver','class' => 'block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50','type' => 'text','name' => 'driver','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(old('driver'))]); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal18c21970322f9e5c938bc954620c12bb)): ?>
-<?php $attributes = $__attributesOriginal18c21970322f9e5c938bc954620c12bb; ?>
-<?php unset($__attributesOriginal18c21970322f9e5c938bc954620c12bb); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal18c21970322f9e5c938bc954620c12bb)): ?>
-<?php $component = $__componentOriginal18c21970322f9e5c938bc954620c12bb; ?>
-<?php unset($__componentOriginal18c21970322f9e5c938bc954620c12bb); ?>
-<?php endif; ?>
+                                            <input type="hidden" id="driver" name="driver" value="<?php echo e(old('driver')); ?>">
                                             <?php if (isset($component)) { $__componentOriginalf94ed9c5393ef72725d159fe01139746 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalf94ed9c5393ef72725d159fe01139746 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-error','data' => ['messages' => $errors->get('driver'),'class' => 'mt-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -1653,9 +1634,50 @@ unset($__errorArgs, $__bag); ?>
 <?php endif; ?>
                                             <select id="led_existant_select" name="led_existant_select" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
                                                 <option value="">-- Sélectionnez une LED --</option>
-                                                <option value="SMD1515RGB+0">SMD1515RGB+0</option>
-                                                <option value="SMD2121RGB+0">SMD2121RGB+0</option>
+                                                <?php $__currentLoopData = $ledDatasheets; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $datasheet): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <?php
+                                                        // Construction d'une description plus claire
+                                                        $description = $datasheet->type;
+                                                        if (!empty($datasheet->reference)) {
+                                                            // Extraire les composants individuels de la référence
+                                                            $parts = explode('_', $datasheet->reference);
+                                                            if (count($parts) > 1) {
+                                                                $size = $parts[1] ?? '';
+                                                                $description .= (!empty($size)) ? " {$size}" : "";
+                                                            }
+                                                        }
+                                                        
+                                                        $pcbColor = ucfirst($datasheet->color ?? 'black');
+                                                        $description .= " {$pcbColor}";
+                                                        
+                                                        // Format des pads
+                                                        $padCount = $datasheet->nb_poles ?? 4;
+                                                        $description .= " ({$padCount} pads)";
+                                                    ?>
+                                                    <option value="<?php echo e($datasheet->id); ?>" 
+                                                            data-reference="<?php echo e($datasheet->reference); ?>"
+                                                            data-type="<?php echo e($datasheet->type); ?>"
+                                                            data-size="<?php echo e(!empty($parts[1]) ? $parts[1] : ''); ?>"
+                                                            data-color="<?php echo e($datasheet->color ?? 'black'); ?>"
+                                                            data-pads="<?php echo e($datasheet->nb_poles ?? 4); ?>"
+                                                            data-config="<?php echo e(json_encode($datasheet->configuration_poles ?? [])); ?>">
+                                                        <?php echo e($description); ?>
+
+                                                    </option>
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                             </select>
+                                            
+                                            <div class="mt-4 p-3 border border-blue-500/30 rounded-lg bg-blue-900/20">
+                                                <h4 class="text-sm font-medium text-blue-300 mb-2">Aperçu de la LED</h4>
+                                                <div id="led_existant_preview" class="text-center">
+                                                    <img id="led_image" src="" alt="Aperçu LED" class="max-w-full h-auto mx-auto hidden" style="max-height: 200px; background-color: #1f2937; padding: 10px; border-radius: 5px;">
+                                                    <p id="no_led_selected" class="text-sm text-gray-300">Veuillez sélectionner une LED pour voir son aperçu.</p>
+                                                </div>
+                                                <div id="led_details_preview" class="text-sm text-gray-300 mt-3">
+                                                </div>
+                                            </div>
+                                            
+                                            <input type="hidden" id="led_datasheet_id" name="led_datasheet_id" value="">
                                         </div>
                                     </div>
                                     
@@ -2109,7 +2131,7 @@ unset($__errorArgs, $__bag); ?>
                                 </div>
                                 
                                 <!-- Rotation de la LED -->
-                                <div class="mb-4">
+                                <div id="led_rotation_container" class="mb-4">
                                     <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'led_rotation','value' => __('Rotation de la LED'),'class' => 'text-gray-300']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -2375,6 +2397,7 @@ unset($__errorArgs, $__bag); ?>
     <script src="<?php echo e(asset('js/components/carte-reception-selector.js')); ?>"></script>
     <script src="<?php echo e(asset('js/components/autocomplete.js')); ?>"></script>
     <script src="<?php echo e(asset('js/components/advanced-product-search.js')); ?>"></script>
+    <script src="<?php echo e(asset('js/components/led-datasheet-viewer.js')); ?>"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Script inline chargé - Formulaire création chantier étape 2');
@@ -2472,10 +2495,32 @@ unset($__errorArgs, $__bag); ?>
             const ledExistantContainer = document.getElementById('led_existant_container');
             
             if (ledNouveau && ledExistant && ledNouveauContainer && ledExistantContainer) {
+                // Fonction pour masquer/afficher tous les éléments liés au datasheet
+                function toggleDatasheetContainers(visible) {
+                    // Tous les éléments à cacher lors du choix d'une LED existante
+                    const containersToHide = [
+                        document.getElementById('pads_container'),
+                        document.getElementById('led_rotation_container'),
+                        document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.gap-4'), // Prévisualisation et bouton générer
+                        document.querySelector('.grid.grid-cols-1.md\\:grid-cols-3.gap-4')  // Type, couleur, taille, pads
+                    ];
+                    
+                    containersToHide.forEach(el => {
+                        if (el) {
+                            if (visible) {
+                                el.classList.remove('hidden');
+                            } else {
+                                el.classList.add('hidden');
+                            }
+                        }
+                    });
+                }
+                
                 ledNouveau.addEventListener('change', function() {
                     if (this.checked) {
                         ledNouveauContainer.classList.remove('hidden');
                         ledExistantContainer.classList.add('hidden');
+                        toggleDatasheetContainers(true);
                     }
                 });
                 
@@ -2483,8 +2528,90 @@ unset($__errorArgs, $__bag); ?>
                     if (this.checked) {
                         ledNouveauContainer.classList.add('hidden');
                         ledExistantContainer.classList.remove('hidden');
+                        toggleDatasheetContainers(false);
                     }
                 });
+                
+                // Ajout d'un écouteur d'événements pour le sélecteur de LED existante
+                const ledExistantSelect = document.getElementById('led_existant_select');
+                const ledDetailsPreview = document.getElementById('led_details_preview');
+                const ledImage = document.getElementById('led_image');
+                const noLedSelected = document.getElementById('no_led_selected');
+                const ledDatasheetId = document.getElementById('led_datasheet_id');
+                
+                if (ledExistantSelect && ledDetailsPreview && ledImage && noLedSelected) {
+                    ledExistantSelect.addEventListener('change', function() {
+                        const selectedOption = this.options[this.selectedIndex];
+                        const selectedLedId = this.value;
+                        
+                        if (selectedLedId) {
+                            // Masquer le message "aucune LED sélectionnée"
+                            noLedSelected.classList.add('hidden');
+                            
+                            // Récupérer directement les informations depuis les attributs data
+                            const type = selectedOption.getAttribute('data-type') || '';
+                            const size = selectedOption.getAttribute('data-size') || '';
+                            const color = selectedOption.getAttribute('data-color') || 'black';
+                            const pads = selectedOption.getAttribute('data-pads') || '4';
+                            let padConfig = {};
+                            
+                            try {
+                                // Récupérer la configuration des pads si elle existe
+                                const padConfigStr = selectedOption.getAttribute('data-config');
+                                if (padConfigStr) {
+                                    padConfig = JSON.parse(padConfigStr);
+                                }
+                            } catch (e) {
+                                console.error("Erreur lors du parsing de la configuration des pads:", e);
+                            }
+                            
+                            // Mettre à jour l'ID du datasheet sélectionné
+                            ledDatasheetId.value = selectedLedId;
+                            
+                            // Construction des détails de la LED avec format amélioré
+                            let padConfigHtml = '';
+                            if (Object.keys(padConfig).length > 0) {
+                                padConfigHtml = '<div class="mt-2 py-1 px-2 bg-gray-800 rounded">';
+                                for (const [padNum, padValue] of Object.entries(padConfig)) {
+                                    padConfigHtml += `<span class="inline-block px-1 mr-1 mb-1 bg-gray-700 rounded">Pad ${padNum}: ${padValue}</span>`;
+                                }
+                                padConfigHtml += '</div>';
+                            }
+                            
+                            // Construction des détails de la LED avec format corrigé
+                            let ledDetails = `
+                                <p><span class="font-medium">Type:</span> ${type}</p>
+                                <p><span class="font-medium">Taille:</span> ${size}</p>
+                                <p><span class="font-medium">Nombre de pads:</span> ${pads}</p>
+                                <p><span class="font-medium">Couleur du PCB:</span> ${color === 'black' ? 'Noir' : 'Blanc'}</p>
+                                ${padConfigHtml}
+                            `;
+                            
+                            // Afficher les détails
+                            ledDetailsPreview.innerHTML = ledDetails;
+                            
+                            // Démarrer le chargement de l'image
+                            ledImage.classList.remove('hidden');
+                            
+                            // Récupérer l'image du datasheet
+                            if (selectedLedId === '1') {
+                                ledImage.src = "data:image/png;base64,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";
+                            } else if (selectedLedId === '2') {
+                                ledImage.src = "data:image/png;base64,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";
+                            } else {
+                                ledImage.src = "";
+                                ledImage.classList.add('hidden');
+                                noLedSelected.classList.remove('hidden');
+                            }
+                        } else {
+                            // Aucune LED sélectionnée, masquer l'image
+                            ledImage.classList.add('hidden');
+                            noLedSelected.classList.remove('hidden');
+                            ledDetailsPreview.innerHTML = '';
+                            ledDatasheetId.value = '';
+                        }
+                    });
+                }
             }
             
             // Détails du produit du catalogue

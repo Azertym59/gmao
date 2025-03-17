@@ -12,75 +12,22 @@
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-semibold text-white">{{ $chantier->nom }}</h3>
                         <div class="flex space-x-2">
+                            <a href="{{ route('etiquettes.chantier', $chantier->id) }}" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg shadow transition-all duration-300 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                Imprimer étiquette
+                            </a>
                             <x-edit-button :route="route('chantiers.edit', $chantier)" />
                             <x-back-button :route="route('chantiers.index')" />
                         </div>
                     </div>
                     
                     <!-- Boutons d'envoi d'email -->
-                    <div class="mt-4 mb-6 flex space-x-2 justify-end">
-                        <x-email-button :chantier="$chantier" type="created" class="btn-glow">
-                            Email création
-                        </x-email-button>
-                        <x-email-button :chantier="$chantier" type="started" class="pulse-primary">
-                            Email interventions
-                        </x-email-button>
-                        <x-email-button :chantier="$chantier" type="completed" class="btn-rainbow">
-                            Email finalisation
-                        </x-email-button>
-                        
-                        <div class="ml-2 flex space-x-1">
-                            <x-icon-button 
-                                tag="button" 
-                                type="info" 
-                                tooltip="Email création" 
-                                tooltipPosition="top"
-                                size="sm" 
-                                class="rotate-icon"
-                                onclick="document.getElementById('email-created-form').submit();">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                            </x-icon-button>
-                            <form id="email-created-form" action="{{ route('emails.chantier', $chantier) }}" method="POST" class="hidden">
-                                @csrf
-                                <input type="hidden" name="email_type" value="created">
-                            </form>
-                            
-                            <x-icon-button 
-                                tag="button" 
-                                type="warning" 
-                                tooltip="Email interventions" 
-                                tooltipPosition="top"
-                                size="sm" 
-                                class="rotate-icon"
-                                onclick="document.getElementById('email-started-form').submit();">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                            </x-icon-button>
-                            <form id="email-started-form" action="{{ route('emails.chantier', $chantier) }}" method="POST" class="hidden">
-                                @csrf
-                                <input type="hidden" name="email_type" value="started">
-                            </form>
-                            
-                            <x-icon-button 
-                                tag="button" 
-                                type="success" 
-                                tooltip="Email finalisation" 
-                                tooltipPosition="top"
-                                size="sm" 
-                                class="rotate-icon"
-                                onclick="document.getElementById('email-completed-form').submit();">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                            </x-icon-button>
-                            <form id="email-completed-form" action="{{ route('emails.chantier', $chantier) }}" method="POST" class="hidden">
-                                @csrf
-                                <input type="hidden" name="email_type" value="completed">
-                            </form>
-                        </div>
+                    <div class="mt-4 mb-6 flex space-x-3 justify-end">
+                        <x-email-button :chantier="$chantier" type="created" buttonType="info" />
+                        <x-email-button :chantier="$chantier" type="started" buttonType="warning" />
+                        <x-email-button :chantier="$chantier" type="completed" buttonType="success" />
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -101,48 +48,27 @@
                                 </div>
                                 <div class="flex items-center">
                                     <span class="font-semibold mr-2">État:</span> 
-                                    @if($chantier->etat == 'non_commence')
-                                        <span class="badge badge-info">Non commencé</span>
-                                    @elseif($chantier->etat == 'en_cours')
-                                        <span class="badge badge-warning">En cours</span>
-                                    @else
-                                        <span class="badge badge-success">Terminé</span>
-                                    @endif
+                                    <x-status-badge :status="$chantier->etat" />
                                     
                                     <!-- Boutons de changement d'état rapide -->
                                     <div class="ml-4 flex space-x-1">
-                                        @if($chantier->etat != 'non_commence')
-                                            <form action="{{ route('chantiers.update.state', $chantier) }}" method="POST" class="inline">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="etat" value="non_commence">
-                                                <button type="submit" class="text-xs px-2 py-1 bg-gray-600 hover:bg-gray-500 text-white rounded">
-                                                    Non commencé
-                                                </button>
-                                            </form>
-                                        @endif
+                                        <x-state-button 
+                                            state="non_commence"
+                                            :route="route('chantiers.update.state', $chantier)"
+                                            :model="$chantier"
+                                            :currentState="$chantier->etat" />
                                         
-                                        @if($chantier->etat != 'en_cours')
-                                            <form action="{{ route('chantiers.update.state', $chantier) }}" method="POST" class="inline">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="etat" value="en_cours">
-                                                <button type="submit" class="text-xs px-2 py-1 bg-yellow-600 hover:bg-yellow-500 text-white rounded">
-                                                    En cours
-                                                </button>
-                                            </form>
-                                        @endif
+                                        <x-state-button 
+                                            state="en_cours"
+                                            :route="route('chantiers.update.state', $chantier)"
+                                            :model="$chantier"
+                                            :currentState="$chantier->etat" />
                                         
-                                        @if($chantier->etat != 'termine')
-                                            <form action="{{ route('chantiers.update.state', $chantier) }}" method="POST" class="inline">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="etat" value="termine">
-                                                <button type="submit" class="text-xs px-2 py-1 bg-green-600 hover:bg-green-500 text-white rounded">
-                                                    Terminé
-                                                </button>
-                                            </form>
-                                        @endif
+                                        <x-state-button 
+                                            state="termine"
+                                            :route="route('chantiers.update.state', $chantier)"
+                                            :model="$chantier"
+                                            :currentState="$chantier->etat" />
                                     </div>
                                 </div>
                             </div>
@@ -875,29 +801,164 @@
                             </div>
                         @endif
                     </div>
-                    <!-- Bouton QR Code -->
-                    <div class="text-center mt-6">
-                        <x-primary-button tag="a" href="{{ route('qrcode.chantier.print', $chantier->id) }}" class="flex items-center btn-3d">
+                    <!-- Boutons d'impression et QR Code -->
+                    <div class="flex justify-center mt-6 space-x-4">
+                        <x-print-button 
+                            tag="a" 
+                            route="{{ route('qrcode.chantier.print', $chantier->id) }}"
+                            type="qrcode"
+                            buttonStyle="font-semibold btn-3d">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4M4 8h16V5a1 1 0 00-1-1H5a1 1 0 00-1 1v3zm16 4v7a1 1 0 01-1 1H5a1 1 0 01-1-1v-7" />
                             </svg>
                             Générer QR Code
-                        </x-primary-button>
+                        </x-print-button>
                         
-                        <x-icon-button 
-                            tag="a" 
-                            href="{{ route('qrcode.chantier.print', $chantier->id) }}"
-                            type="primary" 
-                            tooltip="Générer QR Code" 
-                            tooltipPosition="top"
-                            size="lg"
-                            class="ml-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4M4 8h16V5a1 1 0 00-1-1H5a1 1 0 00-1 1v3zm16 4v7a1 1 0 01-1 1H5a1 1 0 01-1-1v-7" />
+                        <x-print-button 
+                            type="brother"
+                            onclick="printBrotherDirectly('{{ route('etiquettes.chantier.ptouch', $chantier->id) }}');"
+                            buttonStyle="font-semibold">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                             </svg>
-                        </x-icon-button>
+                            Imprimer Brother
+                        </x-print-button>
+                    </div>
+                    
+                    <!-- Boutons d'envoi d'email -->
+                    <div class="flex flex-col items-center mt-6">
+                        <h5 class="font-medium text-gray-300 mb-3">Envoyer des emails au client</h5>
+                        <div class="flex space-x-4">
+                            <button type="button" 
+                                onclick="document.getElementById('email-created-form').submit();" 
+                                class="flex items-center px-4 py-2 rounded-lg shadow bg-indigo-600 hover:bg-indigo-700 text-white transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                Email de création du chantier
+                            </button>
+                            <form id="email-created-form" action="{{ route('emails.chantier', $chantier) }}" method="POST" class="hidden">
+                                @csrf
+                                <input type="hidden" name="email_type" value="created">
+                            </form>
+                            
+                            <button type="button" 
+                                onclick="document.getElementById('email-started-form').submit();" 
+                                class="flex items-center px-4 py-2 rounded-lg shadow bg-yellow-600 hover:bg-yellow-700 text-white transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                Email de début des interventions
+                            </button>
+                            <form id="email-started-form" action="{{ route('emails.chantier', $chantier) }}" method="POST" class="hidden">
+                                @csrf
+                                <input type="hidden" name="email_type" value="started">
+                            </form>
+                            
+                            <button type="button" 
+                                onclick="document.getElementById('email-completed-form').submit();" 
+                                class="flex items-center px-4 py-2 rounded-lg shadow bg-green-600 hover:bg-green-700 text-white transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                Email de finalisation du chantier
+                            </button>
+                            <form id="email-completed-form" action="{{ route('emails.chantier', $chantier) }}" method="POST" class="hidden">
+                                @csrf
+                                <input type="hidden" name="email_type" value="completed">
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        function printBrotherDirectly(url) {
+            // Afficher un indicateur de chargement
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.style.position = 'fixed';
+            loadingIndicator.style.top = '50%';
+            loadingIndicator.style.left = '50%';
+            loadingIndicator.style.transform = 'translate(-50%, -50%)';
+            loadingIndicator.style.padding = '20px';
+            loadingIndicator.style.backgroundColor = 'rgba(0,0,0,0.8)';
+            loadingIndicator.style.color = 'white';
+            loadingIndicator.style.borderRadius = '10px';
+            loadingIndicator.style.zIndex = '9999';
+            loadingIndicator.style.fontWeight = 'bold';
+            loadingIndicator.innerHTML = '<div style="text-align: center;"><svg xmlns="http://www.w3.org/2000/svg" class="animate-pulse" style="display: inline-block; margin-bottom: 10px;" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg><div>Envoi vers l\'imprimante Brother...</div></div>';
+            document.body.appendChild(loadingIndicator);
+            
+            // Envoyer la requête à l'API
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Supprimer l'indicateur de chargement
+                document.body.removeChild(loadingIndicator);
+                
+                // Afficher le message de succès ou d'erreur
+                const messageBox = document.createElement('div');
+                messageBox.style.position = 'fixed';
+                messageBox.style.top = '50%';
+                messageBox.style.left = '50%';
+                messageBox.style.transform = 'translate(-50%, -50%)';
+                messageBox.style.padding = '20px';
+                messageBox.style.borderRadius = '10px';
+                messageBox.style.zIndex = '9999';
+                messageBox.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                
+                if (data.success) {
+                    messageBox.style.backgroundColor = 'rgba(46, 125, 50, 0.9)';
+                    messageBox.style.color = 'white';
+                    messageBox.innerHTML = '<div style="text-align: center;"><svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block; margin-bottom: 10px;" width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg><div>Étiquette envoyée avec succès à l\'imprimante ' + data.printer + '</div></div>';
+                } else {
+                    messageBox.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
+                    messageBox.style.color = 'white';
+                    messageBox.innerHTML = '<div style="text-align: center;"><svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block; margin-bottom: 10px;" width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg><div>Erreur: ' + data.message + '</div></div>';
+                }
+                
+                document.body.appendChild(messageBox);
+                
+                // Supprimer le message après 5 secondes
+                setTimeout(() => {
+                    document.body.removeChild(messageBox);
+                }, 5000);
+            })
+            .catch(error => {
+                // Supprimer l'indicateur de chargement
+                document.body.removeChild(loadingIndicator);
+                
+                // Afficher le message d'erreur
+                const errorBox = document.createElement('div');
+                errorBox.style.position = 'fixed';
+                errorBox.style.top = '50%';
+                errorBox.style.left = '50%';
+                errorBox.style.transform = 'translate(-50%, -50%)';
+                errorBox.style.padding = '20px';
+                errorBox.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
+                errorBox.style.color = 'white';
+                errorBox.style.borderRadius = '10px';
+                errorBox.style.zIndex = '9999';
+                errorBox.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                errorBox.innerHTML = '<div style="text-align: center;"><svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block; margin-bottom: 10px;" width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg><div>Erreur de connexion: ' + error.message + '</div></div>';
+                
+                document.body.appendChild(errorBox);
+                
+                // Supprimer le message après 5 secondes
+                setTimeout(() => {
+                    document.body.removeChild(errorBox);
+                }, 5000);
+            });
+        }
+    </script>
+    @endpush
 </x-app-layout>

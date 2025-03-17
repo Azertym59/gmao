@@ -524,7 +524,10 @@ class ChantierController extends Controller
         
         $produitsCatalogue = ProduitCatalogue::all();
         
-        return view('chantiers.create_step2_product', compact('produitsCatalogue', 'client'));
+        // Récupérer toutes les fiches techniques LED disponibles
+        $ledDatasheets = \App\Models\LedDatasheet::orderBy('created_at', 'desc')->get();
+        
+        return view('chantiers.create_step2_product', compact('produitsCatalogue', 'client', 'ledDatasheets'));
     }
 
     /**

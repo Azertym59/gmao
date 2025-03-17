@@ -93,6 +93,31 @@ class QzTrayService
      */
     public function queuePrintJob(Printer $printer, string $content, string $type, ?string $entityType = null, ?int $entityId = null): PrintJob
     {
+        // Pour Brother + PrintNode, fournir des options simplifiées compatibles
+        $options = [];
+        
+        // Si c'est une imprimante Brother qui utilise PrintNode, on simplifie les options
+        if ($printer->isBrotherLabel() && $printer->hasPrintNode()) {
+            $options = [
+                'size' => 'A4',  // Utiliser un format standard au lieu d'un format personnalisé
+                'copies' => 1,
+                'paper_source' => 'tray1', // Utiliser un bac standard
+            ];
+            
+            // Journaliser l'adaptation des options pour Brother
+            Log::info('PrintNode job for Brother printer - using simplified options', [
+                'printer_id' => $printer->id,
+                'printer_name' => $printer->name
+            ]);
+        } else {
+            // Sinon utiliser les options normales
+            $options = [
+                'size' => $printer->default_width ?? '62mm',
+                'height' => $printer->default_height ?? '20mm',
+                'copies' => 1,
+            ];
+        }
+        
         // Create a print job record
         $printJob = PrintJob::create([
             'printer_id' => $printer->id,
@@ -102,11 +127,7 @@ class QzTrayService
             'status' => 'queued',
             'entity_type' => $entityType,
             'entity_id' => $entityId,
-            'options' => [
-                'size' => $printer->default_width ?? '62mm',
-                'height' => $printer->default_height ?? '20mm',
-                'copies' => 1,
-            ],
+            'options' => $options,
         ]);
         
         // Log the print job

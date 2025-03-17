@@ -16,17 +16,9 @@ class Printer extends Model
      */
     protected $fillable = [
         'name',
-        'description',
-        'model',
         'type',
         'is_default',
-        'options',
-        'ip_address',
-        'port',
-        'dpi',
-        'label_width',
-        'label_height',
-        'connection_type'
+        'options'
     ];
 
     /**
@@ -111,5 +103,82 @@ class Printer extends Model
         // Tenter un ping basique
         exec("ping -c 1 -W 1 " . escapeshellarg($this->ip_address), $output, $status);
         return $status === 0;
+    }
+    
+    /**
+     * Accesseurs pour les propriétés stockées dans options
+     */
+    public function getModelAttribute()
+    {
+        return $this->options['model'] ?? null;
+    }
+    
+    public function getIpAddressAttribute()
+    {
+        return $this->options['ip_address'] ?? null;
+    }
+    
+    public function getPortAttribute()
+    {
+        return $this->options['port'] ?? null;
+    }
+    
+    public function getDpiAttribute()
+    {
+        return $this->options['dpi'] ?? null;
+    }
+    
+    public function getLabelWidthAttribute()
+    {
+        return $this->options['label_width'] ?? null;
+    }
+    
+    public function getLabelHeightAttribute()
+    {
+        return $this->options['label_height'] ?? null;
+    }
+    
+    public function getConnectionTypeAttribute()
+    {
+        return $this->options['connection_type'] ?? null;
+    }
+    
+    public function getLabelFormatAttribute()
+    {
+        return $this->options['label_format'] ?? null;
+    }
+    
+    /**
+     * Accesseur pour l'ID PrintNode
+     */
+    public function getPrintnodeIdAttribute()
+    {
+        return $this->options['printnode_id'] ?? null;
+    }
+    
+    /**
+     * Accesseur pour le type d'imprimante Brother
+     */
+    public function isBrotherLabel()
+    {
+        return $this->type === 'brother_label';
+    }
+    
+    /**
+     * Vérifie si l'imprimante peut être utilisée avec PrintNode
+     */
+    public function hasPrintNode()
+    {
+        return !empty($this->printnode_id);
+    }
+    
+    /**
+     * Vérifie si l'imprimante Brother devrait utiliser le pilote b-PAC
+     */
+    public function shouldUseBpac()
+    {
+        return $this->isBrotherLabel() && 
+               ($this->connection_type === 'usb' || 
+                $this->options['use_bpac'] ?? false);
     }
 }

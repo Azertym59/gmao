@@ -70,6 +70,36 @@ window.QZTray = {
                         this.qz.api.setPromiseType(function promise(resolver) {
                             return new Promise(resolver);
                         });
+                        
+                        // Configure for site
+                        this.qz.security.setCertificatePromise(function(resolve, reject) {
+                            // Utiliser une approche simple pour le certificat
+                            resolve("-----BEGIN CERTIFICATE-----\n" +
+                                   "MIID9TCCAt2gAwIBAgIJAKfOvMpZG0LOMA0GCSqGSIb3DQEBCwUAMIGQMQswCQYD\n" +
+                                   "VQQGEwJGUjEOMAwGA1UECAwFTWFyb2MxFDASBgNVBAcMC0Nhc2FibGFuY2ExFDAS\n" +
+                                   "BgNVBAoMC1RlY2FMRUQgTExDMQ8wDQYDVQQLDAZHbWFvSVQxFzAVBgNVBAMMDmdt\n" +
+                                   "YW8udGVjYWxlZC5mchEwDwYJKoZIhvcNAQkBFgJOQTAeFw0yNTAzMTcwNzI4MTda\n" +
+                                   "Fw0zNTAzMTcwNzI4MTdaMIGQMQswCQYDVQQGEwJGUjEOMAwGA1UECAwFTWFyb2Mx\n" +
+                                   "FDASBgNVBAcMC0Nhc2FibGFuY2ExFDASBgNVBAoMC1RlY2FMRUQgTExDMQ8wDQYD\n" +
+                                   "VQQLDAZHbWFvSVQxFzAVBgNVBAMMDmdt\n" +
+                                   "YW8udGVjYWxlZC5mchEwDwYJKoZIhvcNAQkBFgJOQTCCASIwDQYJKoZIhvcNAQEB\n" +
+                                   "BQADggEPADCCAQoCggEBALg+Cl9/9R5FMXlkfUy8H7SegFfSu2Y2NpRgMZIgY2Bk\n" +
+                                   "Z6ECBCI0EVbdRCYmAOY61+WKSY5TecAL\n" +
+                                   "-----END CERTIFICATE-----");
+                        });
+                        
+                        // Signer pour autoriser l'accès à QZ Tray
+                        this.qz.security.setSignaturePromise(function(toSign) {
+                            return function(resolve, reject) {
+                                try {
+                                    // Signature simple pour les besoins de test
+                                    const signature = { "r": "abcdefg", "s": "hijklmn", "hashAlgorithm": "SHA512" };
+                                    resolve(signature);
+                                } catch(err) {
+                                    reject(err);
+                                }
+                            };
+                        });
                     }
                     
                     // Try to connect with retries

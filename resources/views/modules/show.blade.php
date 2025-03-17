@@ -15,18 +15,8 @@
                             <p class="text-sm text-gray-400">Référence: {{ $module->reference }}</p>
                         </div>
                         <div class="flex space-x-2">
-                            <a href="{{ route('modules.edit', $module) }}" class="btn-action btn-secondary flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                                {{ __('Modifier') }}
-                            </a>
-                            <a href="{{ route('dalles.show', $module->dalle) }}" class="btn-action btn-primary flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                </svg>
-                                {{ __('Retour à la dalle') }}
-                            </a>
+                            <x-edit-button :route="route('modules.edit', $module)" />
+                            <x-back-button :route="route('dalles.show', $module->dalle)" />
                         </div>
                     </div>
 
@@ -56,15 +46,7 @@
                                 </div>
                                 <div>
                                     <span class="font-semibold text-white">État:</span>
-                                    @if($module->etat == 'non_commence')
-                                        <span class="badge badge-info">Non commencé</span>
-                                    @elseif($module->etat == 'en_cours')
-                                        <span class="badge badge-warning">En cours</span>
-                                    @elseif($module->etat == 'defaillant')
-                                        <span class="badge badge-danger">Défaillant</span>
-                                    @else
-                                        <span class="badge badge-success">Terminé</span>
-                                    @endif
+                                    <x-status-badge :status="$module->etat" />
                                 </div>
                             </div>
                         </div>
@@ -158,10 +140,9 @@
                     <div class="mt-8">
                         <div class="flex justify-between items-center mb-4">
                             <h4 class="font-medium text-white">Historique des interventions</h4>
-                            <a href="{{ route('interventions.create', ['module_id' => $module->id]) }}" 
-                               class="btn-action btn-success text-sm">
-                                {{ __('+ Nouvelle intervention') }}
-                            </a>
+                            <x-add-button :route="route('interventions.create', ['module_id' => $module->id])">
+                                {{ __('Nouvelle intervention') }}
+                            </x-add-button>
                         </div>
                         
                         @if($module->interventions->count() > 0)
@@ -235,21 +216,24 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 <p>Aucune intervention n'a encore été effectuée sur ce module.</p>
-                                <a href="{{ route('interventions.create', ['module_id' => $module->id]) }}" 
-                                   class="btn-action btn-primary mt-3 inline-flex items-center">
+                                <x-primary-button tag="a" href="{{ route('interventions.create', ['module_id' => $module->id]) }}" class="mt-3">
                                     {{ __('Commencer une intervention') }}
-                                </a>
+                                </x-primary-button>
                             </div>
                         @endif
                     </div>
                     
                     <div class="flex justify-center mt-8">
-                        <a href="{{ route('qrcode.module.print', $module->id) }}" class="btn-action btn-primary flex items-center">
+                        <x-print-button 
+                            tag="a" 
+                            :route="route('qrcode.module.print', $module->id)" 
+                            type="qrcode"
+                            buttonStyle="font-semibold">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4M4 8h16V5a1 1 0 00-1-1H5a1 1 0 00-1 1v3zm16 4v7a1 1 0 01-1 1H5a1 1 0 01-1-1v-7" />
                             </svg>
                             Générer QR Code
-                        </a>
+                        </x-print-button>
                     </div>
                 </div>
             </div>

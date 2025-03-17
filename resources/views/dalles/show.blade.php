@@ -12,12 +12,8 @@
                     <div class="flex justify-between mb-6">
                         <h3 class="text-lg font-semibold text-white">Dalle #{{ $dalle->id }}</h3>
                         <div>
-                            <a href="{{ route('dalles.edit', $dalle) }}" class="btn-action btn-primary mr-2">
-                                {{ __('Modifier') }}
-                            </a>
-                            <a href="{{ route('produits.show', $dalle->produit) }}" class="btn-action btn-secondary">
-                                {{ __('Retour au produit') }}
-                            </a>
+                            <x-edit-button :route="route('dalles.edit', $dalle)" />
+                            <x-back-button :route="route('produits.show', $dalle->produit)" />
                         </div>
                     </div>
 
@@ -80,10 +76,9 @@
                     <div class="mt-8">
                         <div class="flex justify-between items-center mb-4">
                             <h4 class="font-medium text-accent-purple">Modules</h4>
-                            <a href="{{ route('modules.create', ['dalle_id' => $dalle->id]) }}" 
-                               class="btn-action btn-success text-sm">
-                                {{ __('+ Nouveau module') }}
-                            </a>
+                            <x-add-button :route="route('modules.create', ['dalle_id' => $dalle->id])">
+                                {{ __('Nouveau module') }}
+                            </x-add-button>
                         </div>
                         
                         @if($dalle->modules->count() > 0)
@@ -97,26 +92,22 @@
                                             {{ $module->nb_pixels_largeur }}×{{ $module->nb_pixels_hauteur }} pixels
                                         </div>
                                         <div class="mt-2 text-center">
-                                            @if($module->etat == 'non_commence')
-                                                <span class="badge badge-info">Non commencé</span>
-                                            @elseif($module->etat == 'en_cours')
-                                                <span class="badge badge-warning">En cours</span>
-                                            @elseif($module->etat == 'defaillant')
-                                                <span class="badge badge-danger">Défaillant</span>
-                                            @else
-                                                <span class="badge badge-success">Terminé</span>
-                                            @endif
+                                            <x-status-badge :status="$module->etat" />
                                         </div>
                                         <div class="mt-2 text-center">
-                                            <a href="{{ route('modules.show', $module) }}" 
-                                               class="btn-action btn-primary text-xs">
-                                                Détails
-                                            </a>
+                                            <x-view-button :route="route('modules.show', $module)" size="xs" />
                                         </div>
                                         <div class="mt-2 text-center">
-                                            <a href="{{ route('qrcode.dalle.print', $dalle->id) }}" class="btn-action btn-secondary text-xs">
-                                                Imprimer QR Code
-                                            </a>
+                                            <x-print-button 
+                                                tag="a" 
+                                                route="{{ route('qrcode.dalle.print', $dalle->id) }}" 
+                                                type="qrcode"
+                                                size="sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4M4 8h16V5a1 1 0 00-1-1H5a1 1 0 00-1 1v3zm16 4v7a1 1 0 01-1 1H5a1 1 0 01-1-1v-7" />
+                                                </svg>
+                                                QR Code
+                                            </x-print-button>
                                         </div>
                                     </div>
                                 @endforeach

@@ -177,7 +177,15 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/interventions/{intervention}/store-diagnostic', [InterventionController::class, 'storeDiagnostic'])->name('interventions.store.diagnostic');
     Route::post('/interventions/{intervention}/store-reparation', [InterventionController::class, 'storeReparation'])->name('interventions.store.reparation');
     
-    // Les routes pour les rapports ont été supprimées, les clients utilisent maintenant le suivi des chantiers
+    // Routes pour les rapports
+    Route::prefix('rapports')->name('rapports.')->group(function () {
+        Route::get('/', [RapportController::class, 'index'])->name('index');
+        Route::get('/chantier/{chantier}', [RapportController::class, 'genererRapportChantier'])->name('chantier');
+        Route::get('/intervention/{intervention}', [RapportController::class, 'genererFicheIntervention'])->name('intervention');
+        Route::get('/performance', [RapportController::class, 'genererRapportPerformance'])->name('performance');
+        Route::get('/inventaire', [RapportController::class, 'genererRapportInventaire'])->name('inventaire');
+        Route::get('/statistiques', [RapportController::class, 'genererRapportStatistiques'])->name('statistiques');
+    });
     
     // Routes pour les QR codes - Structure originale conservée
     Route::prefix('qrcode')->name('qrcode.')->group(function () {
@@ -214,6 +222,51 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/clients/{client}/set-password', [App\Http\Controllers\ClientAuthController::class, 'setPassword'])
         ->name('client.set-password');
 
+// Routes pour les étiquettes (accessible sans être admin)
+Route::prefix('etiquettes')->name('etiquettes.')->group(function () {
+    // Test d'étiquettes
+    Route::get('/test', [\App\Http\Controllers\EtiquetteController::class, 'testEtiquettes'])->name('test');
+    Route::get('/test/module', function () {
+        // Générer un QR code de test pour module
+        $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+            ->size(200)->errorCorrection('H')->margin(1)
+            ->generate('https://gmao.tecaled.fr/test-module-qr'));
+        
+        return view('etiquettes.module_test', [
+            'qrCode' => 'data:image/png;base64,' . $qrCode
+        ]);
+    })->name('test.module');
+    
+    Route::get('/test/dalle', function () {
+        // Générer un QR code de test pour dalle
+        $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+            ->size(250)->errorCorrection('H')->margin(1)
+            ->generate('https://gmao.tecaled.fr/test-dalle-qr'));
+        
+        return view('etiquettes.dalle_test', [
+            'qrCode' => 'data:image/png;base64,' . $qrCode
+        ]);
+    })->name('test.dalle');
+    
+    Route::get('/test/flightcase', function () {
+        // Générer un QR code de test pour flightcase
+        $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+            ->size(300)->errorCorrection('H')->margin(1)
+            ->generate('https://gmao.tecaled.fr/test-flightcase-qr'));
+        
+        return view('etiquettes.flightcase_test', [
+            'qrCode' => 'data:image/png;base64,' . $qrCode
+        ]);
+    })->name('test.flightcase');
+    
+    // Étiquettes réelles
+    Route::get('/chantier/{id}', [\App\Http\Controllers\EtiquetteController::class, 'chantierEtiquette'])->name('chantier');
+    Route::get('/chantier/{id}/ptouch', [\App\Http\Controllers\EtiquetteController::class, 'chantierPTouchTemplate'])->name('chantier.ptouch');
+    Route::get('/dalle/{id}', [\App\Http\Controllers\EtiquetteController::class, 'dalleEtiquette'])->name('dalle');
+    Route::get('/module/{id}', [\App\Http\Controllers\EtiquetteController::class, 'moduleEtiquette'])->name('module');
+    Route::post('/module/batch', [\App\Http\Controllers\EtiquetteController::class, 'moduleBatchEtiquettes'])->name('module.batch');
+});
+
 // Routes pour les administrateurs seulement
     Route::middleware([AdminMiddleware::class])->group(function () {
         // Gestion des imprimantes (admin uniquement) - Mise à jour pour QZ Tray
@@ -231,8 +284,17 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/test', [PrinterController::class, 'testQzTray'])->name('test');
             Route::post('/test/print', [PrinterController::class, 'printTestQr'])->name('print-test');
             
+            // Routes pour les tests d'étiquettes
+            Route::get('/etiquettes-test', [PrinterController::class, 'testLabels'])->name('test-labels');
+            Route::post('/etiquettes-test', [PrinterController::class, 'processTestLabels'])->name('process-test-labels');
+            
             // On conserve cette route pour compatibilité et debuggage
             Route::get('/{id}/test-http', [PrinterController::class, 'testHttp'])->name('test-http');
+            
+            // Tests d'impression spécifiques
+            Route::get('/{id}/test', [PrinterController::class, 'testPrint'])->name('test');
+            Route::get('/{id}/direct-print', [PrinterController::class, 'directPrint'])->name('direct-print');
+            Route::get('/{id}/test-brother', [PrinterController::class, 'testBrotherPrint'])->name('test-brother');
         });
         
         // Routes d'administration
