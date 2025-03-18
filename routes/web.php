@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Printer;
-use PrintNode\Credentials;
+use PrintNode\Credentials\ApiKey;
 use PrintNode\Client;
 use PrintNode\PrintJob;
 
@@ -43,9 +43,8 @@ Route::get('/test-printnode', function () {
         return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
     }
     
-    // Initialiser correctement le client PrintNode avec des credentials
-    $credentials = new Credentials();
-    $credentials->setApiKey($apiKey);
+    // Initialiser correctement le client PrintNode avec des ApiKey credentials
+    $credentials = new ApiKey($apiKey);
     $client = new Client($credentials);
     
     // Récupérer les imprimantes disponibles
@@ -143,9 +142,8 @@ Route::get('/test-printnode-specific', function () {
         return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
     }
     
-    // Initialiser correctement le client PrintNode avec des credentials
-    $credentials = new Credentials();
-    $credentials->setApiKey($apiKey);
+    // Initialiser correctement le client PrintNode avec des ApiKey credentials
+    $credentials = new ApiKey($apiKey);
     $client = new Client($credentials);
     
     try {
@@ -230,9 +228,8 @@ Route::get('/test-printnode-roll', function () {
         return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
     }
     
-    // Initialiser correctement le client PrintNode avec des credentials
-    $credentials = new Credentials();
-    $credentials->setApiKey($apiKey);
+    // Initialiser correctement le client PrintNode avec des ApiKey credentials
+    $credentials = new ApiKey($apiKey);
     $client = new Client($credentials);
     
     try {
@@ -307,9 +304,8 @@ Route::get('/test-printnode-dk22205', function () {
         return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
     }
     
-    // Initialiser correctement le client PrintNode avec des credentials
-    $credentials = new Credentials();
-    $credentials->setApiKey($apiKey);
+    // Initialiser correctement le client PrintNode avec des ApiKey credentials
+    $credentials = new ApiKey($apiKey);
     $client = new Client($credentials);
     
     try {
