@@ -23,296 +23,367 @@ use App\Http\Middleware\ClientMiddleware;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Printer;
+use PrintNode\Client;
+use PrintNode\PrintJob;
 
 // Routes temporaires supprimées
 
 // Routes publiques
 // Route d'accès direct sans authentification (TEMPORAIRE)
-Route::get('/direct-dashboard', function () {
-    // Créer un utilisateur fictif à la volée
-    $user = new \App\Models\User([
-        'id' => 1,
-        'name' => 'Admin Temporaire',
-        'email' => 'admin@example.com',
-        'role' => 'admin'
-    ]);
+Route::get('/direct-access', function () {
+    return view('welcome');
+})->name('direct-access');
+
+// Route de test PrintNode
+Route::get('/test-printnode', function () {
+    $apiKey = config('printing.printnode.api_key');
+    if (empty($apiKey)) {
+        return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
+    }
     
-    // Connecter l'utilisateur
-    \Illuminate\Support\Facades\Auth::login($user);
+    $client = new \PrintNode\Client($apiKey);
     
-    // Rediriger vers le tableau de bord
-    return redirect('/dashboard');
-});
+    // Récupérer les imprimantes disponibles
+    try {
+        $printers = $client->getPrinters();
+        
+        if (empty($printers)) {
+            return "Aucune imprimante détectée dans PrintNode. Vérifiez que le client PrintNode est installé et que l'imprimante est connectée.";
+        }
+        
+        // Sélectionner l'imprimante Brother si disponible
+        $brotherPrinter = null;
+        foreach ($printers as $printer) {
+            if (stripos($printer->name, 'Brother') !== false || stripos($printer->name, 'QL-820') !== false) {
+                $brotherPrinter = $printer;
+                break;
+            }
+        }
+        
+        $printerId = $brotherPrinter ? $brotherPrinter->id : $printers[0]->id;
+        $printerName = $brotherPrinter ? $brotherPrinter->name : $printers[0]->name;
+        
+        // Créer un PDF basique pour le test
+        $html = '<html><body style="margin: 0; padding: 5px;">
+            <h3 style="font-size: 14px; text-align: center;">TEST IMPRESSION BROTHER</h3>
+            <p style="font-size: 12px; text-align: center;">Date: ' . date('d/m/Y H:i:s') . '</p>
+            <p style="font-size: 12px; text-align: center;">Imprimante: ' . $printerName . '</p>
+            <div style="text-align: center; margin-top: 10px;">
+                <img src="data:image/png;base64,' . base64_encode(
+                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                    ->size(150)
+                    ->margin(1)
+                    ->generate('Test QR Code - ' . date('d/m/Y H:i:s'))
+                ) . '" style="width: 150px; height: 150px;">
+            </div>
+        </body></html>';
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+        $pdfContent = base64_encode($pdf->output());
+        
+        // Créer la tâche d'impression avec options A4 et sans marges
+        $printJob = new PrintJob();
+        $printJob->printer = $printerId;
+        $printJob->title = "Test Brother Label - A4 Format";
+        $printJob->contentType = 'pdf_base64';
+        $printJob->content = $pdfContent;
+        $printJob->source = 'GMAO Test PrintNode';
+        $printJob->options = [
+            'paper' => 'a4',
+            'fit' => 'content',
+            'bin' => 'default'
+        ];
+        
+        // Envoyer la tâche d'impression
+        $jobId = $client->createPrintJob($printJob);
+        
+        // Enregistrer l'imprimante dans la base de données si elle n'existe pas déjà
+        $dbPrinter = Printer::where('name', $printerName)->first();
+        if (!$dbPrinter) {
+            $dbPrinter = Printer::create([
+                'name' => $printerName,
+                'type' => stripos($printerName, 'Brother') !== false ? 'brother_label' : 'standard',
+                'is_default' => false,
+                'options' => [
+                    'printnode_id' => $printerId,
+                    'dpi' => 300,
+                    'label_width' => 62,
+                    'label_height' => 100,
+                ]
+            ]);
+        } else if (empty($dbPrinter->printnode_id)) {
+            // Mettre à jour l'ID PrintNode si l'imprimante existe mais sans ID PrintNode
+            $options = $dbPrinter->options ?? [];
+            $options['printnode_id'] = $printerId;
+            $dbPrinter->options = $options;
+            $dbPrinter->save();
+        }
+        
+        return "Tâche d'impression envoyée avec succès vers l'imprimante: " . $printerName . 
+               "<br>ID Tâche PrintNode: " . $jobId . 
+               "<br>Imprimante ID: " . $printerId . 
+               "<br><strong>Format:</strong> A4 (pour éviter l'erreur de type de rouleau)" .
+               "<br><a href='/test-printnode-specific'>Essayer avec un format spécifique pour Brother (62mm x 100mm)</a>";
+               
+    } catch (\Exception $e) {
+        return "Erreur lors du test d'impression PrintNode: " . $e->getMessage() . 
+               "<br>Trace: <pre>" . $e->getTraceAsString() . "</pre>";
+    }
+})->name('test-printnode');
 
-// Routes d'authentification client
-Route::get('/client-login', [App\Http\Controllers\ClientAuthController::class, 'showLoginForm'])
-    ->name('client.login');
-Route::post('/client-login', [App\Http\Controllers\ClientAuthController::class, 'login'])
-    ->name('client.login.submit');
-Route::get('/client-register', [App\Http\Controllers\ClientAuthController::class, 'showRegisterForm'])
-    ->name('client.register');
-Route::post('/client-register', [App\Http\Controllers\ClientAuthController::class, 'register'])
-    ->name('client.register.submit');
+// Route de test PrintNode avec format spécifique
+Route::get('/test-printnode-specific', function () {
+    $apiKey = config('printing.printnode.api_key');
+    if (empty($apiKey)) {
+        return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
+    }
+    
+    $client = new \PrintNode\Client($apiKey);
+    
+    try {
+        $printers = $client->getPrinters();
+        
+        if (empty($printers)) {
+            return "Aucune imprimante détectée dans PrintNode.";
+        }
+        
+        // Sélectionner l'imprimante Brother si disponible
+        $brotherPrinter = null;
+        foreach ($printers as $printer) {
+            if (stripos($printer->name, 'Brother') !== false || stripos($printer->name, 'QL-820') !== false) {
+                $brotherPrinter = $printer;
+                break;
+            }
+        }
+        
+        $printerId = $brotherPrinter ? $brotherPrinter->id : $printers[0]->id;
+        $printerName = $brotherPrinter ? $brotherPrinter->name : $printers[0]->name;
+        
+        // Création d'un PDF au format 62mm x 100mm (176px x 283px à 72dpi)
+        $customPaper = array(0, 0, 176, 283);
+        
+        $html = '<html><body style="margin: 0; padding: 5px; width: 62mm; height: 100mm;">
+            <h3 style="font-size: 12px; text-align: center;">TEST FORMAT SPÉCIFIQUE</h3>
+            <p style="font-size: 10px; text-align: center;">Date: ' . date('d/m/Y H:i:s') . '</p>
+            <p style="font-size: 10px; text-align: center;">Format: 62mm x 100mm</p>
+            <div style="text-align: center; margin-top: 5px;">
+                <img src="data:image/png;base64,' . base64_encode(
+                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                    ->size(120)
+                    ->margin(1)
+                    ->generate('Test Format Spécifique - ' . date('d/m/Y H:i:s'))
+                ) . '" style="width: 120px; height: 120px;">
+            </div>
+        </body></html>';
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+            ->setPaper($customPaper, 'portrait')
+            ->setOptions([
+                'dpi' => 300,
+                'defaultFont' => 'sans-serif',
+                'isRemoteEnabled' => true,
+                'isHtml5ParserEnabled' => true,
+            ]);
+            
+        $pdfContent = base64_encode($pdf->output());
+        
+        // Créer la tâche d'impression avec des options spécifiques
+        $printJob = new PrintJob();
+        $printJob->printer = $printerId;
+        $printJob->title = "Test Brother Label - Format Spécifique";
+        $printJob->contentType = 'pdf_base64';
+        $printJob->content = $pdfContent;
+        $printJob->source = 'GMAO Test PrintNode Spécifique';
+        $printJob->options = [
+            'paper' => 'dk22205',
+            'width' => '62mm',
+            'height' => '100mm'
+        ];
+        
+        // Envoyer la tâche d'impression
+        $jobId = $client->createPrintJob($printJob);
+        
+        return "Tâche d'impression spécifique envoyée avec succès vers l'imprimante: " . $printerName . 
+               "<br>ID Tâche PrintNode: " . $jobId . 
+               "<br>Imprimante ID: " . $printerId . 
+               "<br><strong>Format:</strong> 62mm x 100mm (spécifique pour Brother)" .
+               "<br><a href='/test-printnode'>Revenir au test avec format A4</a>";
+               
+    } catch (\Exception $e) {
+        return "Erreur lors du test d'impression PrintNode spécifique: " . $e->getMessage() . 
+               "<br>Trace: <pre>" . $e->getTraceAsString() . "</pre>";
+    }
+})->name('test-printnode-specific');
 
-// Routes protégées pour l'espace client
-Route::middleware([ClientMiddleware::class])->group(function() {
-    Route::post('/client/logout', [App\Http\Controllers\ClientAuthController::class, 'logout'])
-        ->name('client.logout');
-    Route::get('/client/dashboard', [App\Http\Controllers\ClientAuthController::class, 'dashboard'])
-        ->name('client.dashboard');
-    Route::get('/client/chantiers', [App\Http\Controllers\SuiviController::class, 'clientChantiers'])
-        ->name('client.chantiers');
-});
-
-// Routes de suivi public de chantier
-Route::get('/suivi/{token}', [App\Http\Controllers\SuiviController::class, 'show'])
-    ->name('suivi.chantier');
-Route::get('/suivi/{token}/module/{moduleId}', [App\Http\Controllers\SuiviController::class, 'showModule'])
-    ->name('suivi.module');
-Route::get('/generate-tokens', [App\Http\Controllers\SuiviController::class, 'generateTokensForAll'])
-    ->name('suivi.generate-tokens');
-
+// Page d'accueil
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/client-test', function () {
-    return view('client-test');
-})->name('client.test');
-
-Route::get('/client-login-test', function () {
-    return view('client-login-test');
-})->name('client.login.test');
-
-// Routes pour la configuration initiale
-Route::get('/setup/admin', [SetupController::class, 'showAdminSetup'])->name('setup.admin');
-Route::post('/setup/admin', [SetupController::class, 'createAdmin'])->name('setup.admin.store');
-
-// Routes protégées par authentification
-Route::middleware(['auth'])->group(function () {
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
-    // Profil utilisateur
+// Routes d'authentification
+Route::middleware('auth')->group(function () {
+    // Profil
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
-    // Gestion des clients
-    Route::resource('clients', ClientController::class);
-    
-    // Route de test pour le formulaire catalogue
-    Route::get('/test-catalogue-form', [ChantierController::class, 'testCatalogueForm'])->name('test.catalogue.form');
-    Route::post('/test-catalogue-form', [ChantierController::class, 'testCatalogueFormSubmit'])->name('test.catalogue.form.submit');
-    
-    // Gestion des chantiers
-    // IMPORTANT: Les routes spécifiques doivent être placées AVANT la route resource
-    
-    // Routes pour le choix du type de projet (maintenance ou vente)
-    Route::get('/nouveau-projet', [ChantierController::class, 'typeChoix'])->name('nouveau.projet'); // Route simple et directe
-    Route::get('/chantiers/type-choix', [ChantierController::class, 'typeChoix'])->name('chantiers.type.choix');
-    Route::get('/chantiers/select-type', [ChantierController::class, 'typeChoix'])->name('chantiers.select.type'); // Route alternative
-    Route::get('/chantiers/maintenance/create', [ChantierController::class, 'createMaintenanceProject'])->name('chantiers.maintenance.create');
-    Route::get('/chantiers/vente/create', [ChantierController::class, 'createVenteProject'])->name('chantiers.vente.create');
-    
-    // Route patch doit venir avant resource pour éviter les conflits
-    Route::patch('/chantiers/{chantier}/state', [ChantierController::class, 'updateState'])->name('chantiers.update.state');
-    
-    // Route resource doit venir en dernier car elle capture tous les chemins /chantiers/*
-    Route::resource('chantiers', ChantierController::class);
-    
-    // Routes pour les emails
-    Route::post('/emails/chantier/{chantier}', [App\Http\Controllers\EmailController::class, 'sendChantierEmail'])->name('emails.chantier');
-    Route::get('/chantiers/create/step1', [ChantierController::class, 'createStep1'])->name('chantiers.create.step1');
-    Route::post('/chantiers/create/step1', [ChantierController::class, 'storeNewStep1'])->name('chantiers.store.step1');
-    Route::post('/chantiers/create/client-ajax', [ChantierController::class, 'storeClientAjax'])->name('chantiers.store.client-ajax');
-    Route::get('/chantiers/create/step2', [ChantierController::class, 'createNewStep2'])->name('chantiers.create.step2');
-    Route::post('/chantiers/create/step2', [ChantierController::class, 'storeNewStep2'])->name('chantiers.store.step2');
-    Route::get('/chantiers/create/step3', [ChantierController::class, 'createNewStep3'])->name('chantiers.create.step3');
-    Route::post('/chantiers/create/step3', [ChantierController::class, 'storeStep3'])->name('chantiers.store.step3');
-    Route::get('/chantiers/create/step4', [ChantierController::class, 'createStep4'])->name('chantiers.create.step4');
-    Route::post('/chantiers/create/step4', [ChantierController::class, 'storeStep4'])->name('chantiers.store.step4');
-    Route::get('/chantiers/create/step5', [ChantierController::class, 'createStep5'])->name('chantiers.create.step5');
-    Route::post('/chantiers/create/step5', [ChantierController::class, 'storeStep5'])->name('chantiers.store.step5');
-    
-    // Gestion des produits
-    Route::resource('produits', ProduitController::class);
-    Route::get('/produits/{produit}/create-variante', [ProduitController::class, 'createVariante'])->name('produits.create-variante');
-    Route::post('/produits/{produit}/store-variante', [ProduitController::class, 'storeVariante'])->name('produits.store-variante');
-    Route::get('/produits/{variante}/edit-variante', [ProduitController::class, 'editVariante'])->name('produits.edit-variante');
-    Route::resource('produits-catalogue', ProduitCatalogueController::class);
-    
-    // Gestion des dalles et modules
-    Route::resource('dalles', DalleController::class);
-    Route::post('/dalles/{id}/update-numero', [DalleController::class, 'updateNumero'])->name('dalles.update.numero');
-    Route::resource('modules', ModuleController::class);
-    Route::get('/produits/{produit}/modules/mass-create', [ModuleController::class, 'showMassCreateForm'])->name('modules.mass-create.form');
-    Route::post('/produits/{produit}/modules/mass-create', [ModuleController::class, 'processMassCreate'])->name('modules.mass-create.process');
-    Route::get('/modules/print-batch', [ModuleController::class, 'printBatch'])->name('modules.print-batch');
-    
-    // Gestion des interventions
-    Route::resource('interventions', InterventionController::class);
-    Route::post('/interventions/{intervention}/pause', [InterventionController::class, 'pause'])->name('interventions.pause');
-    Route::post('/interventions/{intervention}/resume', [InterventionController::class, 'resume'])->name('interventions.resume');
-    Route::post('/interventions/{intervention}/cancel', [InterventionController::class, 'cancel'])->name('interventions.cancel');
-    
-    // Routes pour le workflow à 3 étapes des interventions
-    Route::get('/interventions/{intervention}/step1', [InterventionController::class, 'showDiagnosticStep'])->name('interventions.step1.diagnostic');
-    Route::get('/interventions/{intervention}/step2', [InterventionController::class, 'showReparationStep'])->name('interventions.step2.reparation');
-    Route::get('/interventions/{intervention}/step3', [InterventionController::class, 'showFinalisationStep'])->name('interventions.step3.finalisation');
-    Route::post('/interventions/{intervention}/store-diagnostic', [InterventionController::class, 'storeDiagnostic'])->name('interventions.store.diagnostic');
-    Route::post('/interventions/{intervention}/store-reparation', [InterventionController::class, 'storeReparation'])->name('interventions.store.reparation');
-    
-    // Routes pour les rapports
-    Route::prefix('rapports')->name('rapports.')->group(function () {
-        Route::get('/', [RapportController::class, 'index'])->name('index');
-        Route::get('/chantier/{chantier}', [RapportController::class, 'genererRapportChantier'])->name('chantier');
-        Route::get('/intervention/{intervention}', [RapportController::class, 'genererFicheIntervention'])->name('intervention');
-        Route::get('/performance', [RapportController::class, 'genererRapportPerformance'])->name('performance');
-        Route::get('/inventaire', [RapportController::class, 'genererRapportInventaire'])->name('inventaire');
-        Route::get('/statistiques', [RapportController::class, 'genererRapportStatistiques'])->name('statistiques');
-    });
-    
-    // Routes pour les QR codes - Structure originale conservée
-    Route::prefix('qrcode')->name('qrcode.')->group(function () {
-        // Routes pour les chantiers
-        Route::get('/chantier/{id}/print', [ChantierQrCodeController::class, 'printLabel'])->name('chantier.print');
-        Route::get('/chantier/{id}', [ChantierQrCodeController::class, 'show'])->name('chantier.show');
-        
-        // Routes pour les dalles
-        Route::get('/dalle/{id}/print', [DalleQrCodeController::class, 'printLabel'])->name('dalle.print');
-        Route::get('/dalle/{id}', [DalleQrCodeController::class, 'show'])->name('dalle.show');
-        
-        // Routes pour les modules
-        Route::get('/module/{id}/print', [ModuleQrCodeController::class, 'printLabel'])->name('module.print');
-        Route::get('/module/{id}', [ModuleQrCodeController::class, 'show'])->name('module.show');
-        Route::get('/module/batch', [ModuleQrCodeController::class, 'printBatchLabels'])->name('module.batch');
-        
-        // Route pour la page de scan
-        Route::get('/scan', function () {
-            return view('qrcodes.scan');
-        })->name('scan');
-    });
+});
+
+// Routes authentifiées
+Route::middleware(['auth'])->group(function () {
+    // Dashboard principal
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // Routes pour les techniciens
-    Route::get('/technicien/dashboard', [TechnicienDashboardController::class, 'index'])->name('technicien.dashboard');
-    
-    // Routes pour les notifications
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
-    Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
-    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
-    Route::get('/notifications/unread', [NotificationController::class, 'getUnreadNotifications'])->name('notifications.unread');
-    
-    // Route pour définir le mot de passe client (administrateur)
-    Route::post('/clients/{client}/set-password', [App\Http\Controllers\ClientAuthController::class, 'setPassword'])
-        ->name('client.set-password');
-
-// Routes pour les étiquettes (accessible sans être admin)
-Route::prefix('etiquettes')->name('etiquettes.')->group(function () {
-    // Test d'étiquettes
-    Route::get('/test', [\App\Http\Controllers\EtiquetteController::class, 'testEtiquettes'])->name('test');
-    Route::get('/test/module', function () {
-        // Générer un QR code de test pour module
-        $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-            ->size(200)->errorCorrection('H')->margin(1)
-            ->generate('https://gmao.tecaled.fr/test-module-qr'));
-        
-        return view('etiquettes.module_test', [
-            'qrCode' => 'data:image/png;base64,' . $qrCode
-        ]);
-    })->name('test.module');
-    
-    Route::get('/test/dalle', function () {
-        // Générer un QR code de test pour dalle
-        $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-            ->size(250)->errorCorrection('H')->margin(1)
-            ->generate('https://gmao.tecaled.fr/test-dalle-qr'));
-        
-        return view('etiquettes.dalle_test', [
-            'qrCode' => 'data:image/png;base64,' . $qrCode
-        ]);
-    })->name('test.dalle');
-    
-    Route::get('/test/flightcase', function () {
-        // Générer un QR code de test pour flightcase
-        $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-            ->size(300)->errorCorrection('H')->margin(1)
-            ->generate('https://gmao.tecaled.fr/test-flightcase-qr'));
-        
-        return view('etiquettes.flightcase_test', [
-            'qrCode' => 'data:image/png;base64,' . $qrCode
-        ]);
-    })->name('test.flightcase');
-    
-    // Étiquettes réelles
-    Route::get('/chantier/{id}', [\App\Http\Controllers\EtiquetteController::class, 'chantierEtiquette'])->name('chantier');
-    Route::get('/chantier/{id}/ptouch', [\App\Http\Controllers\EtiquetteController::class, 'chantierPTouchTemplate'])->name('chantier.ptouch');
-    Route::get('/dalle/{id}', [\App\Http\Controllers\EtiquetteController::class, 'dalleEtiquette'])->name('dalle');
-    Route::get('/module/{id}', [\App\Http\Controllers\EtiquetteController::class, 'moduleEtiquette'])->name('module');
-    Route::post('/module/batch', [\App\Http\Controllers\EtiquetteController::class, 'moduleBatchEtiquettes'])->name('module.batch');
-});
-
-// Routes pour l'impression directe avec PrintNode
-Route::middleware(['auth'])->prefix('print')->name('print.')->group(function () {
-    Route::post('/qrcode/chantier/{id}', [\App\Http\Controllers\Api\PrintController::class, 'printChantierQrCode'])->name('qrcode.chantier');
-});
-
-// Routes pour les administrateurs seulement
-    Route::middleware([AdminMiddleware::class])->group(function () {
-        // Gestion des imprimantes (admin uniquement) - Mise à jour pour QZ Tray
-        Route::prefix('printers')->name('printers.')->group(function () {
-            Route::get('/', [PrinterController::class, 'index'])->name('index');
-            Route::get('/create', [PrinterController::class, 'create'])->name('create');
-            Route::post('/', [PrinterController::class, 'store'])->name('store');
-            Route::get('/{printer}', [PrinterController::class, 'show'])->name('show');
-            Route::get('/{printer}/edit', [PrinterController::class, 'edit'])->name('edit');
-            Route::put('/{printer}', [PrinterController::class, 'update'])->name('update');
-            Route::delete('/{printer}', [PrinterController::class, 'destroy'])->name('destroy');
-            Route::post('/{printer}/default', [PrinterController::class, 'setDefault'])->name('set-default');
-            
-            // Routes pour QZ Tray
-            Route::get('/test', [PrinterController::class, 'testQzTray'])->name('test');
-            Route::post('/test/print', [PrinterController::class, 'printTestQr'])->name('print-test');
-            
-            // Routes pour les tests d'étiquettes
-            Route::get('/etiquettes-test', [PrinterController::class, 'testLabels'])->name('test-labels');
-            Route::post('/etiquettes-test', [PrinterController::class, 'processTestLabels'])->name('process-test-labels');
-            
-            // On conserve cette route pour compatibilité et debuggage
-            Route::get('/{id}/test-http', [PrinterController::class, 'testHttp'])->name('test-http');
-            
-            // Tests d'impression spécifiques
-            Route::get('/{id}/test', [PrinterController::class, 'testPrint'])->name('test');
-            Route::get('/{id}/direct-print', [PrinterController::class, 'directPrint'])->name('direct-print');
-            Route::get('/{id}/test-brother', [PrinterController::class, 'testBrotherPrint'])->name('test-brother');
-        });
-        
-        // Routes d'administration
-        Route::prefix('admin')->name('admin.')->group(function () {
-            Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-            
-            // Gestion des utilisateurs
-            Route::get('/users', [AdminController::class, 'users'])->name('users');
-            Route::get('/users/create', [AdminController::class, 'createUser'])->name('users.create');
-            Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');
-            Route::get('/users/{user}/edit', [AdminController::class, 'editUser'])->name('users.edit');
-            Route::put('/users/{user}', [AdminController::class, 'updateUser'])->name('users.update');
-            Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('users.delete');
-            
-            // Gestion de la base de données
-            Route::get('/database', [AdminController::class, 'databaseManager'])->name('database.manager');
-            Route::post('/database/backup', [AdminController::class, 'backupDatabase'])->name('database.backup');
-            Route::get('/database/backups', [AdminController::class, 'listBackups'])->name('database.backups');
-            Route::get('/database/backups/{filename}/download', [AdminController::class, 'downloadBackup'])->name('database.backups.download');
-            Route::post('/database/backups/{filename}/restore', [AdminController::class, 'restoreBackup'])->name('database.backups.restore');
-            Route::get('/database/reset', [AdminController::class, 'confirmReset'])->name('database.confirm-reset');
-            Route::post('/database/reset', [AdminController::class, 'resetDatabase'])->name('database.reset');
-            Route::get('/database/setup-admin', [AdminController::class, 'setupAdmin'])->name('database.setup-admin');
-            Route::post('/database/setup-admin', [AdminController::class, 'storeAdmin'])->name('database.store-admin');
-        });
+    Route::middleware(['auth', 'role:technicien'])->group(function () {
+        Route::get('/technicien/dashboard', [TechnicienDashboardController::class, 'index'])->name('technicien.dashboard');
     });
+    
+    // Routes pour les administrateurs
+    Route::middleware(['auth', 'role:admin'])->group(function () {
+        Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
+        
+        // Gestion des utilisateurs
+        Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users');
+        Route::get('/admin/users/create', [AdminController::class, 'createUser'])->name('admin.users.create');
+        Route::post('/admin/users', [AdminController::class, 'storeUser'])->name('admin.users.store');
+        Route::get('/admin/users/{user}/edit', [AdminController::class, 'editUser'])->name('admin.users.edit');
+        Route::put('/admin/users/{user}', [AdminController::class, 'updateUser'])->name('admin.users.update');
+        Route::delete('/admin/users/{user}', [AdminController::class, 'destroyUser'])->name('admin.users.destroy');
+        
+        // Gestion de la base de données
+        Route::get('/admin/database', [AdminController::class, 'database'])->name('admin.database');
+        Route::get('/admin/database/backups', [AdminController::class, 'databaseBackups'])->name('admin.database.backups');
+        Route::post('/admin/database/backup', [AdminController::class, 'createBackup'])->name('admin.database.backup');
+        Route::get('/admin/database/reset', [AdminController::class, 'confirmDatabaseReset'])->name('admin.database.reset.confirm');
+        Route::post('/admin/database/reset', [AdminController::class, 'resetDatabase'])->name('admin.database.reset');
+    });
+    
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    
+    // Clients
+    Route::resource('clients', ClientController::class);
+    
+    // Chantiers
+    Route::get('/chantiers', [ChantierController::class, 'index'])->name('chantiers.index');
+    Route::get('/chantiers/create', [ChantierController::class, 'create'])->name('chantiers.create');
+    Route::get('/chantiers/create/step1', [ChantierController::class, 'createStep1'])->name('chantiers.create.step1');
+    Route::post('/chantiers/create/step1', [ChantierController::class, 'storeStep1'])->name('chantiers.store.step1');
+    Route::get('/chantiers/create/step2/{chantier}', [ChantierController::class, 'createStep2'])->name('chantiers.create.step2');
+    Route::post('/chantiers/create/step2/{chantier}', [ChantierController::class, 'storeStep2'])->name('chantiers.store.step2');
+    Route::get('/chantiers/create/step3/{chantier}', [ChantierController::class, 'createStep3'])->name('chantiers.create.step3');
+    Route::post('/chantiers/create/step3/{chantier}', [ChantierController::class, 'storeStep3'])->name('chantiers.store.step3');
+    Route::get('/chantiers/create/step4/{chantier}', [ChantierController::class, 'createStep4'])->name('chantiers.create.step4');
+    Route::post('/chantiers/create/step4/{chantier}', [ChantierController::class, 'storeStep4'])->name('chantiers.store.step4');
+    Route::get('/chantiers/create/step5/{chantier}', [ChantierController::class, 'createStep5'])->name('chantiers.create.step5');
+    Route::post('/chantiers/create/step5/{chantier}', [ChantierController::class, 'storeStep5'])->name('chantiers.store.step5');
+    Route::get('/chantiers/{chantier}', [ChantierController::class, 'show'])->name('chantiers.show');
+    Route::get('/chantiers/{chantier}/edit', [ChantierController::class, 'edit'])->name('chantiers.edit');
+    Route::put('/chantiers/{chantier}', [ChantierController::class, 'update'])->name('chantiers.update');
+    Route::delete('/chantiers/{chantier}', [ChantierController::class, 'destroy'])->name('chantiers.destroy');
+    
+    // Impression d'étiquettes QR Code pour chantiers
+    Route::get('/chantiers/{chantier}/qrcode', [ChantierQrCodeController::class, 'show'])->name('qrcode.chantier.show');
+    Route::get('/chantiers/{chantier}/print-qrcode', [ChantierQrCodeController::class, 'printQrCode'])->name('qrcode.chantier.print');
+    
+    // Dalles
+    Route::get('/chantiers/{chantier}/dalles/create', [DalleController::class, 'create'])->name('dalles.create');
+    Route::post('/chantiers/{chantier}/dalles', [DalleController::class, 'store'])->name('dalles.store');
+    Route::get('/dalles', [DalleController::class, 'index'])->name('dalles.index');
+    Route::get('/dalles/{dalle}', [DalleController::class, 'show'])->name('dalles.show');
+    Route::get('/dalles/{dalle}/edit', [DalleController::class, 'edit'])->name('dalles.edit');
+    Route::put('/dalles/{dalle}', [DalleController::class, 'update'])->name('dalles.update');
+    Route::delete('/dalles/{dalle}', [DalleController::class, 'destroy'])->name('dalles.destroy');
+    
+    // Impression d'étiquettes QR Code pour dalles
+    Route::get('/dalles/{dalle}/qrcode', [DalleQrCodeController::class, 'show'])->name('qrcode.dalle.show');
+    Route::get('/dalles/{dalle}/print-qrcode', [DalleQrCodeController::class, 'printQrCode'])->name('qrcode.dalle.print');
+    
+    // Modules
+    Route::get('/dalles/{dalle}/modules/create', [ModuleController::class, 'create'])->name('modules.create');
+    Route::post('/dalles/{dalle}/modules', [ModuleController::class, 'store'])->name('modules.store');
+    Route::get('/dalles/{dalle}/modules/mass-create', [ModuleController::class, 'massCreate'])->name('modules.mass-create');
+    Route::post('/dalles/{dalle}/modules/mass-store', [ModuleController::class, 'massStore'])->name('modules.mass-store');
+    Route::get('/modules', [ModuleController::class, 'index'])->name('modules.index');
+    Route::get('/modules/{module}', [ModuleController::class, 'show'])->name('modules.show');
+    Route::get('/modules/{module}/edit', [ModuleController::class, 'edit'])->name('modules.edit');
+    Route::put('/modules/{module}', [ModuleController::class, 'update'])->name('modules.update');
+    Route::delete('/modules/{module}', [ModuleController::class, 'destroy'])->name('modules.destroy');
+    
+    // Impression d'étiquettes QR Code pour modules
+    Route::get('/modules/{module}/qrcode', [ModuleQrCodeController::class, 'show'])->name('qrcode.module.show');
+    Route::get('/modules/{module}/print-qrcode', [ModuleQrCodeController::class, 'printQrCode'])->name('qrcode.module.print');
+    Route::get('/modules/batch/{ids}/print-qrcode', [ModuleQrCodeController::class, 'batchPrintQrCode'])->name('qrcode.module.batch-print');
+    
+    // Interventions
+    Route::get('/modules/{module}/interventions/create', [InterventionController::class, 'create'])->name('interventions.create');
+    Route::post('/modules/{module}/interventions', [InterventionController::class, 'store'])->name('interventions.store');
+    Route::get('/interventions', [InterventionController::class, 'index'])->name('interventions.index');
+    Route::get('/interventions/{intervention}', [InterventionController::class, 'show'])->name('interventions.show');
+    Route::get('/interventions/{intervention}/edit', [InterventionController::class, 'edit'])->name('interventions.edit');
+    Route::put('/interventions/{intervention}', [InterventionController::class, 'update'])->name('interventions.update');
+    Route::delete('/interventions/{intervention}', [InterventionController::class, 'destroy'])->name('interventions.destroy');
+    
+    // Etape 1 de l'intervention : diagnostic
+    Route::get('/interventions/{intervention}/diagnostic', [InterventionController::class, 'editDiagnostic'])->name('interventions.diagnostic');
+    Route::post('/interventions/{intervention}/diagnostic', [InterventionController::class, 'storeDiagnostic'])->name('interventions.store-diagnostic');
+    
+    // Etape 2 de l'intervention : réparation
+    Route::get('/interventions/{intervention}/reparation', [InterventionController::class, 'editReparation'])->name('interventions.reparation');
+    Route::post('/interventions/{intervention}/reparation', [InterventionController::class, 'storeReparation'])->name('interventions.store-reparation');
+    
+    // Etape 3 de l'intervention : finalisation
+    Route::get('/interventions/{intervention}/finalisation', [InterventionController::class, 'editFinalisation'])->name('interventions.finalisation');
+    Route::post('/interventions/{intervention}/finalisation', [InterventionController::class, 'storeFinalisation'])->name('interventions.store-finalisation');
+    
+    // Produits du catalogue
+    Route::resource('produits-catalogue', ProduitCatalogueController::class);
+    
+    // Produits
+    Route::resource('produits', ProduitController::class);
+    Route::get('/produits/create/variante/{produit}', [ProduitController::class, 'createVariante'])->name('produits.create-variante');
+    Route::post('/produits/store/variante/{produit}', [ProduitController::class, 'storeVariante'])->name('produits.store-variante');
+    
+    // Imprimantes
+    Route::resource('printers', PrinterController::class);
+    Route::get('/printers/{printer}/test', [PrinterController::class, 'test'])->name('printers.test');
+    Route::post('/printers/{printer}/test', [PrinterController::class, 'executeTest'])->name('printers.execute-test');
+    
+    // Rapports
+    Route::get('/rapports', [RapportController::class, 'index'])->name('rapports.index');
+    Route::get('/rapports/chantier/{chantier}', [RapportController::class, 'chantier'])->name('rapports.chantier');
+    Route::get('/rapports/intervention/{intervention}', [RapportController::class, 'intervention'])->name('rapports.intervention');
 });
 
-// Routes d'authentification
+// Routes de paramétrage initial
+Route::prefix('setup')->group(function () {
+    Route::get('/', [SetupController::class, 'index'])->name('setup.index');
+    Route::get('/admin', [SetupController::class, 'admin'])->name('setup.admin');
+    Route::post('/admin', [SetupController::class, 'storeAdmin'])->name('setup.admin.store');
+});
+
+// Routes de QR Code Public
+Route::prefix('suivi')->group(function () {
+    // Suivi client
+    Route::get('/client/{token}', [ClientController::class, 'suivi'])->name('suivi.client');
+    
+    // Suivi chantier
+    Route::get('/chantier/{token}', [ChantierController::class, 'suivi'])->name('suivi.chantier');
+    
+    // Suivi module
+    Route::get('/module/{token}', [ModuleController::class, 'suivi'])->name('suivi.module');
+});
+
+// Public QR Code routes without token
+Route::prefix('qr')->group(function () {
+    // Scan de QR Code générique
+    Route::get('/scan', function () {
+        return view('qrcodes.scan');
+    })->name('qrcode.scan');
+});
+
+// Routes d'authentification Laravel (login, register, etc.)
 require __DIR__.'/auth.php';
