@@ -1,6 +1,6 @@
-@extends('layouts.app')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -34,36 +34,36 @@
                                     <table class="table table-sm">
                                         <tr>
                                             <th>Nom</th>
-                                            <td>{{ $printer->name }}</td>
+                                            <td><?php echo e($printer->name); ?></td>
                                         </tr>
                                         <tr>
                                             <th>Type</th>
-                                            <td>{{ ucfirst($printer->type) }}</td>
+                                            <td><?php echo e(ucfirst($printer->type)); ?></td>
                                         </tr>
-                                        @if($printer->model)
+                                        <?php if($printer->model): ?>
                                         <tr>
                                             <th>Modèle</th>
-                                            <td>{{ $printer->model }}</td>
+                                            <td><?php echo e($printer->model); ?></td>
                                         </tr>
-                                        @endif
-                                        @if($printer->printnode_id)
+                                        <?php endif; ?>
+                                        <?php if($printer->printnode_id): ?>
                                         <tr>
                                             <th>PrintNode ID</th>
-                                            <td>{{ $printer->printnode_id }}</td>
+                                            <td><?php echo e($printer->printnode_id); ?></td>
                                         </tr>
-                                        @endif
-                                        @if($printer->dpi)
+                                        <?php endif; ?>
+                                        <?php if($printer->dpi): ?>
                                         <tr>
                                             <th>DPI</th>
-                                            <td>{{ $printer->dpi }}</td>
+                                            <td><?php echo e($printer->dpi); ?></td>
                                         </tr>
-                                        @endif
-                                        @if($printer->label_width && $printer->label_height)
+                                        <?php endif; ?>
+                                        <?php if($printer->label_width && $printer->label_height): ?>
                                         <tr>
                                             <th>Dimensions</th>
-                                            <td>{{ $printer->label_width }} x {{ $printer->label_height }} mm</td>
+                                            <td><?php echo e($printer->label_width); ?> x <?php echo e($printer->label_height); ?> mm</td>
                                         </tr>
-                                        @endif
+                                        <?php endif; ?>
                                     </table>
                                 </div>
                             </div>
@@ -76,7 +76,7 @@
                                     <h5 class="mb-0">Aperçu du QR Code</h5>
                                 </div>
                                 <div class="card-body text-center py-4">
-                                    <img src="{{ $printData['imageData'] }}" alt="QR Code" class="img-fluid" style="max-width: 200px; max-height: 200px;">
+                                    <img src="<?php echo e($printData['imageData']); ?>" alt="QR Code" class="img-fluid" style="max-width: 200px; max-height: 200px;">
                                 </div>
                             </div>
                         </div>
@@ -84,7 +84,7 @@
 
                     <!-- Actions -->
                     <div class="d-flex justify-content-between mt-4">
-                        <a href="{{ route('printers.test-labels') }}" class="btn btn-primary">
+                        <a href="<?php echo e(route('printers.test-labels')); ?>" class="btn btn-primary">
                             <i class="fas fa-arrow-left mr-1"></i> Retour au test
                         </a>
                         <div>
@@ -92,7 +92,7 @@
                                 <i class="fas fa-external-link-alt mr-1"></i> Interface PrintNode
                             </a>
                             <!-- Remplacer le bouton par un lien direct -->
-                            <a href="{{ url('/printers/' . $printer->id . '/direct-print') }}" class="btn btn-success">
+                            <a href="<?php echo e(url('/printers/' . $printer->id . '/direct-print')); ?>" class="btn btn-success">
                                 <i class="fas fa-print mr-1"></i> Imprimer
                             </a>
                         </div>
@@ -118,4 +118,5 @@
         </div>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /var/www/gmao/resources/views/printers/test_result.blade.php ENDPATH**/ ?>

@@ -253,6 +253,11 @@ Route::prefix('etiquettes')->name('etiquettes.')->group(function () {
     Route::post('/module/batch', [\App\Http\Controllers\EtiquetteController::class, 'moduleBatchEtiquettes'])->name('module.batch');
 });
 
+// Routes pour l'impression directe avec PrintNode
+Route::middleware(['auth'])->prefix('print')->name('print.')->group(function () {
+    Route::post('/qrcode/chantier/{id}', [\App\Http\Controllers\Api\PrintController::class, 'printChantierQrCode'])->name('qrcode.chantier');
+});
+
 // Routes pour les administrateurs seulement
     Route::middleware([AdminMiddleware::class])->group(function () {
         // Gestion des imprimantes (admin uniquement) - Mise à jour pour QZ Tray

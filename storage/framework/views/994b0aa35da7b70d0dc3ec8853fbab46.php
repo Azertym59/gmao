@@ -22,12 +22,6 @@
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-semibold text-white"><?php echo e($chantier->nom); ?></h3>
                         <div class="flex space-x-2">
-                            <a href="<?php echo e(route('etiquettes.chantier', $chantier->id)); ?>" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg shadow transition-all duration-300 flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                </svg>
-                                Imprimer étiquette
-                            </a>
                             <?php if (isset($component)) { $__componentOriginal8417baeedcb6c131165d53e37e61cc07 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal8417baeedcb6c131165d53e37e61cc07 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.edit-button','data' => ['route' => route('chantiers.edit', $chantier)]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -72,67 +66,45 @@
                     </div>
                     
                     <!-- Boutons d'envoi d'email -->
-                    <div class="mt-4 mb-6 flex space-x-3 justify-end">
-                        <?php if (isset($component)) { $__componentOriginalc4709a7f0659e5bc620ccc45265cff75 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc4709a7f0659e5bc620ccc45265cff75 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.email-button','data' => ['chantier' => $chantier,'type' => 'created','buttonType' => 'info']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('email-button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['chantier' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier),'type' => 'created','buttonType' => 'info']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalc4709a7f0659e5bc620ccc45265cff75)): ?>
-<?php $attributes = $__attributesOriginalc4709a7f0659e5bc620ccc45265cff75; ?>
-<?php unset($__attributesOriginalc4709a7f0659e5bc620ccc45265cff75); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc4709a7f0659e5bc620ccc45265cff75)): ?>
-<?php $component = $__componentOriginalc4709a7f0659e5bc620ccc45265cff75; ?>
-<?php unset($__componentOriginalc4709a7f0659e5bc620ccc45265cff75); ?>
-<?php endif; ?>
-                        <?php if (isset($component)) { $__componentOriginalc4709a7f0659e5bc620ccc45265cff75 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc4709a7f0659e5bc620ccc45265cff75 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.email-button','data' => ['chantier' => $chantier,'type' => 'started','buttonType' => 'warning']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('email-button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['chantier' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier),'type' => 'started','buttonType' => 'warning']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalc4709a7f0659e5bc620ccc45265cff75)): ?>
-<?php $attributes = $__attributesOriginalc4709a7f0659e5bc620ccc45265cff75; ?>
-<?php unset($__attributesOriginalc4709a7f0659e5bc620ccc45265cff75); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc4709a7f0659e5bc620ccc45265cff75)): ?>
-<?php $component = $__componentOriginalc4709a7f0659e5bc620ccc45265cff75; ?>
-<?php unset($__componentOriginalc4709a7f0659e5bc620ccc45265cff75); ?>
-<?php endif; ?>
-                        <?php if (isset($component)) { $__componentOriginalc4709a7f0659e5bc620ccc45265cff75 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc4709a7f0659e5bc620ccc45265cff75 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.email-button','data' => ['chantier' => $chantier,'type' => 'completed','buttonType' => 'success']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('email-button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['chantier' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($chantier),'type' => 'completed','buttonType' => 'success']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalc4709a7f0659e5bc620ccc45265cff75)): ?>
-<?php $attributes = $__attributesOriginalc4709a7f0659e5bc620ccc45265cff75; ?>
-<?php unset($__attributesOriginalc4709a7f0659e5bc620ccc45265cff75); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc4709a7f0659e5bc620ccc45265cff75)): ?>
-<?php $component = $__componentOriginalc4709a7f0659e5bc620ccc45265cff75; ?>
-<?php unset($__componentOriginalc4709a7f0659e5bc620ccc45265cff75); ?>
-<?php endif; ?>
+                    <div class="mt-4 mb-6 flex space-x-4 justify-end">
+                        <button type="button" 
+                            onclick="document.getElementById('email-created-form').submit();" 
+                            class="flex items-center px-4 py-2 rounded-lg shadow bg-indigo-600 hover:bg-indigo-700 text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Email de création du chantier
+                        </button>
+                        <form id="email-created-form" action="<?php echo e(route('emails.chantier', $chantier)); ?>" method="POST" class="hidden">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="email_type" value="created">
+                        </form>
+                        
+                        <button type="button" 
+                            onclick="document.getElementById('email-started-form').submit();" 
+                            class="flex items-center px-4 py-2 rounded-lg shadow bg-yellow-600 hover:bg-yellow-700 text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Email de début des interventions
+                        </button>
+                        <form id="email-started-form" action="<?php echo e(route('emails.chantier', $chantier)); ?>" method="POST" class="hidden">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="email_type" value="started">
+                        </form>
+                        
+                        <button type="button" 
+                            onclick="document.getElementById('email-completed-form').submit();" 
+                            class="flex items-center px-4 py-2 rounded-lg shadow bg-green-600 hover:bg-green-700 text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Email de finalisation du chantier
+                        </button>
+                        <form id="email-completed-form" action="<?php echo e(route('emails.chantier', $chantier)); ?>" method="POST" class="hidden">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="email_type" value="completed">
+                        </form>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -1121,7 +1093,7 @@
                             </div>
                         <?php endif; ?>
                     </div>
-                    <!-- Boutons d'impression et QR Code -->
+                    <!-- Bouton QR Code -->
                     <div class="flex justify-center mt-6 space-x-4">
                         <?php if (isset($component)) { $__componentOriginal653ad55244738a059739a51a5163a501 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal653ad55244738a059739a51a5163a501 = $attributes; } ?>
@@ -1148,75 +1120,15 @@
 <?php unset($__componentOriginal653ad55244738a059739a51a5163a501); ?>
 <?php endif; ?>
                         
-                        <?php if (isset($component)) { $__componentOriginal653ad55244738a059739a51a5163a501 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal653ad55244738a059739a51a5163a501 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.print-button','data' => ['type' => 'brother','onclick' => 'printBrotherDirectly(\''.e(route('etiquettes.chantier.ptouch', $chantier->id)).'\');','buttonStyle' => 'font-semibold']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('print-button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['type' => 'brother','onclick' => 'printBrotherDirectly(\''.e(route('etiquettes.chantier.ptouch', $chantier->id)).'\');','buttonStyle' => 'font-semibold']); ?>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                            </svg>
-                            Imprimer Brother
-                         <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal653ad55244738a059739a51a5163a501)): ?>
-<?php $attributes = $__attributesOriginal653ad55244738a059739a51a5163a501; ?>
-<?php unset($__attributesOriginal653ad55244738a059739a51a5163a501); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal653ad55244738a059739a51a5163a501)): ?>
-<?php $component = $__componentOriginal653ad55244738a059739a51a5163a501; ?>
-<?php unset($__componentOriginal653ad55244738a059739a51a5163a501); ?>
-<?php endif; ?>
-                    </div>
-                    
-                    <!-- Boutons d'envoi d'email -->
-                    <div class="flex flex-col items-center mt-6">
-                        <h5 class="font-medium text-gray-300 mb-3">Envoyer des emails au client</h5>
-                        <div class="flex space-x-4">
-                            <button type="button" 
-                                onclick="document.getElementById('email-created-form').submit();" 
-                                class="flex items-center px-4 py-2 rounded-lg shadow bg-indigo-600 hover:bg-indigo-700 text-white transition-all">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        <form action="<?php echo e(route('print.qrcode.chantier', $chantier->id)); ?>" method="POST">
+                            <?php echo csrf_field(); ?>
+                            <button type="submit" class="btn-action btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                 </svg>
-                                Email de création du chantier
+                                Imprimer QR Code
                             </button>
-                            <form id="email-created-form" action="<?php echo e(route('emails.chantier', $chantier)); ?>" method="POST" class="hidden">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="email_type" value="created">
-                            </form>
-                            
-                            <button type="button" 
-                                onclick="document.getElementById('email-started-form').submit();" 
-                                class="flex items-center px-4 py-2 rounded-lg shadow bg-yellow-600 hover:bg-yellow-700 text-white transition-all">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                Email de début des interventions
-                            </button>
-                            <form id="email-started-form" action="<?php echo e(route('emails.chantier', $chantier)); ?>" method="POST" class="hidden">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="email_type" value="started">
-                            </form>
-                            
-                            <button type="button" 
-                                onclick="document.getElementById('email-completed-form').submit();" 
-                                class="flex items-center px-4 py-2 rounded-lg shadow bg-green-600 hover:bg-green-700 text-white transition-all">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                Email de finalisation du chantier
-                            </button>
-                            <form id="email-completed-form" action="<?php echo e(route('emails.chantier', $chantier)); ?>" method="POST" class="hidden">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="email_type" value="completed">
-                            </form>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </div>

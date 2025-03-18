@@ -73,34 +73,34 @@
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.1) 100%);
   }
   
-  /* Boutons sobres */
+  /* Boutons redessinés */
   .btn {
-    @apply px-4 py-2 rounded-md font-medium text-sm flex items-center justify-center gap-2 transition-opacity duration-200 
-    focus:outline-none focus:border-white/30 border border-transparent;
+    @apply px-4 py-2 rounded-md font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200 
+    focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-transparent border border-transparent shadow-sm;
   }
   
   .btn:hover {
-    @apply opacity-90;
+    @apply transform translate-y-px shadow-md;
   }
   
   .btn-primary {
-    @apply btn bg-accent-primary text-white;
+    @apply btn bg-accent-primary text-gray-900 font-semibold border-accent-primary/20;
   }
   
   .btn-secondary {
-    @apply btn bg-accent-secondary text-white;
+    @apply btn bg-accent-secondary text-white border-accent-secondary/20;
   }
   
   .btn-success {
-    @apply btn bg-accent-green text-white;
+    @apply btn bg-accent-green text-gray-900 font-semibold border-accent-green/20;
   }
   
   .btn-danger {
-    @apply btn bg-error text-white;
+    @apply btn bg-error text-white border-error/20;
   }
   
   .btn-warning {
-    @apply btn bg-warning text-black;
+    @apply btn bg-warning text-gray-900 border-warning/20;
   }
   
   .btn-outline {
@@ -115,9 +115,69 @@
     @apply p-2 rounded-full;
   }
   
-  /* Actions pour tableaux - version sobre */
+  /* Actions pour tableaux - redessinées avec le nouveau style */
   .btn-action {
-    @apply inline-flex items-center px-3 py-1.5 rounded text-xs font-medium transition-opacity duration-150;
+    @apply inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md hover:translate-y-px border border-transparent;
+  }
+
+  .btn-action.btn-primary {
+    @apply bg-accent-primary text-gray-900 font-semibold border-accent-primary/20;
+  }
+
+  .btn-action.btn-secondary {
+    @apply bg-accent-secondary text-white border-accent-secondary/20;
+  }
+
+  .btn-action.btn-success {
+    @apply bg-accent-green text-gray-900 font-semibold border-accent-green/20;
+  }
+
+  .btn-action.btn-danger {
+    @apply bg-error text-white border-error/20;
+  }
+
+  .btn-action.btn-warning {
+    @apply bg-warning text-gray-900 border-warning/20;
+  }
+
+  .btn-action.btn-info {
+    @apply bg-info text-white border-info/20;
+  }
+
+  .btn-action.btn-outline {
+    @apply bg-transparent border border-white/20 text-white hover:border-white/40;
+  }
+
+  .btn-action.btn-dark {
+    @apply bg-gray-700/50 hover:bg-gray-700/80 text-white;
+  }
+  
+  /* Style moderne pour les boutons étape */
+  .step-button {
+    @apply relative w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-md transition-all duration-200;
+    background: radial-gradient(circle at center, #232323, #1a1a1a);
+  }
+  
+  .step-button.active {
+    @apply border-accent-primary bg-gray-800 text-white;
+    box-shadow: 
+      0 0 0 2px rgba(0, 214, 36, 0.2),
+      inset 0 0 10px rgba(0, 214, 36, 0.1);
+  }
+  
+  .step-button.inactive {
+    @apply border-gray-600/30 text-gray-400;
+    background: #151515;
+  }
+  
+  .step-button::before {
+    content: '';
+    @apply absolute inset-0 rounded-full opacity-80;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.1) 100%);
+  }
+  
+  .step-text {
+    @apply uppercase tracking-wider text-xs font-medium mt-2;
   }
   
   /* Badges */

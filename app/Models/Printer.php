@@ -177,8 +177,11 @@ class Printer extends Model
      */
     public function shouldUseBpac()
     {
+        // Si les options sont une chaîne JSON, les décoder d'abord
+        $options = is_array($this->options) ? $this->options : json_decode($this->options, true) ?? [];
+        
         return $this->isBrotherLabel() && 
                ($this->connection_type === 'usb' || 
-                $this->options['use_bpac'] ?? false);
+                ($options['use_bpac'] ?? false));
     }
 }

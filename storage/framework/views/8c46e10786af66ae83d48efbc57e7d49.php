@@ -177,7 +177,7 @@
         </div>
 
         <div class="flex items-center justify-end mt-6">
-            <?php if(Route::has('password.request')): ?>
+            <?php if(\Illuminate\Support\Facades\Route::has('password.request')): ?>
                 <a class="underline text-sm text-accent-blue hover:text-blue-400 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-blue" href="<?php echo e(route('password.request')); ?>">
                     <?php echo e(__('Mot de passe oublié?')); ?>
 

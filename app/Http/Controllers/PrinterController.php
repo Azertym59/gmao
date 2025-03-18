@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Http;
 
 class PrinterController extends Controller
 {
@@ -181,12 +182,13 @@ class PrinterController extends Controller
     {
         try {
             $printer = Printer::findOrFail($id);
+            $printers = Printer::all();
             
             // Vérifier si l'imprimante est disponible
             $isAvailable = $printer->isAvailable();
             
             // Journaliser
-            \Log::info('Test d\'impression demandé pour ' . $printer->name, [
+            Log::info('Test d\'impression demandé pour ' . $printer->name, [
                 'printer_id' => $printer->id,
                 'printer_name' => $printer->name,
                 'printer_type' => $printer->type,
@@ -196,11 +198,13 @@ class PrinterController extends Controller
             // Afficher la vue de test avec un bouton pour l'impression directe
             return view('printers.test', [
                 'printer' => $printer,
+                'printers' => $printers,
+                'selectedPrinter' => $printer,
                 'directPrintUrl' => route('printers.direct-print', $id),
                 'isAvailable' => $isAvailable
             ]);
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de la préparation du test d\'impression: ' . $e->getMessage(), [
+            Log::error('Erreur lors de la préparation du test d\'impression: ' . $e->getMessage(), [
                 'printer_id' => $id,
                 'trace' => $e->getTraceAsString()
             ]);
@@ -211,18 +215,105 @@ class PrinterController extends Controller
     }
 
     /**
-     * Exécuter l'impression directe
+     * Exécuter l'impression directe avec journalisation améliorée
      */
     public function directPrint($id)
     {
-        $result = PrinterService::directPrint($id);
-        
-        if ($result['success']) {
+        try {
+            // Journaliser la tentative
+            Log::info('Tentative d\'impression directe', ['printer_id' => $id]);
+            
+            // Récupérer l'imprimante
+            $printer = Printer::findOrFail($id);
+            
+            // Si c'est une imprimante PrintNode, utiliser l'API directement
+            if ($printer->hasPrintNode()) {
+                $apiKey = config('printing.printnode.api_key');
+                
+                // Vérifier que l'API est configurée
+                if (empty($apiKey)) {
+                    Log::error('PrintNode API key manquante');
+                    return redirect()->route('printers.test', $id)
+                        ->with('error', 'Clé API PrintNode non configurée');
+                }
+                
+                // Générer des données pour le QR code
+                $testData = json_encode([
+                    'test' => true,
+                    'printer' => $printer->name,
+                    'timestamp' => now()->toDateTimeString(),
+                    'id' => uniqid()
+                ]);
+                
+                // Générer un HTML simple
+                $html = '<html><body style="text-align:center; padding:20px;">';
+                $html .= '<h1>Test impression PrintNode</h1>';
+                $html .= '<h2>' . $printer->name . '</h2>';
+                $html .= '<p>Date: ' . date('Y-m-d H:i:s') . '</p>';
+                $html .= '<p>ID Test: ' . uniqid() . '</p>';
+                $html .= '</body></html>';
+                
+                // Convertir en PDF avec DomPDF
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+                $pdfContent = base64_encode($pdf->output());
+                
+                // Construire les données du travail d'impression
+                $printJobData = [
+                    'printerId' => $printer->printnode_id,
+                    'title' => 'Test direct d\'impression',
+                    'contentType' => 'pdf_base64',
+                    'content' => $pdfContent,
+                    'source' => 'GMAO Direct Test'
+                ];
+                
+                // Log complet avant l'appel API
+                Log::info('Envoi direct à PrintNode', [
+                    'printer_id' => $printer->printnode_id,
+                    'api_key_set' => !empty($apiKey),
+                    'pdf_length' => strlen($pdfContent)
+                ]);
+                
+                // Appel API PrintNode directement
+                $response = Http::withBasicAuth($apiKey, '')
+                    ->withHeaders(['Content-Type' => 'application/json'])
+                    ->post('https://api.printnode.com/printjobs', $printJobData);
+                
+                if ($response->successful()) {
+                    $printNodeJobId = $response->body();
+                    Log::info('Impression directe réussie', ['job_id' => $printNodeJobId]);
+                    
+                    return redirect()->route('printers.test', $id)
+                        ->with('success', "Impression directe envoyée avec succès à PrintNode (Job ID: $printNodeJobId)");
+                } else {
+                    Log::error('Erreur API PrintNode', [
+                        'status' => $response->status(),
+                        'body' => $response->body()
+                    ]);
+                    
+                    return redirect()->route('printers.test', $id)
+                        ->with('error', 'Échec de l\'impression PrintNode: ' . $response->body());
+                }
+            } else {
+                // Pour les autres imprimantes, utiliser le service standard
+                $result = PrinterService::directPrint($id);
+                
+                if ($result['success']) {
+                    return redirect()->route('printers.test', $id)
+                        ->with('success', 'Test d\'impression envoyé avec succès : ' . $result['message']);
+                } else {
+                    return redirect()->route('printers.test', $id)
+                        ->with('error', 'Échec du test d\'impression : ' . $result['message']);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception dans directPrint', [
+                'printer_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return redirect()->route('printers.test', $id)
-                ->with('success', 'Test d\'impression envoyé avec succès : ' . $result['message']);
-        } else {
-            return redirect()->route('printers.test', $id)
-                ->with('error', 'Échec du test d\'impression : ' . $result['message']);
+                ->with('error', 'Erreur d\'impression : ' . $e->getMessage());
         }
     }
 
@@ -441,12 +532,9 @@ class PrinterController extends Controller
             $printer = Printer::findOrFail($request->printer_id);
             
             // Log détaillé
-            \Log::info('QZ Tray Test Print', [
-                'printer_id' => $printer->id,
-                'printer_name' => $printer->name,
-                'printer_type' => $printer->type,
-                'printer_ip' => $printer->ip_address ?? 'N/A',
-            ]);
+            file_put_contents(storage_path('logs/printer_debug.log'), 
+                date('Y-m-d H:i:s') . " - QZ Tray Test Print - Printer: {$printer->name} Type: {$printer->type}\n", 
+                FILE_APPEND);
 
             // Récupérer ou calculer la DPI pour la qualité d'impression
             $dpi = $printer->dpi ?? ($printer->type === 'thermal' ? 203 : 300);
@@ -492,7 +580,7 @@ class PrinterController extends Controller
             
         } catch (\Exception $e) {
             // Log de l'erreur avec plus de détails
-            \Log::error('QZ Tray test error: ' . $e->getMessage(), [
+            Log::error('QZ Tray test error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'printer_id' => $request->printer_id ?? 'unknown',
                 'user_id' => auth()->id() ?? 'guest',
@@ -542,7 +630,7 @@ class PrinterController extends Controller
     public function testLabels(Request $request)
     {
         try {
-            \Log::info('Démarrage du test d\'étiquettes', [
+            Log::info('Démarrage du test d\'étiquettes', [
                 'printer_id' => $request->printer_id ?? 'default',
                 'user_id' => auth()->id() ?? 'guest',
                 'user_agent' => $request->userAgent()
@@ -552,7 +640,7 @@ class PrinterController extends Controller
             
             // Liste toutes les imprimantes disponibles pour vérification
             $allPrinters = Printer::all();
-            \Log::info('Imprimantes disponibles:', [
+            Log::info('Imprimantes disponibles:', [
                 'count' => $allPrinters->count(),
                 'ids' => $allPrinters->pluck('id')->toArray(),
                 'names' => $allPrinters->pluck('name')->toArray()
@@ -561,40 +649,40 @@ class PrinterController extends Controller
             // Si un ID d'imprimante est fourni, récupérer l'imprimante
             if ($request->has('printer_id')) {
                 $printerId = $request->printer_id;
-                \Log::info('Recherche d\'imprimante par ID', ['printer_id' => $printerId]);
+                Log::info('Recherche d\'imprimante par ID', ['printer_id' => $printerId]);
                 
                 // Utiliser first() au lieu de findOrFail pour éviter une exception
                 $printer = Printer::where('id', $printerId)->first();
                 
                 if (!$printer) {
-                    \Log::warning('Imprimante non trouvée', ['printer_id' => $printerId]);
+                    Log::warning('Imprimante non trouvée', ['printer_id' => $printerId]);
                     
                     // Utiliser l'imprimante par défaut si celle demandée n'existe pas
                     $printer = Printer::where('is_default', true)->first();
                     if ($printer) {
-                        \Log::info('Utilisation de l\'imprimante par défaut à la place', ['default_id' => $printer->id]);
+                        Log::info('Utilisation de l\'imprimante par défaut à la place', ['default_id' => $printer->id]);
                     }
                 }
             } else {
                 // Sinon, récupérer l'imprimante par défaut
-                \Log::info('Aucun ID d\'imprimante fourni, recherche de l\'imprimante par défaut');
+                Log::info('Aucun ID d\'imprimante fourni, recherche de l\'imprimante par défaut');
                 $printer = Printer::where('is_default', true)->first();
             }
             
             // Si aucune imprimante n'est trouvée, utiliser la première disponible
             if (!$printer && $allPrinters->count() > 0) {
                 $printer = $allPrinters->first();
-                \Log::info('Aucune imprimante par défaut, utilisation de la première disponible', ['printer_id' => $printer->id]);
+                Log::info('Aucune imprimante par défaut, utilisation de la première disponible', ['printer_id' => $printer->id]);
             }
             
             // Si toujours aucune imprimante trouvée, rediriger vers la page de gestion
             if (!$printer) {
-                \Log::warning('Aucune imprimante disponible');
+                Log::warning('Aucune imprimante disponible');
                 return redirect()->route('printers.index')
                     ->with('error', 'Aucune imprimante trouvée. Veuillez en configurer une.');
             }
             
-            \Log::info('Imprimante sélectionnée pour le test:', [
+            Log::info('Imprimante sélectionnée pour le test:', [
                 'id' => $printer->id,
                 'name' => $printer->name,
                 'is_default' => $printer->is_default
@@ -607,14 +695,14 @@ class PrinterController extends Controller
                 'flightcase' => "Test d'étiquette FlightCase - " . now()->format('Y-m-d H:i:s')
             ];
             
-            \Log::info('Génération des QR codes');
+            Log::info('Génération des QR codes');
             
             // Générer les QR codes
             $moduleQrBase64 = base64_encode($this->qzTrayService->generateQrCode($testData['module'], 200, 'H')->getData());
             $dalleQrBase64 = base64_encode($this->qzTrayService->generateQrCode($testData['dalle'], 250, 'H')->getData());
             $flightcaseQrBase64 = base64_encode($this->qzTrayService->generateQrCode($testData['flightcase'], 300, 'H')->getData());
             
-            \Log::info('Préparation des données d\'impression');
+            Log::info('Préparation des données d\'impression');
             
             // Préparer les données d'impression pour chaque format
             $modulePrintData = $this->qzTrayService->prepareQrCodePrint(
@@ -653,12 +741,12 @@ class PrinterController extends Controller
                 ]
             );
             
-            \Log::info('Rendu de la vue');
+            Log::info('Rendu de la vue');
             
             // Vérifier si le fichier de vue existe pour aider au débogage
             $viewPath = resource_path('views/printers/label_test.blade.php');
             if (!file_exists($viewPath)) {
-                \Log::error('Le fichier de vue n\'existe pas', ['path' => $viewPath]);
+                Log::error('Le fichier de vue n\'existe pas', ['path' => $viewPath]);
                 throw new \Exception("Le fichier de vue printers.label_test n'existe pas à l'emplacement attendu.");
             }
             
@@ -673,7 +761,7 @@ class PrinterController extends Controller
                 'qzTrayService' => $this->qzTrayService
             ]);
         } catch (\Exception $e) {
-            \Log::error('Erreur lors du chargement de la page de test d\'étiquettes: ' . $e->getMessage(), [
+            Log::error('Erreur lors du chargement de la page de test d\'étiquettes: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),

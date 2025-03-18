@@ -10,72 +10,79 @@
         </h2>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto">
+    <div class="py-8">
+        <div class="max-w-5xl mx-auto">
             <!-- Étapes de progression -->
-            <div class="mb-8">
+            <div class="mb-10">
                 <div class="flex items-center justify-between">
                     <div class="w-full flex items-center">
-                        <div class="relative flex flex-col items-center text-accent-blue">
-                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 bg-accent-blue border-accent-blue text-white font-bold flex items-center justify-center">
-                                1
+                        <div class="relative flex flex-col items-center">
+                            <div class="step-button active">
+                                <span class="relative z-10 font-bold">1</span>
                             </div>
-                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-accent-blue">
-                                <span class="font-bold">Client</span>
-                            </div>
-                        </div>
-                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-gray-700"></div>
-                        <div class="relative flex flex-col items-center text-gray-500">
-                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 border-gray-700 text-gray-400 font-bold flex items-center justify-center">
-                                2
-                            </div>
-                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-gray-500">
-                                <span>Chantier</span>
+                            <div class="text-center mt-1 w-32">
+                                <span class="step-text text-accent-primary font-semibold">Client</span>
                             </div>
                         </div>
-                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-gray-700"></div>
-                        <div class="relative flex flex-col items-center text-gray-500">
-                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 border-gray-700 text-gray-400 font-bold flex items-center justify-center">
-                                3
+                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-gray-600/30"></div>
+                        <div class="relative flex flex-col items-center">
+                            <div class="step-button inactive">
+                                <span class="relative z-10">2</span>
                             </div>
-                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-gray-500">
-                                <span>Produit</span>
-                            </div>
-                        </div>
-                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-gray-700"></div>
-                        <div class="relative flex flex-col items-center text-gray-500">
-                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 border-gray-700 text-gray-400 font-bold flex items-center justify-center">
-                                4
-                            </div>
-                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-gray-500">
-                                <span>Interventions</span>
+                            <div class="text-center mt-1 w-32">
+                                <span class="step-text text-gray-400">Chantier</span>
                             </div>
                         </div>
-                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-gray-700"></div>
-                        <div class="relative flex flex-col items-center text-gray-500">
-                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 border-gray-700 text-gray-400 font-bold flex items-center justify-center">
-                                5
+                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-gray-600/30"></div>
+                        <div class="relative flex flex-col items-center">
+                            <div class="step-button inactive">
+                                <span class="relative z-10">3</span>
                             </div>
-                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-gray-500">
-                                <span>Rapports</span>
+                            <div class="text-center mt-1 w-32">
+                                <span class="step-text text-gray-400">Produit</span>
+                            </div>
+                        </div>
+                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-gray-600/30"></div>
+                        <div class="relative flex flex-col items-center">
+                            <div class="step-button inactive">
+                                <span class="relative z-10">4</span>
+                            </div>
+                            <div class="text-center mt-1 w-32">
+                                <span class="step-text text-gray-400">Interventions</span>
+                            </div>
+                        </div>
+                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-gray-600/30"></div>
+                        <div class="relative flex flex-col items-center">
+                            <div class="step-button inactive">
+                                <span class="relative z-10">5</span>
+                            </div>
+                            <div class="text-center mt-1 w-32">
+                                <span class="step-text text-gray-400">Rapports</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="glassmorphism overflow-hidden shadow-lg rounded-xl">
-                <div class="p-6 border-b border-gray-700">
+            <div class="glassmorphism overflow-hidden shadow-lg rounded-2xl border border-white/5">
+                <div class="p-8 border-b border-gray-700/50">
+                    <h3 class="text-xl font-medium text-white mb-6 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-accent-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Informations client
+                    </h3>
+                    
                     <form method="POST" action="{{ route('chantiers.store.step1') }}">
                         @csrf
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <!-- Client avec autocomplétion -->
                             <div>
                                 <x-client-autocomplete :required="true" label="Client" />
                                 <x-input-error :messages="$errors->get('client_id')" class="mt-2" />
-                                <div class="mt-2">
-                                    <button type="button" id="openCreateClientModal" class="text-sm text-blue-400 hover:text-blue-300 flex items-center">
+                                <div class="mt-3">
+                                    <button type="button" id="openCreateClientModal" class="text-sm text-accent-tertiary hover:text-accent-blue transition-colors flex items-center font-medium">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                         </svg>
@@ -85,39 +92,39 @@
                             </div>
 
                             <!-- Création automatique du nom -->
-                            <div class="bg-blue-900/30 border border-blue-500/30 p-4 rounded-xl flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent-blue mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div class="bg-accent-blue/10 border border-accent-blue/20 p-4 rounded-xl flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent-tertiary mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                <span class="text-sm text-blue-300">Le nom du chantier sera généré automatiquement à partir des informations du client.</span>
+                                <span class="text-sm text-gray-200">Le nom du chantier sera généré automatiquement à partir des informations du client.</span>
                             </div>
 
                             <!-- Description -->
                             <div class="md:col-span-2">
-                                <x-input-label for="description" :value="__('Description')" class="text-gray-300" />
-                                <textarea id="description" name="description" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" rows="3">{{ old('description') }}</textarea>
+                                <x-input-label for="description" :value="__('Description')" class="text-gray-200 font-medium" />
+                                <textarea id="description" name="description" class="block mt-2 w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30 resize-none" rows="3" placeholder="Description détaillée du projet...">{{ old('description') }}</textarea>
                                 <x-input-error :messages="$errors->get('description')" class="mt-2" />
                             </div>
 
                             <!-- Date de réception -->
                             <div>
-                                <x-input-label for="date_reception" :value="__('Date de réception')" class="text-gray-300" />
-                                <x-text-input id="date_reception" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="date" name="date_reception" :value="old('date_reception', date('Y-m-d'))" required />
+                                <x-input-label for="date_reception" :value="__('Date de réception')" class="text-gray-200 font-medium" />
+                                <x-text-input id="date_reception" class="block mt-2 w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30" type="date" name="date_reception" :value="old('date_reception', date('Y-m-d'))" required />
                                 <x-input-error :messages="$errors->get('date_reception')" class="mt-2" />
                             </div>
 
                             <!-- Date butoir -->
                             <div>
-                                <x-input-label for="date_butoir" :value="__('Date butoir')" class="text-gray-300" />
-                                <x-text-input id="date_butoir" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="date" name="date_butoir" :value="old('date_butoir')" />
-                                <p class="text-xs text-blue-300 mt-1">Obligatoire pour SAV / Réparation, optionnel pour Vente / Achat client</p>
+                                <x-input-label for="date_butoir" :value="__('Date butoir')" class="text-gray-200 font-medium" />
+                                <x-text-input id="date_butoir" class="block mt-2 w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30" type="date" name="date_butoir" :value="old('date_butoir')" />
+                                <p class="text-xs text-accent-tertiary mt-2">Obligatoire pour SAV / Réparation, optionnel pour Vente / Achat client</p>
                                 <x-input-error :messages="$errors->get('date_butoir')" class="mt-2" />
                             </div>
 
                             <!-- État -->
                             <div>
-                                <x-input-label for="etat" :value="__('État')" class="text-gray-300" />
-                                <select id="etat" name="etat" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                <x-input-label for="etat" :value="__('État')" class="text-gray-200 font-medium" />
+                                <select id="etat" name="etat" class="block mt-2 w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30">
                                     <option value="non_commence" {{ old('etat') == 'non_commence' ? 'selected' : '' }}>Non commencé</option>
                                     <option value="en_cours" {{ old('etat') == 'en_cours' ? 'selected' : '' }}>En cours</option>
                                     <option value="termine" {{ old('etat') == 'termine' ? 'selected' : '' }}>Terminé</option>
@@ -126,40 +133,40 @@
                             </div>
                             
                             <!-- Séparateur -->
-                            <div class="md:col-span-2 border-t border-gray-700 my-6"></div>
+                            <div class="md:col-span-2 border-t border-gray-700/30 my-6"></div>
                             
                             <!-- Type de projet (prédéfini selon la sélection) -->
                             <div>
-                                <x-input-label for="type_projet" :value="__('Type de projet')" class="text-gray-300" />
-                                <select id="type_projet" name="is_client_achat" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                <x-input-label for="type_projet" :value="__('Type de projet')" class="text-gray-200 font-medium" />
+                                <select id="type_projet" name="is_client_achat" class="block mt-2 w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30">
                                     @if (isset($type) && $type === 'vente')
                                         <option value="1" selected>Vente / Achat client</option>
                                     @else
                                         <option value="0" selected>SAV / Réparation</option>
                                     @endif
                                 </select>
-                                <p class="text-xs text-blue-300 mt-1">Le type de projet est prédéfini selon votre choix précédent</p>
+                                <p class="text-xs text-accent-tertiary mt-2">Le type de projet est prédéfini selon votre choix précédent</p>
                                 <x-input-error :messages="$errors->get('is_client_achat')" class="mt-2" />
                             </div>
                             
                             <!-- Garantie -->
                             <div>
-                                <div class="flex items-center mt-3">
-                                    <input type="checkbox" id="is_under_warranty" name="is_under_warranty" value="1" {{ old('is_under_warranty') ? 'checked' : '' }} class="rounded bg-gray-700 border-gray-600 text-accent-blue focus:ring-indigo-500">
-                                    <label for="is_under_warranty" class="ml-2 text-gray-300">Produit sous garantie</label>
+                                <div class="flex items-center mt-7 p-2 rounded-lg hover:bg-gray-700/20 transition-colors">
+                                    <input type="checkbox" id="is_under_warranty" name="is_under_warranty" value="1" {{ old('is_under_warranty') ? 'checked' : '' }} class="rounded bg-gray-700/50 border-gray-600/50 text-accent-primary focus:ring-accent-primary/30 h-5 w-5">
+                                    <label for="is_under_warranty" class="ml-3 text-gray-200 font-medium">Produit sous garantie</label>
                                 </div>
                             </div>
                             
                             <!-- Options de garantie (affichées seulement si sous garantie) -->
-                            <div id="warranty_options" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 mt-2 bg-blue-900/20 p-4 rounded-lg border border-blue-500/30" style="display: none;">
+                            <div id="warranty_options" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 mt-2 bg-accent-blue/5 p-6 rounded-xl border border-accent-blue/20" style="display: none;">
                                 <div>
-                                    <x-input-label for="warranty_end_date" :value="__('Date de fin de garantie')" class="text-gray-300" />
-                                    <x-text-input id="warranty_end_date" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="date" name="warranty_end_date" :value="old('warranty_end_date')" />
+                                    <x-input-label for="warranty_end_date" :value="__('Date de fin de garantie')" class="text-gray-200 font-medium" />
+                                    <x-text-input id="warranty_end_date" class="block mt-2 w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30" type="date" name="warranty_end_date" :value="old('warranty_end_date')" />
                                 </div>
                                 
                                 <div>
-                                    <x-input-label for="warranty_type" :value="__('Type de garantie')" class="text-gray-300" />
-                                    <select id="warranty_type" name="warranty_type" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                    <x-input-label for="warranty_type" :value="__('Type de garantie')" class="text-gray-200 font-medium" />
+                                    <select id="warranty_type" name="warranty_type" class="block mt-2 w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30">
                                         <option value="">-- Sélectionnez --</option>
                                         <option value="standard" {{ old('warranty_type') == 'standard' ? 'selected' : '' }}>Standard (1 an)</option>
                                         <option value="extended" {{ old('warranty_type') == 'extended' ? 'selected' : '' }}>Étendue (2 ans)</option>
@@ -170,16 +177,16 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-end mt-6">
-                            <a href="{{ route('chantiers.index') }}" class="btn-action btn-secondary mr-2">
+                        <div class="flex items-center justify-end mt-8">
+                            <x-action-button tag="a" href="{{ route('chantiers.index') }}" color="dark" class="mr-3">
                                 {{ __('Annuler') }}
-                            </a>
-                            <button type="submit" class="btn-action btn-primary">
+                            </x-action-button>
+                            <x-action-button tag="button" type="submit" color="primary" class="flex items-center">
                                 {{ __('Suivant') }}
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                 </svg>
-                            </button>
+                            </x-action-button>
                         </div>
                     </form>
                 </div>
@@ -190,66 +197,72 @@
     <!-- Modal pour créer un client -->
     <div id="createClientModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <div class="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity" aria-hidden="true"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom glassmorphism rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <h3 class="text-lg leading-6 font-medium text-white" id="modal-title">
+            <div class="inline-block align-bottom glassmorphism rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full border border-white/10">
+                <div class="px-6 pt-6 pb-4 sm:p-8">
+                    <h3 class="text-xl font-medium text-white mb-5 flex items-center" id="modal-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-accent-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
                         Créer un nouveau client
                     </h3>
                     <form id="createClientForm" class="mt-4">
                         @csrf
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label for="nom" class="block text-sm font-medium text-gray-300">Nom</label>
-                                <input type="text" name="nom" id="nom" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" required>
+                                <label for="nom" class="block text-sm font-medium text-gray-200">Nom</label>
+                                <input type="text" name="nom" id="nom" class="mt-2 block w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30" required>
                             </div>
                             <div>
-                                <label for="prenom" class="block text-sm font-medium text-gray-300">Prénom</label>
-                                <input type="text" name="prenom" id="prenom" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" required>
+                                <label for="prenom" class="block text-sm font-medium text-gray-200">Prénom</label>
+                                <input type="text" name="prenom" id="prenom" class="mt-2 block w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30" required>
                             </div>
                             <div>
-                                <label for="societe" class="block text-sm font-medium text-gray-300">Société</label>
-                                <input type="text" name="societe" id="societe" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                                <label for="societe" class="block text-sm font-medium text-gray-200">Société</label>
+                                <input type="text" name="societe" id="societe" class="mt-2 block w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30">
                             </div>
                             <div>
-                                <label for="telephone" class="block text-sm font-medium text-gray-300">Téléphone</label>
-                                <input type="text" name="telephone" id="telephone" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" required>
+                                <label for="telephone" class="block text-sm font-medium text-gray-200">Téléphone</label>
+                                <input type="text" name="telephone" id="telephone" class="mt-2 block w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30" required>
                             </div>
                             <div class="md:col-span-2">
-                                <label for="email" class="block text-sm font-medium text-gray-300">Email</label>
-                                <input type="email" name="email" id="email" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" required>
+                                <label for="email" class="block text-sm font-medium text-gray-200">Email</label>
+                                <input type="email" name="email" id="email" class="mt-2 block w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30" required>
                             </div>
                             <div class="md:col-span-2">
-                                <label for="adresse" class="block text-sm font-medium text-gray-300">Adresse</label>
-                                <input type="text" name="adresse" id="adresse" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" required>
+                                <label for="adresse" class="block text-sm font-medium text-gray-200">Adresse</label>
+                                <input type="text" name="adresse" id="adresse" class="mt-2 block w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30" required>
                             </div>
                             <div>
-                                <label for="code_postal" class="block text-sm font-medium text-gray-300">Code Postal</label>
-                                <input type="text" name="code_postal" id="code_postal" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" required>
+                                <label for="code_postal" class="block text-sm font-medium text-gray-200">Code Postal</label>
+                                <input type="text" name="code_postal" id="code_postal" class="mt-2 block w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30" required>
                             </div>
                             <div>
-                                <label for="ville" class="block text-sm font-medium text-gray-300">Ville</label>
-                                <input type="text" name="ville" id="ville" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" required>
+                                <label for="ville" class="block text-sm font-medium text-gray-200">Ville</label>
+                                <input type="text" name="ville" id="ville" class="mt-2 block w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30" required>
                             </div>
                             <div class="md:col-span-2">
-                                <label for="pays" class="block text-sm font-medium text-gray-300">Pays</label>
-                                <input type="text" name="pays" id="pays" value="France" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" required>
+                                <label for="pays" class="block text-sm font-medium text-gray-200">Pays</label>
+                                <input type="text" name="pays" id="pays" value="France" class="mt-2 block w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30" required>
                             </div>
                             <div class="md:col-span-2">
-                                <label for="notes" class="block text-sm font-medium text-gray-300">Notes</label>
-                                <textarea name="notes" id="notes" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" rows="2"></textarea>
+                                <label for="notes" class="block text-sm font-medium text-gray-200">Notes</label>
+                                <textarea name="notes" id="notes" class="mt-2 block w-full rounded-xl bg-gray-700/50 border-gray-600/50 text-white focus:border-accent-primary focus:ring focus:ring-accent-primary/30 resize-none" rows="2"></textarea>
                             </div>
                         </div>
                     </form>
                 </div>
-                <div class="px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" id="submitCreateClient" class="btn-action btn-primary">
+                <div class="px-6 py-4 sm:px-8 sm:py-5 border-t border-gray-700/30 sm:flex sm:flex-row-reverse">
+                    <x-action-button tag="button" id="submitCreateClient" color="primary" class="w-full sm:w-auto flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
                         Créer le client
-                    </button>
-                    <button type="button" id="closeClientModal" class="btn-action btn-secondary mr-2">
+                    </x-action-button>
+                    <x-action-button tag="button" id="closeClientModal" color="dark" class="mt-3 sm:mt-0 sm:mr-3 w-full sm:w-auto flex items-center justify-center">
                         Annuler
-                    </button>
+                    </x-action-button>
                 </div>
             </div>
         </div>
@@ -266,26 +279,23 @@
             const toast = document.createElement('div');
             
             // Déterminer la classe de couleur en fonction du type
-            let bgColor, borderColor, textColor, icon;
+            let bgColor, textColor, icon;
             if (type === 'success') {
-                bgColor = 'bg-green-500/80';
-                borderColor = 'border-green-400';
+                bgColor = 'bg-accent-primary/90';
                 textColor = 'text-white';
-                icon = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                icon = '<svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
             } else if (type === 'error') {
-                bgColor = 'bg-red-500/80';
-                borderColor = 'border-red-400';
+                bgColor = 'bg-error/90';
                 textColor = 'text-white';
-                icon = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                icon = '<svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
             } else {
-                bgColor = 'bg-blue-500/80';
-                borderColor = 'border-blue-400';
+                bgColor = 'bg-accent-blue/90';
                 textColor = 'text-white';
-                icon = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+                icon = '<svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
             }
             
             // Construire le HTML du toast
-            toast.className = `${bgColor} ${borderColor} ${textColor} px-4 py-3 rounded-lg shadow-lg mb-3 flex items-center transform transition-all duration-300 ease-in-out translate-x-full opacity-0`;
+            toast.className = `${bgColor} ${textColor} px-4 py-3 rounded-xl shadow-lg mb-3 flex items-center transform transition-all duration-300 ease-in-out translate-x-full opacity-0 backdrop-blur-sm`;
             toast.innerHTML = `
                 ${icon}
                 <div>${message}</div>

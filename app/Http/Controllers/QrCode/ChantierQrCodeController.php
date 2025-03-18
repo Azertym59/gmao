@@ -88,7 +88,7 @@ class ChantierQrCodeController extends Controller
             return view('qrcodes.chantier.label', [
                 'chantier' => $chantier,
                 'printData' => $printData,
-                'qzTrayService' => $this->qzTrayService
+                'printer' => $printer
             ]);
             
         } catch (\Exception $e) {

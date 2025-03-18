@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Printer;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class PrinterService
 {
@@ -206,441 +207,455 @@ class PrinterService
     }
 
     public static function testPrint($printerId)
-{
-    try {
-        // Récupérer l'imprimante
-        $printer = Printer::findOrFail($printerId);
-        
-        // Stocker l'imprimante en session pour le test
-        Session::put('test_printer', $printer);
-        
-        // Journaliser le test
-        Log::info('Test d\'impression pour l\'imprimante : ' . $printer->name);
-        
-        // Rediriger vers la vue de test
-        return view('printers.test', ['printer' => $printer]);
-    } catch (\Exception $e) {
-        Log::error('Erreur lors du test d\'impression : ' . $e->getMessage());
-        return back()->with('error', 'Erreur lors du test d\'impression : ' . $e->getMessage());
+    {
+        try {
+            // Récupérer l'imprimante
+            $printer = Printer::findOrFail($printerId);
+            
+            // Stocker l'imprimante en session pour le test
+            Session::put('test_printer', $printer);
+            
+            // Journaliser le test
+            Log::info('Test d\'impression pour l\'imprimante : ' . $printer->name);
+            
+            // Rediriger vers la vue de test
+            return view('printers.test', ['printer' => $printer]);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du test d\'impression : ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors du test d\'impression : ' . $e->getMessage());
+        }
     }
-}
 
-public static function directPrint($printerId, $content = null)
-{
-    try {
-        // Récupérer l'imprimante
-        $printer = Printer::findOrFail($printerId);
-        
-        // Si aucun contenu n'est fourni, créer un contenu de test
-        if (!$content) {
-            $content = '<html><body>';
-            $content .= '<h1 style="font-size: 14pt; text-align: center; font-weight: bold;">TEST IMPRESSION</h1>';
-            $content .= '<p style="text-align: center;">Imprimante : ' . $printer->name . '</p>';
-            $content .= '<p style="text-align: center;">Date : ' . date('d/m/Y H:i:s') . '</p>';
+    public static function directPrint($printerId, $content = null)
+    {
+        try {
+            // Récupérer l'imprimante
+            $printer = Printer::findOrFail($printerId);
             
-            // Générer un QR code si possible
-            if (class_exists('\SimpleSoftwareIO\QrCode\Facades\QrCode')) {
-                $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(80)->generate('Test QR Code - ' . $printer->name);
-                $content .= '<div style="text-align: center; margin-top: 10px; border: 1px solid black; display: inline-block; padding: 5px;">' . $qrCode . '</div>';
+            // Si aucun contenu n'est fourni, créer un contenu de test
+            if (!$content) {
+                $content = '<html><body>';
+                $content .= '<h1 style="font-size: 14pt; text-align: center; font-weight: bold;">TEST IMPRESSION</h1>';
+                $content .= '<p style="text-align: center;">Imprimante : ' . $printer->name . '</p>';
+                $content .= '<p style="text-align: center;">Date : ' . date('d/m/Y H:i:s') . '</p>';
+                
+                // Générer un QR code si possible
+                if (class_exists('\SimpleSoftwareIO\QrCode\Facades\QrCode')) {
+                    $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(80)->generate('Test QR Code - ' . $printer->name);
+                    $content .= '<div style="text-align: center; margin-top: 10px; border: 1px solid black; display: inline-block; padding: 5px;">' . $qrCode . '</div>';
+                }
+                
+                $content .= '</body></html>';
             }
             
-            $content .= '</body></html>';
-        }
-        
-        // Journaliser l'intention d'impression
-        Log::info('Tentative d\'impression directe sur ' . $printer->name . ' (' . $printer->ip_address . ':' . $printer->port . ')');
-        
-        // Vérifier que l'imprimante a une adresse IP et un port
-        if (empty($printer->ip_address) || empty($printer->port)) {
-            Log::error('Configuration d\'imprimante incomplète : adresse IP ou port manquant');
-            return [
-                'success' => false, 
-                'message' => 'Configuration d\'imprimante incomplète : adresse IP ou port manquant'
-            ];
-        }
-        
-        // Tentative de connexion à l'imprimante
-        $socket = @fsockopen($printer->ip_address, $printer->port, $errno, $errstr, 10);
-        
-        if (!$socket) {
-            Log::error('Impossible de se connecter à l\'imprimante : ' . $errstr);
-            return [
-                'success' => false, 
-                'message' => 'Impossible de se connecter à l\'imprimante : ' . $errstr
-            ];
-        }
-        
-        // Préparer les en-têtes HTTP
-        $headers = "POST /cgi-bin/epos/service.cgi?devid=" . ($printer->printer_id ?? '1') . "&timeout=10000 HTTP/1.1\r\n";
-        $headers .= "Host: " . $printer->ip_address . "\r\n";
-        $headers .= "Content-Type: text/html\r\n";
-        $headers .= "Content-Length: " . strlen($content) . "\r\n";
-        $headers .= "Connection: close\r\n\r\n";
-        
-        // Envoyer les données
-        fwrite($socket, $headers . $content);
-        
-        // Lire la réponse
-        $response = '';
-        while (!feof($socket)) {
-            $response .= fgets($socket, 128);
-        }
-        fclose($socket);
-        
-        // Journaliser la réponse
-        Log::info('Réponse de l\'imprimante : ' . $response);
-        
-        return [
-            'success' => true,
-            'message' => 'Impression envoyée avec succès',
-            'response' => $response
-        ];
-    } catch (\Exception $e) {
-        Log::error('Erreur d\'impression directe : ' . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Erreur : ' . $e->getMessage()
-        ];
-    }
-}
-
-/**
- * Impression spécifique pour imprimantes Brother
- * 
- * @param int $printerId Identifiant de l'imprimante
- * @param string|null $content Contenu à imprimer
- * @param array $options Options d'impression
- * @return array Résultat de l'impression
- */
-public static function brotherPrint($printerId, $content = null, $options = [])
-{
-    try {
-        // Récupérer l'imprimante
-        $printer = Printer::findOrFail($printerId);
-        
-        // Vérifier si on doit utiliser b-PAC SDK
-        if ($printer->shouldUseBpac()) {
-            return self::printWithBpac($printer, $content, $options);
-        }
-        
-        // Récupérer le mode d'impression (par défaut: raster)
-        $printMode = $printer->options['print_mode'] ?? $options['mode'] ?? 'raster';
-        
-        Log::info('Tentative d\'impression Brother pour ' . $printer->name . ' (' . $printer->ip_address . ') en mode ' . $printMode);
-        
-        // Pour les imprimantes Brother, nous allons utiliser une approche différente
-        // Nous allons créer un fichier temporaire et l'envoyer via une commande système
-        
-        // Créer un fichier temporaire avec le contenu
-        $tempfile = tempnam(sys_get_temp_dir(), 'bro_print_');
-        
-        // Déterminer le contenu à imprimer
-        $printContent = $content ?: self::generateTestContent($printer);
-        
-        // Selon le mode d'impression, ajuster le contenu
-        if ($printMode === 'template') {
-            // Format P-touch Template - pas utilisé dans votre cas
-            $header = ""; // En-tête P-touch Template
-            $footer = ""; // Pied de page
-            $printContent = $header . $printContent . $footer;
-        } elseif ($printMode === 'escp') {
-            // Format ESC/P - pas utilisé dans votre cas
-            $initCmd = chr(27) . "@"; // ESC @ - initialiser l'imprimante
-            $endCmd = chr(27) . "J" . chr(0); // ESC J 0 - Avance papier et coupe
-            $printContent = $initCmd . $printContent . $endCmd;
-        } else {
-            // Mode Raster (utilisé dans votre cas)
-            // Pour le mode raster, nous utilisons un format brut sans modification
-            // Mais on peut ajouter un en-tête pour les imprimantes Brother qui le nécessitent
-            $rasterHeader = chr(27) . chr(105) . chr(65) . chr(0); // ESC i A 0 - Mode raster
+            // Journaliser l'intention d'impression
+            Log::info('Tentative d\'impression directe sur ' . $printer->name . ' (' . $printer->ip_address . ':' . $printer->port . ')');
             
-            // Vérifier si le contenu semble déjà être du HTML
-            if (strpos($printContent, '<html') !== false || strpos($printContent, '<!DOCTYPE') !== false) {
-                // Ne pas ajouter d'en-tête au HTML
-            } else {
-                // Pour un contenu binaire, on peut ajouter l'en-tête raster
-                $printContent = $rasterHeader . $printContent;
-            }
-        }
-        
-        // Écrire le contenu dans le fichier temporaire
-        file_put_contents($tempfile, $printContent);
-        
-        // Journaliser le contenu pour débogage (attention aux fichiers volumineux)
-        Log::debug('Type de contenu à imprimer: ' . (is_string($printContent) ? 'Texte/HTML' : 'Binaire/Image'));
-        Log::debug('Taille du contenu: ' . strlen($printContent) . ' octets');
-        
-        // Créer un script temporaire pour l'impression
-        $scriptFile = tempnam(sys_get_temp_dir(), 'print_cmd_');
-        chmod($scriptFile, 0755);
-        
-        // Commande d'impression selon le système d'exploitation et le mode d'impression
-        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-            // Windows - utiliser la commande print avec des paramètres spécifiques selon le mode
-            $modeParam = "";
-            if ($printMode === 'template') {
-                $modeParam = " -template";
-            } elseif ($printMode === 'escp') {
-                $modeParam = " -escp";
-            } // Par défaut, raster ne nécessite pas de paramètre spécifique
-            
-            $command = 'print' . $modeParam . ' /D:"\\\\' . $printer->ip_address . '\\' . ($printer->share_name ?: 'Brother_QL_820NWB') . '" "' . $tempfile . '"';
-            
-            // Écrire la commande dans le script
-            file_put_contents($scriptFile, "@echo off\r\n" . $command);
-        } else {
-            // Linux/Unix - utiliser des commandes CUPS/Brother
-            $modeParam = "";
-            if ($printMode === 'template') {
-                $modeParam = "--template";
-            } elseif ($printMode === 'escp') {
-                $modeParam = "--escp";
-            } else {
-                $modeParam = "--raster"; // Mode raster explicite
+            // Si c'est une imprimante PrintNode, on n'a pas besoin d'adresse IP ni de port
+            if ($printer->hasPrintNode()) {
+                Log::info('Utilisation de PrintNode pour l\'impression directe, ID: ' . $printer->printnode_id);
+                
+                // Appeler le service PrintNode (code dans le contrôleur PrintController directPrint)
+                return [
+                    'success' => true,
+                    'message' => 'Redirection vers PrintNode',
+                    'use_printnode' => true,
+                    'printnode_id' => $printer->printnode_id
+                ];
             }
             
-            // Tester différentes méthodes d'impression pour Brother
-            $portParam = "";
-            if (!empty($printer->port)) {
-                $portParam = " --port=" . $printer->port;
+            // Pour les autres modes de connexion, vérifier l'adresse IP (le port peut être optionnel)
+            if (empty($printer->ip_address)) {
+                Log::error('Configuration d\'imprimante incomplète : adresse IP manquante');
+                return [
+                    'success' => false, 
+                    'message' => 'Configuration d\'imprimante incomplète : adresse IP manquante'
+                ];
             }
             
-            // Créer un script shell
-            $scriptContent = "#!/bin/bash\n";
+            // Tentative de connexion à l'imprimante
+            $socket = @fsockopen($printer->ip_address, $printer->port, $errno, $errstr, 10);
             
-            // Journaliser les informations pour le débogage
-            $scriptContent .= "echo \"Mode d'impression: $printMode\"\n";
-            $scriptContent .= "echo \"Fichier à imprimer: $tempfile\"\n";
-            $scriptContent .= "echo \"Imprimante IP: " . $printer->ip_address . "\"\n\n";
-            
-            // Préparer une page de test simple
-            $testPage = tempnam(sys_get_temp_dir(), 'test_');
-            $scriptContent .= "# Créer une page de test simple pour l'imprimante Brother\n";
-            $scriptContent .= "cat > $testPage << 'EOT'\n";
-            $scriptContent .= "<!DOCTYPE html>\n";
-            $scriptContent .= "<html><body style='font-family: sans-serif; margin: 0; padding: 0;'>\n";
-            $scriptContent .= "<h1 style='font-size: 12pt; text-align: center;'>TEST BROTHER RASTER</h1>\n";
-            $scriptContent .= "<p style='text-align: center;'>Date: " . date('Y-m-d H:i:s') . "</p>\n";
-            $scriptContent .= "<p style='text-align: center;'>Imprimante: " . $printer->name . "</p>\n";
-            $scriptContent .= "</body></html>\n";
-            $scriptContent .= "EOT\n\n";
-            
-            // Essayer brother_ql si disponible (solution Python)
-            $scriptContent .= "# Méthode 1: Utiliser brother_ql (outil Python)\n";
-            $scriptContent .= "if command -v brother_ql > /dev/null 2>&1; then\n";
-            $scriptContent .= "  echo \"Tentative d'impression avec brother_ql...\"\n";
-            // Utiliser brother_ql pour imprimer en mode raster
-            $labelSize = "62"; // 62mm est le rouleau DK-22205
-            $scriptContent .= "  brother_ql --backend network --printer " . $printer->ip_address . ":" . ($printer->port ?: '9100') . " print --label " . $labelSize . " --rotate 0 \"$tempfile\"\n";
-            $scriptContent .= "  BRO_QL_STATUS=$?\n";
-            $scriptContent .= "  echo \"Résultat brother_ql: $BRO_QL_STATUS\"\n";
-            $scriptContent .= "  if [ $BRO_QL_STATUS -eq 0 ]; then\n";
-            $scriptContent .= "    echo \"Impression réussie avec brother_ql\"\n";
-            $scriptContent .= "    exit 0\n";
-            $scriptContent .= "  fi\n";
-            $scriptContent .= "fi\n\n";
-            
-            // Essayer une connexion directe avec un fichier simplifié d'abord
-            $scriptContent .= "# Méthode 2: Connexion socket directe (mode RAW)\n";
-            $scriptContent .= "if command -v nc > /dev/null 2>&1; then\n";
-            $scriptContent .= "  echo \"Tentative de connexion directe RAW via netcat...\"\n";
-            
-            // Pour le mode raster, on envoie juste le fichier tel quel (fichier test simple)
-            $scriptContent .= "  # D'abord essayer avec un fichier test simplifié\n";
-            $scriptContent .= "  cat \"$testPage\" | nc -w 5 " . $printer->ip_address . " " . ($printer->port ?: '9100') . "\n";
-            $scriptContent .= "  NC_TEST_STATUS=$?\n";
-            $scriptContent .= "  if [ $NC_TEST_STATUS -eq 0 ]; then\n";
-            $scriptContent .= "    echo \"Page de test envoyée avec succès\"\n";
-            $scriptContent .= "    # Si le test fonctionne, essayer le vrai contenu\n";
-            $scriptContent .= "    sleep 1\n";
-            $scriptContent .= "    echo \"Envoi du contenu principal...\"\n";
-            $scriptContent .= "    cat \"$tempfile\" | nc -w 5 " . $printer->ip_address . " " . ($printer->port ?: '9100') . "\n";
-            $scriptContent .= "    NC_MAIN_STATUS=$?\n";
-            $scriptContent .= "    if [ $NC_MAIN_STATUS -eq 0 ]; then\n";
-            $scriptContent .= "      echo \"Contenu principal envoyé avec succès\"\n";
-            $scriptContent .= "      exit 0\n";
-            $scriptContent .= "    else\n";
-            $scriptContent .= "      echo \"Échec de l'envoi du contenu principal (code: $NC_MAIN_STATUS)\"\n";
-            $scriptContent .= "    fi\n";
-            $scriptContent .= "  else\n";
-            $scriptContent .= "    echo \"Échec de l'envoi de la page test (code: $NC_TEST_STATUS)\"\n";
-            $scriptContent .= "  fi\n";
-            $scriptContent .= "fi\n\n";
-            
-            // Essayer la commande Brother si disponible
-            $scriptContent .= "# Méthode 2: Utiliser brother_ql_print si disponible\n";
-            $scriptContent .= "if command -v brother_ql_print > /dev/null 2>&1; then\n";
-            $scriptContent .= "  echo \"Tentative d'impression avec brother_ql_print...\"\n";
-            $scriptContent .= "  brother_ql_print --printer=" . $printer->ip_address . $portParam . " $modeParam \"$tempfile\"\n";
-            $scriptContent .= "  BRO_STATUS=$?\n";
-            $scriptContent .= "  echo \"Résultat brother_ql_print: $BRO_STATUS\"\n";
-            $scriptContent .= "  if [ $BRO_STATUS -eq 0 ]; then\n";
-            $scriptContent .= "    exit 0\n";
-            $scriptContent .= "  fi\n";
-            $scriptContent .= "fi\n\n";
-            
-            // Essayer lpr comme fallback
-            $scriptContent .= "# Méthode 3: Utiliser lpr si disponible\n";
-            $scriptContent .= "if command -v lpr > /dev/null 2>&1; then\n";
-            $scriptContent .= "  echo \"Tentative d'impression avec lpr...\"\n";
-            
-            if ($printMode === 'template') {
-                $modeOption = "-o Brother-PT=template";
-            } elseif ($printMode === 'escp') {
-                $modeOption = "-o Brother-PT=escp";
-            } else {
-                $modeOption = "-o Brother-PT=raster";
+            if (!$socket) {
+                Log::error('Impossible de se connecter à l\'imprimante : ' . $errstr);
+                return [
+                    'success' => false, 
+                    'message' => 'Impossible de se connecter à l\'imprimante : ' . $errstr
+                ];
             }
             
-            $scriptContent .= "  lpr -H " . $printer->ip_address . " -P " . ($printer->queue_name ?: 'Brother_QL_820NWB') . " $modeOption \"$tempfile\"\n";
-            $scriptContent .= "  LPR_STATUS=$?\n";
-            $scriptContent .= "  echo \"Résultat lpr: $LPR_STATUS\"\n";
-            $scriptContent .= "  if [ $LPR_STATUS -eq 0 ]; then\n";
-            $scriptContent .= "    exit 0\n";
-            $scriptContent .= "  fi\n";
-            $scriptContent .= "fi\n\n";
+            // Préparer les en-têtes HTTP
+            $headers = "POST /cgi-bin/epos/service.cgi?devid=" . ($printer->printer_id ?? '1') . "&timeout=10000 HTTP/1.1\r\n";
+            $headers .= "Host: " . $printer->ip_address . "\r\n";
+            $headers .= "Content-Type: text/html\r\n";
+            $headers .= "Content-Length: " . strlen($content) . "\r\n";
+            $headers .= "Connection: close\r\n\r\n";
             
-            // Essayer la commande CUPS lpd si disponible
-            $scriptContent .= "# Méthode 4: Utiliser lpd/lpdl si disponible\n";
-            $scriptContent .= "if command -v lpd > /dev/null 2>&1 || command -v lp > /dev/null 2>&1; then\n";
-            $scriptContent .= "  echo \"Tentative d'impression avec lpd/lp...\"\n";
-            if ($printMode === 'raster') {
-                $scriptContent .= "  if command -v lp > /dev/null 2>&1; then\n";
-                $scriptContent .= "    lp -d \"" . ($printer->queue_name ?: 'BROTHER_QL_SERIES') . "\" -o raw \"$tempfile\"\n";
-                $scriptContent .= "  else\n";
-                $scriptContent .= "    lpd \"" . $printer->ip_address . "\" \"" . ($printer->queue_name ?: 'BINARY_P1') . "\" \"$tempfile\"\n";
-                $scriptContent .= "  fi\n";
-            } else {
-                $scriptContent .= "  if command -v lp > /dev/null 2>&1; then\n";
-                $scriptContent .= "    lp -d \"" . ($printer->queue_name ?: 'BROTHER_QL_SERIES') . "\" \"$tempfile\"\n";
-                $scriptContent .= "  else\n";
-                $scriptContent .= "    lpd \"" . $printer->ip_address . "\" \"" . ($printer->queue_name ?: 'BINARY_P1') . "\" \"$tempfile\"\n";
-                $scriptContent .= "  fi\n";
+            // Envoyer les données
+            fwrite($socket, $headers . $content);
+            
+            // Lire la réponse
+            $response = '';
+            while (!feof($socket)) {
+                $response .= fgets($socket, 128);
             }
-            $scriptContent .= "  LP_STATUS=$?\n";
-            $scriptContent .= "  echo \"Résultat lp/lpd: $LP_STATUS\"\n";
-            $scriptContent .= "  if [ $LP_STATUS -eq 0 ]; then\n";
-            $scriptContent .= "    exit 0\n";
-            $scriptContent .= "  fi\n";
-            $scriptContent .= "fi\n\n";
-
-            // Essayer une connexion directe avec une séquence d'initialisation
-            $scriptContent .= "# Méthode 5: Tentative de connexion socket directe avec séquence d'initialisation\n";
-            $scriptContent .= "if command -v nc > /dev/null 2>&1; then\n";
-            $scriptContent .= "  echo \"Tentative de connexion directe avec séquence d'initialisation...\"\n";
-            $scriptContent .= "  (printf \"\\x1B\\x40\" && cat \"$tempfile\" && printf \"\\x1B\\x69\\x52\\x01\\x0C\") | nc -w 5 " . $printer->ip_address . " " . ($printer->port ?: '9100') . "\n";
-            $scriptContent .= "  NC_INIT_STATUS=$?\n";
-            $scriptContent .= "  echo \"Résultat nc avec init: $NC_INIT_STATUS\"\n";
-            $scriptContent .= "  if [ $NC_INIT_STATUS -eq 0 ]; then\n";
-            $scriptContent .= "    exit 0\n";
-            $scriptContent .= "  fi\n";
-            $scriptContent .= "fi\n\n";
+            fclose($socket);
             
-            // Si tout échoue, essayer une commande curl directe
-            $scriptContent .= "# Méthode 6: Utiliser curl si disponible\n";
-            $scriptContent .= "if command -v curl > /dev/null 2>&1; then\n";
-            $scriptContent .= "  echo \"Tentative d'impression avec curl...\"\n";
-            $scriptContent .= "  curl -v -s -T \"$tempfile\" -H \"Content-Type: application/octet-stream\" http://" . $printer->ip_address . ":631/ipp/print\n";
-            $scriptContent .= "  CURL_STATUS=$?\n";
-            $scriptContent .= "  echo \"Résultat curl: $CURL_STATUS\"\n";
-            $scriptContent .= "  if [ $CURL_STATUS -eq 0 ]; then\n";
-            $scriptContent .= "    exit 0\n";
-            $scriptContent .= "  fi\n";
-            $scriptContent .= "fi\n\n";
+            // Journaliser la réponse
+            Log::info('Réponse de l\'imprimante : ' . $response);
             
-            $scriptContent .= "echo \"ERREUR: Aucune méthode d'impression n'a réussi\"\n";
-            $scriptContent .= "exit 1\n";
-            
-            file_put_contents($scriptFile, $scriptContent);
-            $command = $scriptFile;
-        
-        // Journaliser la commande pour débogage
-        Log::debug('Commande d\'impression: ' . $command);
-        
-        // Exécuter la commande
-        $output = [];
-        $returnCode = 0;
-        exec($command, $output, $returnCode);
-        
-        // Nettoyer les fichiers temporaires
-        @unlink($tempfile);
-        @unlink($scriptFile);
-        @unlink($testPage); // Supprimer aussi la page de test
-        
-        // Journaliser la sortie
-        Log::debug('Résultat de la commande d\'impression:', [
-            'output' => $output,
-            'return_code' => $returnCode
-        ]);
-        
-        // Vérifier le résultat
-        if ($returnCode === 0) {
-            Log::info('Impression Brother réussie en mode ' . $printMode);
             return [
                 'success' => true,
-                'message' => 'Impression envoyée avec succès (mode ' . $printMode . ')',
-                'output' => implode("\n", $output)
+                'message' => 'Impression envoyée avec succès',
+                'response' => $response
             ];
-        } else {
-            Log::error('Échec de l\'impression Brother en mode ' . $printMode . ': ' . implode("\n", $output));
+        } catch (\Exception $e) {
+            Log::error('Erreur d\'impression directe : ' . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'Échec de l\'impression (mode ' . $printMode . '): ' . implode("\n", $output)
+                'message' => 'Erreur : ' . $e->getMessage()
             ];
         }
-    } catch (\Exception $e) {
-        Log::error('Erreur d\'impression Brother: ' . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Erreur: ' . $e->getMessage()
-        ];
     }
-}
 
-/**
- * Impression avec Brother b-PAC SDK (pour Windows)
- * 
- * @param Printer $printer L'imprimante à utiliser
- * @param string|null $content Le contenu à imprimer (HTML ou texte)
- * @param array $options Options d'impression supplémentaires
- * @return array Résultat de l'opération
- */
-private static function printWithBpac($printer, $content = null, $options = [])
-{
-    try {
-        // Vérifier que nous sommes sur Windows
-        if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
-            Log::error('Impression b-PAC: Ce mode n\'est supporté que sous Windows');
+    /**
+     * Impression spécifique pour imprimantes Brother
+     * 
+     * @param int $printerId Identifiant de l'imprimante
+     * @param string|null $content Contenu à imprimer
+     * @param array $options Options d'impression
+     * @return array Résultat de l'impression
+     */
+    public static function brotherPrint($printerId, $content = null, $options = [])
+    {
+        try {
+            // Récupérer l'imprimante
+            $printer = Printer::findOrFail($printerId);
+            
+            // Vérifier si on doit utiliser b-PAC SDK
+            if ($printer->shouldUseBpac()) {
+                return self::printWithBpac($printer, $content, $options);
+            }
+            
+            // Récupérer le mode d'impression (par défaut: raster)
+            $printMode = $printer->options['print_mode'] ?? $options['mode'] ?? 'raster';
+            
+            Log::info('Tentative d\'impression Brother pour ' . $printer->name . ' (' . $printer->ip_address . ') en mode ' . $printMode);
+            
+            // Pour les imprimantes Brother, nous allons utiliser une approche différente
+            // Nous allons créer un fichier temporaire et l'envoyer via une commande système
+            
+            // Créer un fichier temporaire avec le contenu
+            $tempfile = tempnam(sys_get_temp_dir(), 'bro_print_');
+            
+            // Déterminer le contenu à imprimer
+            $printContent = $content ?: self::generateTestContent($printer);
+            
+            // Selon le mode d'impression, ajuster le contenu
+            if ($printMode === 'template') {
+                // Format P-touch Template - pas utilisé dans votre cas
+                $header = ""; // En-tête P-touch Template
+                $footer = ""; // Pied de page
+                $printContent = $header . $printContent . $footer;
+            } elseif ($printMode === 'escp') {
+                // Format ESC/P - pas utilisé dans votre cas
+                $initCmd = chr(27) . "@"; // ESC @ - initialiser l'imprimante
+                $endCmd = chr(27) . "J" . chr(0); // ESC J 0 - Avance papier et coupe
+                $printContent = $initCmd . $printContent . $endCmd;
+            } else {
+                // Mode Raster (utilisé dans votre cas)
+                // Pour le mode raster, nous utilisons un format brut sans modification
+                // Mais on peut ajouter un en-tête pour les imprimantes Brother qui le nécessitent
+                $rasterHeader = chr(27) . chr(105) . chr(65) . chr(0); // ESC i A 0 - Mode raster
+                
+                // Vérifier si le contenu semble déjà être du HTML
+                if (strpos($printContent, '<html') !== false || strpos($printContent, '<!DOCTYPE') !== false) {
+                    // Ne pas ajouter d'en-tête au HTML
+                } else {
+                    // Pour un contenu binaire, on peut ajouter l'en-tête raster
+                    $printContent = $rasterHeader . $printContent;
+                }
+            }
+            
+            // Écrire le contenu dans le fichier temporaire
+            file_put_contents($tempfile, $printContent);
+            
+            // Journaliser le contenu pour débogage (attention aux fichiers volumineux)
+            Log::debug('Type de contenu à imprimer: ' . (is_string($printContent) ? 'Texte/HTML' : 'Binaire/Image'));
+            Log::debug('Taille du contenu: ' . strlen($printContent) . ' octets');
+            
+            // Créer un script temporaire pour l'impression
+            $scriptFile = tempnam(sys_get_temp_dir(), 'print_cmd_');
+            chmod($scriptFile, 0755);
+            
+            // Commande d'impression selon le système d'exploitation et le mode d'impression
+            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+                // Windows - utiliser la commande print avec des paramètres spécifiques selon le mode
+                $modeParam = "";
+                if ($printMode === 'template') {
+                    $modeParam = " -template";
+                } elseif ($printMode === 'escp') {
+                    $modeParam = " -escp";
+                } // Par défaut, raster ne nécessite pas de paramètre spécifique
+                
+                $command = 'print' . $modeParam . ' /D:"\\\\' . $printer->ip_address . '\\' . ($printer->share_name ?: 'Brother_QL_820NWB') . '" "' . $tempfile . '"';
+                
+                // Écrire la commande dans le script
+                file_put_contents($scriptFile, "@echo off\r\n" . $command);
+            } else {
+                // Linux/Unix - utiliser des commandes CUPS/Brother
+                $modeParam = "";
+                if ($printMode === 'template') {
+                    $modeParam = "--template";
+                } elseif ($printMode === 'escp') {
+                    $modeParam = "--escp";
+                } else {
+                    $modeParam = "--raster"; // Mode raster explicite
+                }
+                
+                // Tester différentes méthodes d'impression pour Brother
+                $portParam = "";
+                if (!empty($printer->port)) {
+                    $portParam = " --port=" . $printer->port;
+                }
+                
+                // Créer un script shell
+                $scriptContent = "#!/bin/bash\n";
+                
+                // Journaliser les informations pour le débogage
+                $scriptContent .= "echo \"Mode d'impression: $printMode\"\n";
+                $scriptContent .= "echo \"Fichier à imprimer: $tempfile\"\n";
+                $scriptContent .= "echo \"Imprimante IP: " . $printer->ip_address . "\"\n\n";
+                
+                // Préparer une page de test simple
+                $testPage = tempnam(sys_get_temp_dir(), 'test_');
+                $scriptContent .= "# Créer une page de test simple pour l'imprimante Brother\n";
+                $scriptContent .= "cat > $testPage << 'EOT'\n";
+                $scriptContent .= "<!DOCTYPE html>\n";
+                $scriptContent .= "<html><body style='font-family: sans-serif; margin: 0; padding: 0;'>\n";
+                $scriptContent .= "<h1 style='font-size: 12pt; text-align: center;'>TEST BROTHER RASTER</h1>\n";
+                $scriptContent .= "<p style='text-align: center;'>Date: " . date('Y-m-d H:i:s') . "</p>\n";
+                $scriptContent .= "<p style='text-align: center;'>Imprimante: " . $printer->name . "</p>\n";
+                $scriptContent .= "</body></html>\n";
+                $scriptContent .= "EOT\n\n";
+                
+                // Essayer brother_ql si disponible (solution Python)
+                $scriptContent .= "# Méthode 1: Utiliser brother_ql (outil Python)\n";
+                $scriptContent .= "if command -v brother_ql > /dev/null 2>&1; then\n";
+                $scriptContent .= "  echo \"Tentative d'impression avec brother_ql...\"\n";
+                // Utiliser brother_ql pour imprimer en mode raster
+                $labelSize = "62"; // 62mm est le rouleau DK-22205
+                $scriptContent .= "  brother_ql --backend network --printer " . $printer->ip_address . ":" . ($printer->port ?: '9100') . " print --label " . $labelSize . " --rotate 0 \"$tempfile\"\n";
+                $scriptContent .= "  BRO_QL_STATUS=$?\n";
+                $scriptContent .= "  echo \"Résultat brother_ql: $BRO_QL_STATUS\"\n";
+                $scriptContent .= "  if [ $BRO_QL_STATUS -eq 0 ]; then\n";
+                $scriptContent .= "    echo \"Impression réussie avec brother_ql\"\n";
+                $scriptContent .= "    exit 0\n";
+                $scriptContent .= "  fi\n";
+                $scriptContent .= "fi\n\n";
+                
+                // Essayer une connexion directe avec un fichier simplifié d'abord
+                $scriptContent .= "# Méthode 2: Connexion socket directe (mode RAW)\n";
+                $scriptContent .= "if command -v nc > /dev/null 2>&1; then\n";
+                $scriptContent .= "  echo \"Tentative de connexion directe RAW via netcat...\"\n";
+                
+                // Pour le mode raster, on envoie juste le fichier tel quel (fichier test simple)
+                $scriptContent .= "  # D'abord essayer avec un fichier test simplifié\n";
+                $scriptContent .= "  cat \"$testPage\" | nc -w 5 " . $printer->ip_address . " " . ($printer->port ?: '9100') . "\n";
+                $scriptContent .= "  NC_TEST_STATUS=$?\n";
+                $scriptContent .= "  if [ $NC_TEST_STATUS -eq 0 ]; then\n";
+                $scriptContent .= "    echo \"Page de test envoyée avec succès\"\n";
+                $scriptContent .= "    # Si le test fonctionne, essayer le vrai contenu\n";
+                $scriptContent .= "    sleep 1\n";
+                $scriptContent .= "    echo \"Envoi du contenu principal...\"\n";
+                $scriptContent .= "    cat \"$tempfile\" | nc -w 5 " . $printer->ip_address . " " . ($printer->port ?: '9100') . "\n";
+                $scriptContent .= "    NC_MAIN_STATUS=$?\n";
+                $scriptContent .= "    if [ $NC_MAIN_STATUS -eq 0 ]; then\n";
+                $scriptContent .= "      echo \"Contenu principal envoyé avec succès\"\n";
+                $scriptContent .= "      exit 0\n";
+                $scriptContent .= "    else\n";
+                $scriptContent .= "      echo \"Échec de l'envoi du contenu principal (code: $NC_MAIN_STATUS)\"\n";
+                $scriptContent .= "    fi\n";
+                $scriptContent .= "  else\n";
+                $scriptContent .= "    echo \"Échec de l'envoi de la page test (code: $NC_TEST_STATUS)\"\n";
+                $scriptContent .= "  fi\n";
+                $scriptContent .= "fi\n\n";
+                
+                // Essayer la commande Brother si disponible
+                $scriptContent .= "# Méthode 2: Utiliser brother_ql_print si disponible\n";
+                $scriptContent .= "if command -v brother_ql_print > /dev/null 2>&1; then\n";
+                $scriptContent .= "  echo \"Tentative d'impression avec brother_ql_print...\"\n";
+                $scriptContent .= "  brother_ql_print --printer=" . $printer->ip_address . $portParam . " $modeParam \"$tempfile\"\n";
+                $scriptContent .= "  BRO_STATUS=$?\n";
+                $scriptContent .= "  echo \"Résultat brother_ql_print: $BRO_STATUS\"\n";
+                $scriptContent .= "  if [ $BRO_STATUS -eq 0 ]; then\n";
+                $scriptContent .= "    exit 0\n";
+                $scriptContent .= "  fi\n";
+                $scriptContent .= "fi\n\n";
+                
+                // Essayer lpr comme fallback
+                $scriptContent .= "# Méthode 3: Utiliser lpr si disponible\n";
+                $scriptContent .= "if command -v lpr > /dev/null 2>&1; then\n";
+                $scriptContent .= "  echo \"Tentative d'impression avec lpr...\"\n";
+                
+                if ($printMode === 'template') {
+                    $modeOption = "-o Brother-PT=template";
+                } elseif ($printMode === 'escp') {
+                    $modeOption = "-o Brother-PT=escp";
+                } else {
+                    $modeOption = "-o Brother-PT=raster";
+                }
+                
+                $scriptContent .= "  lpr -H " . $printer->ip_address . " -P " . ($printer->queue_name ?: 'Brother_QL_820NWB') . " $modeOption \"$tempfile\"\n";
+                $scriptContent .= "  LPR_STATUS=$?\n";
+                $scriptContent .= "  echo \"Résultat lpr: $LPR_STATUS\"\n";
+                $scriptContent .= "  if [ $LPR_STATUS -eq 0 ]; then\n";
+                $scriptContent .= "    exit 0\n";
+                $scriptContent .= "  fi\n";
+                $scriptContent .= "fi\n\n";
+                
+                // Essayer la commande CUPS lpd si disponible
+                $scriptContent .= "# Méthode 4: Utiliser lpd/lpdl si disponible\n";
+                $scriptContent .= "if command -v lpd > /dev/null 2>&1 || command -v lp > /dev/null 2>&1; then\n";
+                $scriptContent .= "  echo \"Tentative d'impression avec lpd/lp...\"\n";
+                if ($printMode === 'raster') {
+                    $scriptContent .= "  if command -v lp > /dev/null 2>&1; then\n";
+                    $scriptContent .= "    lp -d \"" . ($printer->queue_name ?: 'BROTHER_QL_SERIES') . "\" -o raw \"$tempfile\"\n";
+                    $scriptContent .= "  else\n";
+                    $scriptContent .= "    lpd \"" . $printer->ip_address . "\" \"" . ($printer->queue_name ?: 'BINARY_P1') . "\" \"$tempfile\"\n";
+                    $scriptContent .= "  fi\n";
+                } else {
+                    $scriptContent .= "  if command -v lp > /dev/null 2>&1; then\n";
+                    $scriptContent .= "    lp -d \"" . ($printer->queue_name ?: 'BROTHER_QL_SERIES') . "\" \"$tempfile\"\n";
+                    $scriptContent .= "  else\n";
+                    $scriptContent .= "    lpd \"" . $printer->ip_address . "\" \"" . ($printer->queue_name ?: 'BINARY_P1') . "\" \"$tempfile\"\n";
+                    $scriptContent .= "  fi\n";
+                }
+                $scriptContent .= "  LP_STATUS=$?\n";
+                $scriptContent .= "  echo \"Résultat lp/lpd: $LP_STATUS\"\n";
+                $scriptContent .= "  if [ $LP_STATUS -eq 0 ]; then\n";
+                $scriptContent .= "    exit 0\n";
+                $scriptContent .= "  fi\n";
+                $scriptContent .= "fi\n\n";
+
+                // Essayer une connexion directe avec une séquence d'initialisation
+                $scriptContent .= "# Méthode 5: Tentative de connexion socket directe avec séquence d'initialisation\n";
+                $scriptContent .= "if command -v nc > /dev/null 2>&1; then\n";
+                $scriptContent .= "  echo \"Tentative de connexion directe avec séquence d'initialisation...\"\n";
+                $scriptContent .= "  (printf \"\\x1B\\x40\" && cat \"$tempfile\" && printf \"\\x1B\\x69\\x52\\x01\\x0C\") | nc -w 5 " . $printer->ip_address . " " . ($printer->port ?: '9100') . "\n";
+                $scriptContent .= "  NC_INIT_STATUS=$?\n";
+                $scriptContent .= "  echo \"Résultat nc avec init: $NC_INIT_STATUS\"\n";
+                $scriptContent .= "  if [ $NC_INIT_STATUS -eq 0 ]; then\n";
+                $scriptContent .= "    exit 0\n";
+                $scriptContent .= "  fi\n";
+                $scriptContent .= "fi\n\n";
+                
+                // Si tout échoue, essayer une commande curl directe
+                $scriptContent .= "# Méthode 6: Utiliser curl si disponible\n";
+                $scriptContent .= "if command -v curl > /dev/null 2>&1; then\n";
+                $scriptContent .= "  echo \"Tentative d'impression avec curl...\"\n";
+                $scriptContent .= "  curl -v -s -T \"$tempfile\" -H \"Content-Type: application/octet-stream\" http://" . $printer->ip_address . ":631/ipp/print\n";
+                $scriptContent .= "  CURL_STATUS=$?\n";
+                $scriptContent .= "  echo \"Résultat curl: $CURL_STATUS\"\n";
+                $scriptContent .= "  if [ $CURL_STATUS -eq 0 ]; then\n";
+                $scriptContent .= "    exit 0\n";
+                $scriptContent .= "  fi\n";
+                $scriptContent .= "fi\n\n";
+                
+                $scriptContent .= "echo \"ERREUR: Aucune méthode d'impression n'a réussi\"\n";
+                $scriptContent .= "exit 1\n";
+                
+                file_put_contents($scriptFile, $scriptContent);
+                $command = $scriptFile;
+            }
+        
+            // Journaliser la commande pour débogage
+            Log::debug('Commande d\'impression: ' . $command);
+            
+            // Exécuter la commande
+            $output = [];
+            $returnCode = 0;
+            exec($command, $output, $returnCode);
+            
+            // Nettoyer les fichiers temporaires
+            @unlink($tempfile);
+            @unlink($scriptFile);
+            @unlink($testPage); // Supprimer aussi la page de test
+            
+            // Journaliser la sortie
+            Log::debug('Résultat de la commande d\'impression:', [
+                'output' => $output,
+                'return_code' => $returnCode
+            ]);
+            
+            // Vérifier le résultat
+            if ($returnCode === 0) {
+                Log::info('Impression Brother réussie en mode ' . $printMode);
+                return [
+                    'success' => true,
+                    'message' => 'Impression envoyée avec succès (mode ' . $printMode . ')',
+                    'output' => implode("\n", $output)
+                ];
+            } else {
+                Log::error('Échec de l\'impression Brother en mode ' . $printMode . ': ' . implode("\n", $output));
+                return [
+                    'success' => false,
+                    'message' => 'Échec de l\'impression (mode ' . $printMode . '): ' . implode("\n", $output)
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('Erreur d\'impression Brother: ' . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'L\'impression avec Brother b-PAC n\'est supportée que sous Windows'
+                'message' => 'Erreur: ' . $e->getMessage()
             ];
         }
-        
-        Log::info('Tentative d\'impression avec b-PAC SDK pour ' . $printer->name);
-        
-        // Créer un fichier temporaire avec le contenu à imprimer
-        $tempfile = tempnam(sys_get_temp_dir(), 'bpac_print_');
-        $tempfile .= '.html'; // Ajouter l'extension .html
-        
-        // Déterminer le contenu à imprimer
-        $printContent = $content ?: self::generateTestContent($printer);
-        
-        // Sauvegarder le contenu HTML dans le fichier temporaire
-        file_put_contents($tempfile, $printContent);
-        
-        // Créer un script PowerShell pour l'impression
-        $scriptFile = tempnam(sys_get_temp_dir(), 'bpac_script_');
-        $scriptFile .= '.ps1'; // Ajouter l'extension PowerShell
-        
-        // Récupérer les paramètres d'impression
-        $printerName = $printer->name;
-        $tapeType = $printer->options['bpac_tape_type'] ?? $printer->options['brother_roll'] ?? 'DK22205';
-        $labelWidth = $printer->options['label_width'] ?? 62;
-        $labelHeight = $printer->options['label_height'] ?? 100;
-        
-        // Générer le script PowerShell pour utiliser b-PAC SDK
-        $psScript = <<<EOT
+    }
+
+    /**
+     * Impression avec Brother b-PAC SDK (pour Windows)
+     * 
+     * @param Printer $printer L'imprimante à utiliser
+     * @param string|null $content Le contenu à imprimer (HTML ou texte)
+     * @param array $options Options d'impression supplémentaires
+     * @return array Résultat de l'opération
+     */
+    private static function printWithBpac($printer, $content = null, $options = [])
+    {
+        try {
+            // Vérifier que nous sommes sur Windows
+            if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
+                Log::error('Impression b-PAC: Ce mode n\'est supporté que sous Windows');
+                return [
+                    'success' => false,
+                    'message' => 'L\'impression avec Brother b-PAC n\'est supportée que sous Windows'
+                ];
+            }
+            
+            Log::info('Tentative d\'impression avec b-PAC SDK pour ' . $printer->name);
+            
+            // Créer un fichier temporaire avec le contenu à imprimer
+            $tempfile = tempnam(sys_get_temp_dir(), 'bpac_print_');
+            $tempfile .= '.html'; // Ajouter l'extension .html
+            
+            // Déterminer le contenu à imprimer
+            $printContent = $content ?: self::generateTestContent($printer);
+            
+            // Sauvegarder le contenu HTML dans le fichier temporaire
+            file_put_contents($tempfile, $printContent);
+            
+            // Créer un script PowerShell pour l'impression
+            $scriptFile = tempnam(sys_get_temp_dir(), 'bpac_script_');
+            $scriptFile .= '.ps1'; // Ajouter l'extension PowerShell
+            
+            // Récupérer les paramètres d'impression
+            $printerName = $printer->name;
+            $tapeType = $printer->options['bpac_tape_type'] ?? $printer->options['brother_roll'] ?? 'DK22205';
+            $labelWidth = $printer->options['label_width'] ?? 62;
+            $labelHeight = $printer->options['label_height'] ?? 100;
+            
+            // Générer le script PowerShell pour utiliser b-PAC SDK
+            $psScript = <<<EOT
 # Script PowerShell pour impression avec Brother b-PAC SDK
 Write-Host "Démarrage de l'impression Brother avec b-PAC SDK..."
 
@@ -687,124 +702,173 @@ finally {
     }
 }
 EOT;
-        
-        // Écrire le script PowerShell dans le fichier temporaire
-        file_put_contents($scriptFile, $psScript);
-        
-        // Exécuter le script PowerShell
-        $command = "powershell -ExecutionPolicy Bypass -File \"$scriptFile\"";
-        
-        Log::debug('Commande PowerShell d\'impression b-PAC: ' . $command);
-        
-        // Exécuter la commande
-        $output = [];
-        $returnCode = 0;
-        exec($command, $output, $returnCode);
-        
-        // Nettoyer les fichiers temporaires
-        @unlink($tempfile);
-        @unlink($scriptFile);
-        
-        // Journaliser la sortie
-        Log::debug('Résultat de la commande d\'impression b-PAC:', [
-            'output' => $output,
-            'return_code' => $returnCode
-        ]);
-        
-        // Vérifier le résultat
-        if ($returnCode === 0) {
-            Log::info('Impression Brother b-PAC réussie');
-            return [
-                'success' => true,
-                'message' => 'Impression envoyée avec succès via b-PAC SDK',
-                'output' => implode("\n", $output)
-            ];
-        } else {
-            Log::error('Échec de l\'impression Brother b-PAC: ' . implode("\n", $output));
-            return [
-                'success' => false,
-                'message' => 'Échec de l\'impression via b-PAC SDK: ' . implode("\n", $output)
-            ];
-        }
-    } catch (\Exception $e) {
-        Log::error('Erreur d\'impression Brother b-PAC: ' . $e->getMessage());
-        return [
-            'success' => false,
-            'message' => 'Erreur b-PAC: ' . $e->getMessage()
-        ];
-    }
-}
-
-/**
- * Génère un contenu de test pour l'impression
- */
-private static function generateTestContent($printer)
-{
-    $content = '<html><body>';
-    $content .= '<h1 style="font-size: 14pt; text-align: center; font-weight: bold;">TEST IMPRESSION</h1>';
-    $content .= '<p style="text-align: center;">Imprimante : ' . $printer->name . '</p>';
-    $content .= '<p style="text-align: center;">Date : ' . date('d/m/Y H:i:s') . '</p>';
-    
-    // Générer un QR code si possible
-    if (class_exists('\SimpleSoftwareIO\QrCode\Facades\QrCode')) {
-        $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(80)->generate('Test QR Code - ' . $printer->name);
-        $content .= '<div style="text-align: center; margin-top: 10px; border: 1px solid black; display: inline-block; padding: 5px;">' . $qrCode . '</div>';
-    }
-    
-    $content .= '</body></html>';
-    return $content;
-}
-
-/**
- * Vérifier si l'imprimante Brother est accessible
- */
-public static function checkBrotherPrinter($printerId)
-{
-    try {
-        $printer = Printer::findOrFail($printerId);
-        
-        // Tester la connexion ping
-        $ping = exec("ping -c 1 -W 1 " . escapeshellarg($printer->ip_address), $pingOutput, $pingStatus);
-        
-        if ($pingStatus !== 0) {
-            return [
-                'success' => false,
-                'message' => 'L\'imprimante ne répond pas au ping',
-                'output' => implode("\n", $pingOutput)
-            ];
-        }
-        
-        // Tester le port standard des imprimantes Brother (9100 ou 515)
-        $ports = [9100, 515];
-        $connectedPort = null;
-        
-        foreach ($ports as $port) {
-            $socket = @fsockopen($printer->ip_address, $port, $errno, $errstr, 2);
-            if ($socket) {
-                fclose($socket);
-                $connectedPort = $port;
-                break;
+            
+            // Écrire le script PowerShell dans le fichier temporaire
+            file_put_contents($scriptFile, $psScript);
+            
+            // Exécuter le script PowerShell
+            $command = "powershell -ExecutionPolicy Bypass -File \"$scriptFile\"";
+            
+            Log::debug('Commande PowerShell d\'impression b-PAC: ' . $command);
+            
+            // Exécuter la commande
+            $output = [];
+            $returnCode = 0;
+            exec($command, $output, $returnCode);
+            
+            // Nettoyer les fichiers temporaires
+            @unlink($tempfile);
+            @unlink($scriptFile);
+            
+            // Journaliser la sortie
+            Log::debug('Résultat de la commande d\'impression b-PAC:', [
+                'output' => $output,
+                'return_code' => $returnCode
+            ]);
+            
+            // Vérifier le résultat
+            if ($returnCode === 0) {
+                Log::info('Impression Brother b-PAC réussie');
+                return [
+                    'success' => true,
+                    'message' => 'Impression envoyée avec succès via b-PAC SDK',
+                    'output' => implode("\n", $output)
+                ];
+            } else {
+                Log::error('Échec de l\'impression Brother b-PAC: ' . implode("\n", $output));
+                return [
+                    'success' => false,
+                    'message' => 'Échec de l\'impression via b-PAC SDK: ' . implode("\n", $output)
+                ];
             }
-        }
-        
-        if ($connectedPort) {
-            return [
-                'success' => true,
-                'message' => 'L\'imprimante est accessible sur le port ' . $connectedPort,
-                'port' => $connectedPort
-            ];
-        } else {
+        } catch (\Exception $e) {
+            Log::error('Erreur d\'impression Brother b-PAC: ' . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'L\'imprimante n\'est pas accessible sur les ports standards Brother'
+                'message' => 'Erreur b-PAC: ' . $e->getMessage()
             ];
         }
-    } catch (\Exception $e) {
-        return [
-            'success' => false,
-            'message' => 'Erreur: ' . $e->getMessage()
-        ];
     }
-}
 
+    /**
+     * Vérifie si une imprimante Brother est accessible
+     * 
+     * @param int $printerId ID de l'imprimante à vérifier
+     * @return array Résultat de la vérification
+     */
+    public static function checkBrotherPrinter($printerId)
+    {
+        try {
+            // Récupérer l'imprimante
+            $printer = Printer::findOrFail($printerId);
+            
+            // Vérifier que c'est bien une Brother
+            if (!$printer->isBrotherLabel()) {
+                return [
+                    'success' => false,
+                    'message' => 'Cette imprimante n\'est pas configurée comme une imprimante Brother.'
+                ];
+            }
+            
+            // Si imprimante PrintNode
+            if ($printer->hasPrintNode()) {
+                // Vérifier que l'ID PrintNode est configuré
+                if (empty($printer->printnode_id)) {
+                    return [
+                        'success' => false,
+                        'message' => 'ID PrintNode non configuré.'
+                    ];
+                }
+                
+                // Tenter de récupérer l'état de l'imprimante via PrintNode
+                $apiKey = config('printing.printnode_api_key');
+                if (empty($apiKey)) {
+                    return [
+                        'success' => false,
+                        'message' => 'Clé API PrintNode non configurée.'
+                    ];
+                }
+                
+                try {
+                    $response = Http::withBasicAuth($apiKey, '')
+                        ->get('https://api.printnode.com/printers/' . $printer->printnode_id);
+                    
+                    if ($response->successful()) {
+                        $printerData = $response->json();
+                        $isOnline = isset($printerData['state']) && $printerData['state'] === 'online';
+                        
+                        return [
+                            'success' => $isOnline,
+                            'message' => $isOnline ? 'Imprimante en ligne.' : 'Imprimante hors ligne: ' . ($printerData['state'] ?? 'état inconnu'),
+                            'printer_data' => $printerData
+                        ];
+                    } else {
+                        return [
+                            'success' => false,
+                            'message' => 'Erreur PrintNode: ' . $response->status() . ' - ' . $response->body()
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    return [
+                        'success' => false,
+                        'message' => 'Erreur lors de la vérification PrintNode: ' . $e->getMessage()
+                    ];
+                }
+            }
+            
+            // Sinon, vérifier la connexion directement
+            if (empty($printer->ip_address)) {
+                return [
+                    'success' => false,
+                    'message' => 'Adresse IP de l\'imprimante non configurée.'
+                ];
+            }
+            
+            // Tenter un ping simple
+            exec("ping -c 1 -W 1 " . escapeshellarg($printer->ip_address), $output, $status);
+            $pingSuccess = ($status === 0);
+            
+            // Si le ping échoue, essayer une connexion socket
+            if (!$pingSuccess && !empty($printer->port)) {
+                $port = $printer->port ?: 9100;
+                $socket = @fsockopen($printer->ip_address, $port, $errno, $errstr, 2);
+                if ($socket) {
+                    fclose($socket);
+                    $pingSuccess = true;
+                }
+            }
+            
+            return [
+                'success' => $pingSuccess,
+                'message' => $pingSuccess ? 'Imprimante accessible.' : 'Imprimante inaccessible. Vérifiez la connexion réseau.'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la vérification de l\'imprimante Brother: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Génère un contenu de test pour l'impression
+     */
+    private static function generateTestContent($printer)
+    {
+        $content = '<html><body>';
+        $content .= '<h1 style="font-size: 14pt; text-align: center; font-weight: bold;">TEST IMPRESSION</h1>';
+        $content .= '<p style="text-align: center;">Imprimante : ' . $printer->name . '</p>';
+        $content .= '<p style="text-align: center;">Date : ' . date('d/m/Y H:i:s') . '</p>';
+        
+        // Générer un QR code si possible
+        if (class_exists('\SimpleSoftwareIO\QrCode\Facades\QrCode')) {
+            $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(150)->generate('Test QR Code - ' . $printer->name);
+            $content .= '<div style="text-align: center; margin-top: 15px; border: 1px solid black; display: inline-block; padding: 10px; background-color: white;">' . $qrCode . '</div>';
+        }
+        
+        $content .= '</body></html>';
+        
+        return $content;
+    }
 }

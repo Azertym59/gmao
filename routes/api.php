@@ -34,6 +34,9 @@ Route::post('/print/job', [PrintController::class, 'createPrintJob']);
 Route::get('/print/job/{id}', [PrintController::class, 'getPrintJob']);
 Route::put('/print/job/{id}', [PrintController::class, 'updatePrintJob']);
 
+// Test d'impression direct
+Route::post('/print/test', [PrintController::class, 'testPrint']);
+
 Route::prefix('print-jobs')->group(function () {
     // Gestion des jobs d'impression
     Route::post('/create', [PrintController::class, 'createJob']);
@@ -45,6 +48,9 @@ Route::prefix('print-jobs')->group(function () {
     Route::post('/test', [PrintController::class, 'testPrint']);
     Route::post('/qrcode', [PrintController::class, 'createQrCodePrintJob']);
 });
+
+// Route pour vérifier la configuration de PrintNode
+Route::get('/print/check-config', [PrintController::class, 'checkConfig']);
 
 Route::prefix('printers')->group(function () {
     // Récupération des imprimantes disponibles

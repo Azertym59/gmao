@@ -38,7 +38,7 @@
         </div>
 
         <div class="flex items-center justify-end mt-6">
-            @if (Route::has('password.request'))
+            @if (\Illuminate\Support\Facades\Route::has('password.request'))
                 <a class="underline text-sm text-accent-blue hover:text-blue-400 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-blue" href="{{ route('password.request') }}">
                     {{ __('Mot de passe oublié?') }}
                 </a>

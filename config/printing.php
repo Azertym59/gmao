@@ -14,6 +14,18 @@ return [
     'printnode_api_key' => env('PRINTNODE_API_KEY', null),
     'printnode_printer_id' => env('PRINTNODE_PRINTER_ID', null),
     
+    // Paramètres pour PrintNode
+    'printnode' => [
+        // Activer ou désactiver PrintNode
+        'enabled' => env('PRINTNODE_ENABLED', true),
+        
+        // API Key pour PrintNode
+        'api_key' => env('PRINTNODE_API_KEY', null),
+        
+        // ID de l'imprimante PrintNode par défaut
+        'default_printer_id' => env('PRINTNODE_PRINTER_ID', null),
+    ],
+    
     // Configuration pour Brother b-PAC SDK
     'bpac' => [
         'enabled' => env('BPAC_ENABLED', true),
@@ -31,24 +43,6 @@ return [
                 'DK11209' => '62x29mm_address_small',
             ]
         ],
-    ],
-    
-    // Paramètres pour QZ Tray
-    'qz_tray' => [
-        // Activer ou désactiver QZ Tray
-        'enabled' => env('QZ_TRAY_ENABLED', true),
-        
-        // Utiliser des certificats pour QZ Tray en production
-        'use_certificates' => env('QZ_TRAY_USE_CERTIFICATES', false),
-        
-        // Chemin vers le certificat (en production)
-        'certificate_path' => env('QZ_TRAY_CERTIFICATE_PATH', null),
-        
-        // Délai de reconnexion en millisecondes
-        'reconnect_delay' => env('QZ_TRAY_RECONNECT_DELAY', 1000),
-        
-        // Nombre de tentatives de reconnexion
-        'reconnect_attempts' => env('QZ_TRAY_RECONNECT_ATTEMPTS', 3),
     ],
     
     // Paramètres par défaut pour les différents types d'imprimantes

@@ -1,17 +1,27 @@
-<x-app-layout>
-    <x-slot name="header">
+<?php if (isset($component)) { $__componentOriginal9ac128a9029c0e4701924bd2d73d7f54 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54 = $attributes; } ?>
+<?php $component = App\View\Components\AppLayout::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('app-layout'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\App\View\Components\AppLayout::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes([]); ?>
+     <?php $__env->slot('header', null, []); ?> 
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Test d\'impression') }}
+                <?php echo e(__('Test d\'impression')); ?>
+
             </h2>
             <div class="flex space-x-2">
-                <a href="{{ url('/etiquettes/test') }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center">
+                <a href="<?php echo e(url('/etiquettes/test')); ?>" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                     </svg>
                     Tester étiquettes
                 </a>
-                <a href="{{ route('printers.index') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center">
+                <a href="<?php echo e(route('printers.index')); ?>" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -19,7 +29,7 @@
                 </a>
             </div>
         </div>
-    </x-slot>
+     <?php $__env->endSlot(); ?>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -45,7 +55,7 @@
                         <!-- Left column: Current printer & form -->
                         <div>
                             <!-- Current Printer Card -->
-                            @if(isset($selectedPrinter) && $selectedPrinter)
+                            <?php if(isset($selectedPrinter) && $selectedPrinter): ?>
                             <div class="mb-6 p-5 bg-gradient-to-r from-blue-700/30 to-indigo-700/30 rounded-xl border border-blue-500/30 shadow-lg">
                                 <div class="flex items-center mb-3">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -57,32 +67,32 @@
                                 <div class="ml-8 bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
                                     <div class="flex items-center mb-2">
                                         <span class="text-gray-400 w-24">Nom:</span>
-                                        <span class="text-white font-semibold">{{ $selectedPrinter->name }}</span>
-                                        @if($selectedPrinter->is_default) 
+                                        <span class="text-white font-semibold"><?php echo e($selectedPrinter->name); ?></span>
+                                        <?php if($selectedPrinter->is_default): ?> 
                                             <span class="ml-3 px-2 py-1 bg-yellow-500/50 text-yellow-100 rounded-full text-xs font-medium">
                                                 Par défaut
                                             </span> 
-                                        @endif
+                                        <?php endif; ?>
                                     </div>
                                     <div class="flex items-center mb-2">
                                         <span class="text-gray-400 w-24">Type:</span>
-                                        <span class="text-white">{{ $selectedPrinter->type }}</span>
+                                        <span class="text-white"><?php echo e($selectedPrinter->type); ?></span>
                                     </div>
-                                    @if($selectedPrinter->hasPrintNode())
+                                    <?php if($selectedPrinter->hasPrintNode()): ?>
                                     <div class="flex items-center">
                                         <span class="text-gray-400 w-24">PrintNode:</span>
                                         <span class="px-2 py-1 bg-green-600/40 text-green-200 text-xs rounded-full">
-                                            Activé (ID: {{ $selectedPrinter->printnode_id }})
+                                            Activé (ID: <?php echo e($selectedPrinter->printnode_id); ?>)
                                         </span>
                                     </div>
-                                    @endif
+                                    <?php endif; ?>
                                 </div>
                             </div>
-                            @endif
+                            <?php endif; ?>
 
                             <!-- Print Test Form -->
-                            <form method="POST" action="{{ route('printers.print-test') }}" class="mb-6 p-5 bg-gradient-to-r from-purple-700/20 to-purple-900/20 rounded-xl border border-purple-500/30 shadow-lg">
-                                @csrf
+                            <form method="POST" action="<?php echo e(route('printers.print-test')); ?>" class="mb-6 p-5 bg-gradient-to-r from-purple-700/20 to-purple-900/20 rounded-xl border border-purple-500/30 shadow-lg">
+                                <?php echo csrf_field(); ?>
                                 <div class="flex items-center mb-3">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -95,12 +105,12 @@
                                         <label for="printer_id" class="block text-sm font-medium text-purple-300 mb-2">Sélectionner une imprimante</label>
                                         <select class="form-select w-full rounded-lg border-purple-500/40 bg-gray-800 text-white shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-500/30" id="printer_id" name="printer_id" required>
                                             <option value="">Sélectionner...</option>
-                                            @foreach($printers as $printer)
-                                                <option value="{{ $printer->id }}" {{ isset($selectedPrinter) && $selectedPrinter && $selectedPrinter->id == $printer->id ? 'selected' : '' }}>
-                                                    {{ $printer->name }} ({{ $printer->type }})
-                                                    @if($printer->is_default) [Par défaut] @endif
+                                            <?php $__currentLoopData = $printers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $printer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($printer->id); ?>" <?php echo e(isset($selectedPrinter) && $selectedPrinter && $selectedPrinter->id == $printer->id ? 'selected' : ''); ?>>
+                                                    <?php echo e($printer->name); ?> (<?php echo e($printer->type); ?>)
+                                                    <?php if($printer->is_default): ?> [Par défaut] <?php endif; ?>
                                                 </option>
-                                            @endforeach
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
                                     </div>
                                     
@@ -116,7 +126,7 @@
                             </form>
 
                             <!-- Brother Specific Options -->
-                            @if(isset($selectedPrinter) && $selectedPrinter->isBrotherLabel())
+                            <?php if(isset($selectedPrinter) && $selectedPrinter->isBrotherLabel()): ?>
                             <div class="mb-6 p-5 bg-gradient-to-r from-green-700/20 to-green-900/20 rounded-xl border border-green-500/30 shadow-lg">
                                 <div class="flex items-center mb-3">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -126,7 +136,7 @@
                                 </div>
                                 
                                 <div class="ml-8 space-y-4">
-                                    <a href="{{ route('printers.test-brother', $selectedPrinter->id) }}" 
+                                    <a href="<?php echo e(route('printers.test-brother', $selectedPrinter->id)); ?>" 
                                        class="block w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 text-white rounded-lg shadow-lg transition transform hover:scale-105 text-center sm:inline-flex sm:items-center sm:justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -134,7 +144,7 @@
                                         Test d'impression Brother
                                     </a>
                                     
-                                    @if($selectedPrinter->shouldUseBpac())
+                                    <?php if($selectedPrinter->shouldUseBpac()): ?>
                                     <div class="p-4 bg-gradient-to-r from-green-800/50 to-green-900/50 rounded-lg border border-green-800/40">
                                         <div class="flex items-center mb-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -144,10 +154,10 @@
                                         </div>
                                         <p class="text-sm text-gray-300 ml-6">Cette imprimante est configurée pour utiliser le SDK Brother b-PAC pour une meilleure compatibilité.</p>
                                     </div>
-                                    @endif
+                                    <?php endif; ?>
                                 </div>
                             </div>
-                            @endif
+                            <?php endif; ?>
                         </div>
 
                         <!-- Right column: Printers Grid -->
@@ -171,26 +181,26 @@
                                             </tr>
                                         </thead>
                                         <tbody class="bg-gray-800/40 divide-y divide-gray-700/50">
-                                            @foreach($printers as $printer)
+                                            <?php $__currentLoopData = $printers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $printer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                 <tr class="hover:bg-gray-700/30 transition-colors">
                                                     <td class="px-4 py-3 whitespace-nowrap">
-                                                        <div class="text-sm font-medium text-white">{{ $printer->name }}</div>
+                                                        <div class="text-sm font-medium text-white"><?php echo e($printer->name); ?></div>
                                                     </td>
                                                     <td class="px-4 py-3 whitespace-nowrap">
-                                                        <div class="text-sm text-gray-300">{{ ucfirst($printer->type) }}</div>
+                                                        <div class="text-sm text-gray-300"><?php echo e(ucfirst($printer->type)); ?></div>
                                                     </td>
                                                     <td class="px-4 py-3 whitespace-nowrap text-center">
                                                         <div class="flex justify-center gap-1">
-                                                            @if($printer->is_default) 
+                                                            <?php if($printer->is_default): ?> 
                                                                 <span class="px-2 py-1 inline-flex text-xs leading-none rounded-full bg-yellow-500/50 text-yellow-100">Par défaut</span> 
-                                                            @endif
-                                                            @if($printer->hasPrintNode()) 
+                                                            <?php endif; ?>
+                                                            <?php if($printer->hasPrintNode()): ?> 
                                                                 <span class="px-2 py-1 inline-flex text-xs leading-none rounded-full bg-green-600/40 text-green-200">PrintNode</span> 
-                                                            @endif
+                                                            <?php endif; ?>
                                                         </div>
                                                     </td>
                                                     <td class="px-4 py-3 whitespace-nowrap text-right">
-                                                        <a href="{{ route('printers.test', ['id' => $printer->id]) }}" 
+                                                        <a href="<?php echo e(route('printers.test', ['id' => $printer->id])); ?>" 
                                                            class="inline-flex items-center justify-center px-3 py-1 border border-blue-500 text-blue-300 rounded-lg hover:bg-blue-700/40 hover:text-blue-100 transition-colors">
                                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -199,7 +209,7 @@
                                                         </a>
                                                     </td>
                                                 </tr>
-                                            @endforeach
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </tbody>
                                     </table>
                                 </div>
@@ -234,4 +244,13 @@
             }
         });
     </script>
-</x-app-layout>
+ <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54)): ?>
+<?php $attributes = $__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54; ?>
+<?php unset($__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal9ac128a9029c0e4701924bd2d73d7f54)): ?>
+<?php $component = $__componentOriginal9ac128a9029c0e4701924bd2d73d7f54; ?>
+<?php unset($__componentOriginal9ac128a9029c0e4701924bd2d73d7f54); ?>
+<?php endif; ?><?php /**PATH /var/www/gmao/resources/views/printers/test.blade.php ENDPATH**/ ?>

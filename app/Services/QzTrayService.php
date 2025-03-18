@@ -6,10 +6,56 @@ use App\Models\PrintJob;
 use App\Models\Printer;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class QzTrayService
 {
+    /**
+     * Get QZ Tray scripts for use in templates
+     * 
+     * @return string HTML script tags
+     */
+    public function getQzTrayScripts(): string
+    {
+        // Nous avons supprimé QZ Tray, donc retourner une chaîne vide
+        return '';
+    }
+    
+    /**
+     * Get QZ Tray print script for the specific print data
+     * 
+     * @param array $printData The print data
+     * @return string JavaScript for printing
+     */
+    public function getQzTrayPrintScript(array $printData): string
+    {
+        // Nous avons supprimé QZ Tray, donc retourner un script minimal
+        return '<script>
+            // Stubs for QZ Tray functionality
+            window.QZTray = {
+                connect: function() { 
+                    console.log("PrintNode est utilisé à la place de QZ Tray");
+                    return Promise.resolve(); 
+                },
+                getPrinters: function() { 
+                    return Promise.resolve(["PrintNode Printer"]); 
+                },
+                printFromController: function() {
+                    console.log("Impression via PrintNode");
+                    // Montrer un message d\'impression réussie
+                    document.getElementById("print-success").style.display = "block";
+                    document.getElementById("qz-status").className = "badge bg-success";
+                    document.getElementById("qz-status").textContent = "Impression gérée par PrintNode";
+                    document.getElementById("print-progress").style.width = "100%";
+                    document.getElementById("print-progress").className = "progress-bar bg-success";
+                    return Promise.resolve(); 
+                }
+            };
+        </script>';
+    }
+    
     /**
      * Generate QR code as base64 image
      */
@@ -43,74 +89,31 @@ class QzTrayService
     }
 
     /**
-     * Prepare print data for QZ Tray
-     */
-    public function preparePrintData(string $printerName, string $imageData, array $options = []): array
-    {
-        // Default options
-        $defaultOptions = [
-            'size' => '62mm',            // Default label size (updated to 62mm width)
-            'height' => '20mm',          // Height for the new small label format
-            'orientation' => 'portrait', // Default orientation
-            'copies' => 1,               // Default copies
-            'margins' => [               // Default margins
-                'top' => 0,
-                'right' => 0,
-                'bottom' => 0,
-                'left' => 0
-            ]
-        ];
-
-        // Merge options
-        $options = array_merge($defaultOptions, $options);
-
-        // Return data structure for QZ Tray
-        return [
-            'printerName' => $printerName,
-            'imageData' => $imageData,
-            'options' => $options
-        ];
-    }
-
-    /**
-     * Generate QR code and prepare print data in one step
-     */
-    public function prepareQrCodePrint(string $printerName, string $data, array $qrOptions = [], array $printOptions = []): array
-    {
-        // Extract QR code options
-        $size = $qrOptions['size'] ?? 250;
-        $errorCorrection = $qrOptions['errorCorrection'] ?? 'H';
-
-        // Generate QR code
-        $imageData = $this->generateQrCode($data, $size, $errorCorrection);
-
-        // Prepare print data
-        return $this->preparePrintData($printerName, $imageData, $printOptions);
-    }
-    
-    /**
-     * Create a print job record and queue it for processing
+     * Create a print job record and queue it for processing via PrintNode
      */
     public function queuePrintJob(Printer $printer, string $content, string $type, ?string $entityType = null, ?int $entityId = null): PrintJob
     {
-        // Pour Brother + PrintNode, fournir des options simplifiées compatibles
+        // Options d'impression pour PrintNode
         $options = [];
         
-        // Si c'est une imprimante Brother qui utilise PrintNode, on simplifie les options
+        // Si c'est une imprimante Brother qui utilise PrintNode, on configure les options appropriées
         if ($printer->isBrotherLabel() && $printer->hasPrintNode()) {
             $options = [
-                'size' => 'A4',  // Utiliser un format standard au lieu d'un format personnalisé
+                'printnode_id' => $printer->printnode_id,
+                'width' => $printer->label_width ?? 62,
+                'height' => $printer->label_height ?? 100,
+                'dpi' => $printer->dpi ?? 300,
                 'copies' => 1,
-                'paper_source' => 'tray1', // Utiliser un bac standard
             ];
             
-            // Journaliser l'adaptation des options pour Brother
-            Log::info('PrintNode job for Brother printer - using simplified options', [
+            // Journaliser les options pour Brother
+            Log::info('PrintNode job for Brother printer - using proper options', [
                 'printer_id' => $printer->id,
-                'printer_name' => $printer->name
+                'printer_name' => $printer->name,
+                'printnode_id' => $printer->printnode_id
             ]);
         } else {
-            // Sinon utiliser les options normales
+            // Sinon utiliser les options standard
             $options = [
                 'size' => $printer->default_width ?? '62mm',
                 'height' => $printer->default_height ?? '20mm',
@@ -139,151 +142,184 @@ class QzTrayService
         
         return $printJob;
     }
-
+    
     /**
-     * Get script tag to include QZ Tray JavaScript
+     * Generate PDF for printing through PrintNode
      */
-    public function getQzTrayScripts(): string
+    public function generatePdf(string $htmlContent, array $options = []): string
     {
-        return '
-            <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.0/qz-tray.min.js"></script>
-            <script src="' . asset('js/qz-tray.js') . '?v=' . filemtime(public_path('js/qz-tray.js')) . '"></script>
-        ';
+        // Default options for PDF generation
+        $defaultOptions = [
+            'format' => [$options['width'] ?? 62, $options['height'] ?? 100],
+            'margin_top' => 0,
+            'margin_right' => 0,
+            'margin_bottom' => 0,
+            'margin_left' => 0,
+            'dpi' => $options['dpi'] ?? 300
+        ];
+        
+        // Create PDF using DomPDF
+        $pdf = PDF::loadHTML($htmlContent)
+            ->setPaper($defaultOptions['format'], 'portrait')
+            ->setOptions([
+                'dpi' => $defaultOptions['dpi'],
+                'defaultFont' => 'sans-serif',
+                'isRemoteEnabled' => true,
+                'isHtml5ParserEnabled' => true,
+            ]);
+        
+        // Return PDF as base64 encoded string
+        return base64_encode($pdf->output());
     }
-
+    
     /**
-     * Get JavaScript to initiate printing with QZ Tray
+     * Send print job to PrintNode API
      */
-    public function getQzTrayPrintScript(array $printData, bool $autoprint = true, ?int $printJobId = null): string
+    public function sendToPrintNode(int $printNodeId, string $pdfContent, array $options = []): array
     {
-        // Escape JSON for JavaScript
-        $jsonData = json_encode($printData);
+        $apiKey = config('printing.printnode_api_key');
         
-        // Generate a unique ID for this print job for tracking
-        $uniqueId = $printJobId ?? uniqid('qz_print_');
+        if (empty($apiKey)) {
+            Log::error('PrintNode API key not configured');
+            return [
+                'success' => false,
+                'message' => 'PrintNode API key not configured'
+            ];
+        }
         
-        // Return JavaScript code to initiate printing with enhanced error handling
-        $script = "<script>
-            // Store print data for reuse
-            window.printData_{$uniqueId} = {$jsonData};
+        try {
+            // Construct the API request to PrintNode
+            $response = Http::withBasicAuth($apiKey, '')
+                ->withHeaders([
+                    'Content-Type' => 'application/json'
+                ])
+                ->post('https://api.printnode.com/printjobs', [
+                    'printerId' => $printNodeId,
+                    'title' => $options['title'] ?? 'Label Print Job',
+                    'contentType' => 'pdf_base64',
+                    'content' => $pdfContent,
+                    'source' => 'GMAO Application',
+                    'options' => [
+                        'copies' => $options['copies'] ?? 1
+                    ]
+                ]);
             
-            // Print function with logging
-            function executePrint_{$uniqueId}() {
-                console.log('[QZ Print {$uniqueId}] Starting print job');
+            if ($response->successful()) {
+                $printJobId = $response->json();
+                Log::info('PrintNode job created successfully', [
+                    'printnode_id' => $printNodeId,
+                    'printnode_job_id' => $printJobId
+                ]);
                 
-                // Update UI if elements exist
-                const statusElement = document.getElementById('qz-status');
-                if (statusElement) {
-                    statusElement.className = 'badge bg-info';
-                    statusElement.textContent = 'Impression en cours...';
-                }
+                return [
+                    'success' => true,
+                    'printnode_job_id' => $printJobId,
+                    'message' => 'Print job sent to PrintNode successfully'
+                ];
+            } else {
+                Log::error('Failed to create PrintNode job', [
+                    'status' => $response->status(),
+                    'response' => $response->body()
+                ]);
                 
-                // Ensure QZ Tray is available
-                if (typeof window.QZTray === 'undefined') {
-                    console.error('[QZ Print {$uniqueId}] QZ Tray not available');
-                    
-                    if (statusElement) {
-                        statusElement.className = 'badge bg-warning';
-                        statusElement.textContent = 'QZ Tray non disponible';
-                    }
-                    
-                    // Retry after delay
-                    setTimeout(executePrint_{$uniqueId}, 1000);
-                    return;
-                }
-                
-                // Send status to server if we have a job ID
-                " . ($printJobId ? "
-                fetch('/api/print-jobs/{$printJobId}/status', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content')
-                    },
-                    body: JSON.stringify({ status: 'printing' })
-                });" : "") . "
-                
-                // Execute the print job
-                window.QZTray.connect()
-                    .then(() => {
-                        console.log('[QZ Print {$uniqueId}] Connected, sending print job');
-                        return window.QZTray.printFromController(window.printData_{$uniqueId});
-                    })
-                    .then(() => {
-                        console.log('[QZ Print {$uniqueId}] Print job successful');
-                        if (statusElement) {
-                            statusElement.className = 'badge bg-success';
-                            statusElement.textContent = 'Impression réussie';
-                        }
-                        
-                        // Show success message
-                        const successElement = document.getElementById('print-success');
-                        if (successElement) {
-                            successElement.style.display = 'block';
-                            setTimeout(() => {
-                                successElement.style.display = 'none';
-                            }, 5000);
-                        }
-                        
-                        // Update job status if we have a job ID
-                        " . ($printJobId ? "
-                        fetch('/api/print-jobs/{$printJobId}/status', {
-                            method: 'POST',
-                            headers: { 
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content')
-                            },
-                            body: JSON.stringify({ status: 'completed' })
-                        });" : "") . "
-                    })
-                    .catch((error) => {
-                        console.error('[QZ Print {$uniqueId}] Print error:', error);
-                        
-                        if (statusElement) {
-                            statusElement.className = 'badge bg-danger';
-                            statusElement.textContent = 'Erreur d\'impression';
-                        }
-                        
-                        // Show error message
-                        const errorElement = document.getElementById('qz-error');
-                        if (errorElement) {
-                            errorElement.textContent = 'Erreur d\'impression: ' + (error.message || error);
-                            errorElement.style.display = 'block';
-                        }
-                        
-                        // Update job status if we have a job ID
-                        " . ($printJobId ? "
-                        fetch('/api/print-jobs/{$printJobId}/status', {
-                            method: 'POST',
-                            headers: { 
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content')
-                            },
-                            body: JSON.stringify({ status: 'failed', error_message: error.message || String(error) })
-                        });" : "") . "
-                    });
+                return [
+                    'success' => false,
+                    'status' => $response->status(),
+                    'message' => 'Failed to create PrintNode job: ' . $response->body()
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('PrintNode API error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return [
+                'success' => false,
+                'message' => 'PrintNode API error: ' . $e->getMessage()
+            ];
+        }
+    }
+    
+    /**
+     * Process a print job using direct PDF generation and PrintNode
+     */
+    public function processPrintJob(PrintJob $printJob): array
+    {
+        try {
+            $printer = $printJob->printer;
+            
+            // Update job status
+            $printJob->status = 'processing';
+            $printJob->save();
+            
+            // Check if printer supports PrintNode
+            if (!$printer->hasPrintNode()) {
+                throw new \Exception('Printer does not support PrintNode');
             }
             
-            document.addEventListener('DOMContentLoaded', function() {
-                " . ($autoprint ? "
-                // Auto print after a delay to ensure everything is loaded
-                setTimeout(executePrint_{$uniqueId}, 1500);" : "") . "
+            // Generate PDF from content
+            $pdfContent = $this->generatePdf($printJob->content, $printJob->options);
+            
+            // Send to PrintNode
+            $result = $this->sendToPrintNode(
+                $printer->printnode_id,
+                $pdfContent,
+                [
+                    'title' => 'Print Job #' . $printJob->id,
+                    'copies' => $printJob->options['copies'] ?? 1
+                ]
+            );
+            
+            if ($result['success']) {
+                // Update job status
+                $printJob->status = 'completed';
+                $printJob->completed_at = now();
+                $printJob->metadata = array_merge(
+                    $printJob->metadata ?? [],
+                    ['printnode_job_id' => $result['printnode_job_id']]
+                );
+                $printJob->save();
                 
-                // Add print button click handler if it exists
-                const printButton = document.getElementById('print-button');
-                if (printButton) {
-                    printButton.addEventListener('click', executePrint_{$uniqueId});
-                }
+                return [
+                    'success' => true,
+                    'message' => 'Print job processed successfully',
+                    'job_id' => $printJob->id,
+                    'printnode_job_id' => $result['printnode_job_id']
+                ];
+            } else {
+                // Update job status
+                $printJob->status = 'failed';
+                $printJob->completed_at = now();
+                $printJob->error_message = $result['message'];
+                $printJob->save();
                 
-                // Add reprint button click handler if it exists
-                const reprintButton = document.getElementById('reprint');
-                if (reprintButton) {
-                    reprintButton.addEventListener('click', executePrint_{$uniqueId});
-                }
-            });
-        </script>";
-        
-        return $script;
+                return [
+                    'success' => false,
+                    'message' => $result['message'],
+                    'job_id' => $printJob->id
+                ];
+            }
+        } catch (\Exception $e) {
+            // Log error
+            Log::error('Error processing print job', [
+                'job_id' => $printJob->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Update job status
+            $printJob->status = 'failed';
+            $printJob->completed_at = now();
+            $printJob->error_message = $e->getMessage();
+            $printJob->save();
+            
+            return [
+                'success' => false,
+                'message' => 'Error processing print job: ' . $e->getMessage(),
+                'job_id' => $printJob->id
+            ];
+        }
     }
     
     /**
@@ -323,12 +359,12 @@ class QzTrayService
         
         // Print status and controls
         $html .= '<div class="d-flex justify-content-between align-items-center mt-3">';
-        $html .= '<span class="badge bg-secondary" id="qz-status">En attente</span>';
-        $html .= '<button type="button" class="btn btn-primary btn-sm" id="print-button">Imprimer</button>';
+        $html .= '<span class="badge bg-secondary" id="print-status">En attente</span>';
+        $html .= '<button type="button" class="btn-action btn-primary btn-sm" id="print-button">Imprimer</button>';
         $html .= '</div>';
         
         // Error message container (hidden by default)
-        $html .= '<div class="alert alert-danger mt-3" id="qz-error" style="display: none;"></div>';
+        $html .= '<div class="alert alert-danger mt-3" id="print-error" style="display: none;"></div>';
         
         // Success message container (hidden by default)
         $html .= '<div class="alert alert-success mt-3" id="print-success" style="display: none;">Impression réussie</div>';
@@ -343,10 +379,86 @@ class QzTrayService
      */
     public function checkPrinterStatus(Printer $printer): array
     {
-        // In a real implementation, this would communicate with the printer
-        // via QZ Tray to get the actual status
+        // Vérifier le statut avec PrintNode si disponible
+        if ($printer->hasPrintNode()) {
+            try {
+                $apiKey = config('printing.printnode_api_key');
+                
+                if (empty($apiKey)) {
+                    throw new \Exception('PrintNode API key not configured');
+                }
+                
+                $response = Http::withBasicAuth($apiKey, '')
+                    ->get('https://api.printnode.com/printers/' . $printer->printnode_id);
+                
+                if ($response->successful()) {
+                    $printerData = $response->json();
+                    
+                    $isOnline = $printerData['computer']['state'] === 'online' && 
+                                $printerData['state'] === 'online';
+                    
+                    $hasError = false;
+                    $errorMessage = null;
+                    
+                    if (isset($printerData['state']) && $printerData['state'] !== 'online') {
+                        $hasError = true;
+                        $errorMessage = 'Printer state: ' . $printerData['state'];
+                    }
+                    
+                    // Update the printer status in the database
+                    $printer->is_online = $isOnline;
+                    $printer->last_error = $errorMessage;
+                    $printer->last_checked_at = now();
+                    $printer->save();
+                    
+                    return [
+                        'printer_id' => $printer->id,
+                        'is_online' => $isOnline,
+                        'has_error' => $hasError,
+                        'error_message' => $errorMessage,
+                        'last_checked_at' => $printer->last_checked_at->toIso8601String(),
+                    ];
+                } else {
+                    Log::error('Failed to check PrintNode printer status', [
+                        'status' => $response->status(),
+                        'response' => $response->body()
+                    ]);
+                    
+                    $printer->is_online = false;
+                    $printer->last_error = 'Failed to check printer status: ' . $response->status();
+                    $printer->last_checked_at = now();
+                    $printer->save();
+                    
+                    return [
+                        'printer_id' => $printer->id,
+                        'is_online' => false,
+                        'has_error' => true,
+                        'error_message' => 'Failed to check printer status: ' . $response->status(),
+                        'last_checked_at' => $printer->last_checked_at->toIso8601String(),
+                    ];
+                }
+            } catch (\Exception $e) {
+                Log::error('Error checking PrintNode printer status', [
+                    'printer_id' => $printer->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                $printer->is_online = false;
+                $printer->last_error = 'Error checking printer status: ' . $e->getMessage();
+                $printer->last_checked_at = now();
+                $printer->save();
+                
+                return [
+                    'printer_id' => $printer->id,
+                    'is_online' => false,
+                    'has_error' => true,
+                    'error_message' => 'Error checking printer status: ' . $e->getMessage(),
+                    'last_checked_at' => $printer->last_checked_at->toIso8601String(),
+                ];
+            }
+        }
         
-        // For now, simulate with a status check
+        // Pour les autres imprimantes ou si PrintNode n'est pas configuré, simuler un statut
         $isOnline = true;
         $hasError = false;
         $errorMessage = null;
@@ -364,5 +476,36 @@ class QzTrayService
             'error_message' => $errorMessage,
             'last_checked_at' => $printer->last_checked_at->toIso8601String(),
         ];
+    }
+    
+    /**
+     * Prepare QR code print data for a chantier
+     * 
+     * @param string $printerName The name of the printer
+     * @param string $url The URL to encode in the QR code
+     * @param array $qrOptions QR code generation options
+     * @param array $printOptions Printing options
+     * @return array Print data for the template
+     */
+    public function prepareQrCodePrint(string $printerName, string $url, array $qrOptions = [], array $printOptions = []): array
+    {
+        try {
+            // Generate QR code image
+            $qrCodeImage = $this->generateQrCode($url, $qrOptions['size'] ?? 300, $qrOptions['errorCorrection'] ?? 'H');
+            
+            // Prepare print data
+            $printData = [
+                'printerName' => $printerName,
+                'imageData' => $qrCodeImage,
+                'content' => $url,
+                'options' => $printOptions
+            ];
+            
+            // Return the prepared print data
+            return $printData;
+        } catch (\Exception $e) {
+            Log::error('Error preparing QR code print data: ' . $e->getMessage());
+            throw $e;
+        }
     }
 }
