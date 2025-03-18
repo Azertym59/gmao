@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Printer;
+use PrintNode\Credentials;
 use PrintNode\Client;
 use PrintNode\PrintJob;
 
@@ -42,7 +43,10 @@ Route::get('/test-printnode', function () {
         return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
     }
     
-    $client = new \PrintNode\Client($apiKey);
+    // Initialiser correctement le client PrintNode avec des credentials
+    $credentials = new Credentials();
+    $credentials->setApiKey($apiKey);
+    $client = new Client($credentials);
     
     // Récupérer les imprimantes disponibles
     try {
@@ -139,7 +143,10 @@ Route::get('/test-printnode-specific', function () {
         return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
     }
     
-    $client = new \PrintNode\Client($apiKey);
+    // Initialiser correctement le client PrintNode avec des credentials
+    $credentials = new Credentials();
+    $credentials->setApiKey($apiKey);
+    $client = new Client($credentials);
     
     try {
         $printers = $client->getPrinters();
@@ -215,6 +222,159 @@ Route::get('/test-printnode-specific', function () {
                "<br>Trace: <pre>" . $e->getTraceAsString() . "</pre>";
     }
 })->name('test-printnode-specific');
+
+// Route de test simple avec paper=roll
+Route::get('/test-printnode-roll', function () {
+    $apiKey = config('printing.printnode.api_key');
+    if (empty($apiKey)) {
+        return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
+    }
+    
+    // Initialiser correctement le client PrintNode avec des credentials
+    $credentials = new Credentials();
+    $credentials->setApiKey($apiKey);
+    $client = new Client($credentials);
+    
+    try {
+        $printers = $client->getPrinters();
+        
+        if (empty($printers)) {
+            return "Aucune imprimante détectée dans PrintNode.";
+        }
+        
+        // Sélectionner l'imprimante Brother si disponible
+        $brotherPrinter = null;
+        foreach ($printers as $printer) {
+            if (stripos($printer->name, 'Brother') !== false || stripos($printer->name, 'QL-820') !== false) {
+                $brotherPrinter = $printer;
+                break;
+            }
+        }
+        
+        $printerId = $brotherPrinter ? $brotherPrinter->id : $printers[0]->id;
+        $printerName = $brotherPrinter ? $brotherPrinter->name : $printers[0]->name;
+        
+        // Création d'un PDF simple
+        $html = '<html><body style="margin: 0; padding: 5px;">
+            <h3 style="font-size: 12px; text-align: center;">TEST FORMAT ROULEAU</h3>
+            <p style="font-size: 10px; text-align: center;">Date: ' . date('d/m/Y H:i:s') . '</p>
+            <p style="font-size: 10px; text-align: center;">Option: paper=roll</p>
+            <div style="text-align: center; margin-top: 5px;">
+                <img src="data:image/png;base64,' . base64_encode(
+                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                    ->size(120)
+                    ->margin(1)
+                    ->generate('Test Option Rouleau - ' . date('d/m/Y H:i:s'))
+                ) . '" style="width: 120px; height: 120px;">
+            </div>
+        </body></html>';
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+        $pdfContent = base64_encode($pdf->output());
+        
+        // Créer la tâche d'impression avec l'option paper=roll
+        $printJob = new PrintJob();
+        $printJob->printer = $printerId;
+        $printJob->title = "Test Brother - Option Roll";
+        $printJob->contentType = 'pdf_base64';
+        $printJob->content = $pdfContent;
+        $printJob->source = 'GMAO Test PrintNode Roll';
+        $printJob->options = [
+            'paper' => 'roll',
+            'fit' => 'content'
+        ];
+        
+        // Envoyer la tâche d'impression
+        $jobId = $client->createPrintJob($printJob);
+        
+        return "Tâche d'impression spécifique envoyée avec succès vers l'imprimante: " . $printerName . 
+               "<br>ID Tâche PrintNode: " . $jobId . 
+               "<br>Imprimante ID: " . $printerId . 
+               "<br><strong>Format:</strong> Option paper=roll" .
+               "<br><a href='/test-printnode'>Revenir au test avec format A4</a>" .
+               "<br><a href='/test-printnode-dk22205'>Essayer avec paper=dk22205</a>";
+               
+    } catch (\Exception $e) {
+        return "Erreur lors du test d'impression PrintNode roll: " . $e->getMessage() . 
+               "<br>Trace: <pre>" . $e->getTraceAsString() . "</pre>";
+    }
+})->name('test-printnode-roll');
+
+// Route de test avec option dk22205 (correspond au rouleau continu 62mm)
+Route::get('/test-printnode-dk22205', function () {
+    $apiKey = config('printing.printnode.api_key');
+    if (empty($apiKey)) {
+        return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
+    }
+    
+    // Initialiser correctement le client PrintNode avec des credentials
+    $credentials = new Credentials();
+    $credentials->setApiKey($apiKey);
+    $client = new Client($credentials);
+    
+    try {
+        $printers = $client->getPrinters();
+        
+        if (empty($printers)) {
+            return "Aucune imprimante détectée dans PrintNode.";
+        }
+        
+        // Sélectionner l'imprimante Brother si disponible
+        $brotherPrinter = null;
+        foreach ($printers as $printer) {
+            if (stripos($printer->name, 'Brother') !== false || stripos($printer->name, 'QL-820') !== false) {
+                $brotherPrinter = $printer;
+                break;
+            }
+        }
+        
+        $printerId = $brotherPrinter ? $brotherPrinter->id : $printers[0]->id;
+        $printerName = $brotherPrinter ? $brotherPrinter->name : $printers[0]->name;
+        
+        // Création d'un PDF simple
+        $html = '<html><body style="margin: 0; padding: 5px;">
+            <h3 style="font-size: 12px; text-align: center;">TEST FORMAT DK22205</h3>
+            <p style="font-size: 10px; text-align: center;">Date: ' . date('d/m/Y H:i:s') . '</p>
+            <p style="font-size: 10px; text-align: center;">Option: paper=dk22205</p>
+            <div style="text-align: center; margin-top: 5px;">
+                <img src="data:image/png;base64,' . base64_encode(
+                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                    ->size(120)
+                    ->margin(1)
+                    ->generate('Test Option DK22205 - ' . date('d/m/Y H:i:s'))
+                ) . '" style="width: 120px; height: 120px;">
+            </div>
+        </body></html>';
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+        $pdfContent = base64_encode($pdf->output());
+        
+        // Créer la tâche d'impression avec l'option paper=dk22205
+        $printJob = new PrintJob();
+        $printJob->printer = $printerId;
+        $printJob->title = "Test Brother - Option DK22205";
+        $printJob->contentType = 'pdf_base64';
+        $printJob->content = $pdfContent;
+        $printJob->source = 'GMAO Test PrintNode DK22205';
+        $printJob->options = [
+            'paper' => 'dk22205'
+        ];
+        
+        // Envoyer la tâche d'impression
+        $jobId = $client->createPrintJob($printJob);
+        
+        return "Tâche d'impression spécifique envoyée avec succès vers l'imprimante: " . $printerName . 
+               "<br>ID Tâche PrintNode: " . $jobId . 
+               "<br>Imprimante ID: " . $printerId . 
+               "<br><strong>Format:</strong> Option paper=dk22205" .
+               "<br><a href='/test-printnode'>Revenir au test avec format A4</a>" .
+               "<br><a href='/test-printnode-roll'>Essayer avec paper=roll</a>";
+               
+    } catch (\Exception $e) {
+        return "Erreur lors du test d'impression PrintNode dk22205: " . $e->getMessage() . 
+               "<br>Trace: <pre>" . $e->getTraceAsString() . "</pre>";
+    }
+})->name('test-printnode-dk22205');
 
 // Page d'accueil
 Route::get('/', function () {
