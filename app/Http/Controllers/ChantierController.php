@@ -19,42 +19,11 @@ use Illuminate\Support\Facades\Log;
 class ChantierController extends Controller
 {
     /**
-     * Formulaire de test pour le catalogue
-     */
-    public function testCatalogueForm()
-    {
-        $produitsCatalogue = ProduitCatalogue::all();
-        return view('chantiers.test_catalogue_form', compact('produitsCatalogue'));
-    }
-    
-    /**
-     * Traiter le formulaire de test pour le catalogue
-     */
-    public function testCatalogueFormSubmit(Request $request)
-    {
-        // Log pour débogage
-        \Illuminate\Support\Facades\Log::info('Test form submit', [
-            'all_request' => $request->all(),
-            'catalogue_id' => $request->input('catalogue_id')
-        ]);
-        
-        $validated = $request->validate([
-            'catalogue_id' => 'required|exists:produits_catalogue,id',
-        ]);
-        
-        // Récupérer le produit pour affichage
-        $produit = ProduitCatalogue::find($validated['catalogue_id']);
-        
-        return redirect()->route('test.catalogue.form')
-            ->with('success', "Formulaire soumis avec succès! Produit sélectionné: {$produit->marque} {$produit->modele}");
-    }
-    
-    /**
      * Afficher la liste des chantiers
      */
     public function index(Request $request)
     {
-        $query = Chantier::with('client');
+        $query = Chantier::with(['client', 'produits.dalles.modules']);
         
         // Filtrage par état
         if ($request->has('filter_etat')) {
@@ -69,6 +38,23 @@ class ChantierController extends Controller
         }
         
         $chantiers = $query->get();
+        
+        // Calculer le pourcentage d'avancement pour chaque chantier
+        foreach ($chantiers as $chantier) {
+            $chantier->pourcentage_avancement = $chantier->getCompletionPercentage();
+        }
+        
+        // Trier les chantiers par urgence (date butoir la plus proche en premier)
+        // Seulement pour les chantiers non terminés
+        $chantiersTermines = $chantiers->where('etat', 'termine');
+        $chantiersNonTermines = $chantiers->where('etat', '!=', 'termine');
+        
+        $chantiersNonTermines = $chantiersNonTermines->sortBy(function ($chantier) {
+            return $chantier->date_butoir;
+        });
+        
+        // Fusionner les collections triées
+        $chantiers = $chantiersNonTermines->merge($chantiersTermines);
         
         // Passer les filtres à la vue pour marquer les onglets actifs
         $activeFilters = [
@@ -93,13 +79,13 @@ class ChantierController extends Controller
     public function typeChoix()
     {
         // Ajout d'un log pour vérifier si cette méthode est appelée
-        \Illuminate\Support\Facades\Log::info('Méthode typeChoix appelée');
+        Log::info('Méthode typeChoix appelée');
         
         // S'assurer que la vue existe et est accessible
         if (view()->exists('chantiers.type_choix')) {
             return view('chantiers.type_choix');
         } else {
-            \Illuminate\Support\Facades\Log::error('Vue type_choix.blade.php introuvable');
+            Log::error('Vue type_choix.blade.php introuvable');
             return redirect()->route('chantiers.index')
                 ->with('error', 'La page de choix du type de projet est indisponible. Veuillez contacter l\'administrateur.');
         }
@@ -142,271 +128,7 @@ class ChantierController extends Controller
     }
 
     /**
-     * Stocker un nouveau chantier
-     */
-    public function store(Request $request)
-    {
-        // Définir des règles de validation de base
-        $rules = [
-            'client_id' => 'required|exists:clients,id',
-            'description' => 'nullable|string',
-            'date_reception' => 'required|date',
-            'etat' => 'required|in:non_commence,en_cours,termine',
-        ];
-        
-        // Validation conditionnelle pour date_butoir selon le type de projet
-        if ($request->input('is_client_achat') == 0 || $request->input('is_client_achat') === null) {
-            // SAV / Réparation ou cas par défaut (ancienne méthode)
-            $rules['date_butoir'] = 'required|date|after_or_equal:date_reception';
-        } else {
-            // Vente / Achat client
-            $rules['date_butoir'] = 'nullable|date|after_or_equal:date_reception';
-        }
-        
-        $validated = $request->validate($rules);
-        
-        // Récupérer le client pour générer le nom automatiquement
-        $client = Client::find($validated['client_id']);
-        
-        // Générer le nom du chantier automatiquement
-        $societe = $client->societe ? $client->societe : $client->nom_complet;
-        $date = date('d/m/Y');
-        $validated['nom'] = "Réparation écran - {$societe} - {$date}";
-        
-        // Générer une référence unique
-        $validated['reference'] = Chantier::genererReference();
-        
-        $chantier = Chantier::create($validated);
-        
-        return redirect()->route('chantiers.show', $chantier)
-            ->with('success', 'Chantier créé avec succès.');
-    }
-
-    /**
-     * Afficher un chantier spécifique
-     */
-    public function show(Chantier $chantier)
-    {
-        $chantier->load(['client', 'produits.dalles.modules']);
-        return view('chantiers.show', compact('chantier'));
-    }
-
-    /**
-     * Afficher le formulaire d'édition
-     */
-    public function edit(Chantier $chantier)
-    {
-        $clients = Client::all();
-        return view('chantiers.edit', compact('chantier', 'clients'));
-    }
-
-    /**
-     * Mettre à jour un chantier
-     */
-    public function update(Request $request, Chantier $chantier)
-    {
-        // Définir des règles de validation de base
-        $rules = [
-            'client_id' => 'required|exists:clients,id',
-            'description' => 'nullable|string',
-            'date_reception' => 'required|date',
-            'etat' => 'required|in:non_commence,en_cours,termine',
-        ];
-        
-        // Validation conditionnelle pour date_butoir selon le type de projet
-        if ($request->input('is_client_achat') == 0 || $request->input('is_client_achat') === null) {
-            // SAV / Réparation ou cas par défaut
-            $rules['date_butoir'] = 'required|date|after_or_equal:date_reception';
-        } else {
-            // Vente / Achat client
-            $rules['date_butoir'] = 'nullable|date|after_or_equal:date_reception';
-        }
-        
-        $validated = $request->validate($rules);
-        
-        // Si le client a changé, mettre à jour le nom du chantier
-        if ($chantier->client_id != $validated['client_id']) {
-            $client = Client::find($validated['client_id']);
-            $societe = $client->societe ? $client->societe : $client->nom_complet;
-            
-            // Récupérer la marque du premier produit du chantier (si disponible)
-            $marque = '';
-            $produit = $chantier->produits()->first();
-            if ($produit && $produit->marque) {
-                $marque = $produit->marque;
-            }
-            
-            // Générer un nom plus professionnel
-            $nom = "SAV {$societe}";
-            // Éviter la redondance si la marque contient déjà le nom de la société
-            if ($marque && stripos($marque, $societe) === false) {
-                $nom .= " - {$marque}";
-            }
-            // Ajouter la référence pour faciliter l'identification
-            $nom .= " ({$chantier->reference})";
-            
-            $chantier->nom = $nom;
-        }
-        
-        $oldEtat = $chantier->etat;
-        
-        // Si l'état passe de en_cours ou non_commence à termine, vérifier l'état des modules
-        if ($validated['etat'] === 'termine' && $chantier->etat !== 'termine') {
-            $totalModules = 0;
-            $completedModules = 0;
-            
-            // Compter les modules terminés et le total
-            foreach ($chantier->produits as $produit) {
-                foreach ($produit->dalles as $dalle) {
-                    foreach ($dalle->modules as $module) {
-                        $totalModules++;
-                        if ($module->etat === 'termine' || $module->etat === 'defaillant') {
-                            $completedModules++;
-                        }
-                    }
-                }
-            }
-            
-            // Si tous les modules ne sont pas terminés, ajouter un warning
-            if ($totalModules > 0 && $completedModules < $totalModules) {
-                session()->flash('warning', 'Attention: ' . ($totalModules - $completedModules) . ' modules sur ' . $totalModules . ' ne sont pas encore terminés ou défaillants.');
-            }
-        }
-        
-        // Mettre à jour les autres champs
-        $chantier->client_id = $validated['client_id'];
-        $chantier->description = $validated['description'];
-        $chantier->date_reception = $validated['date_reception'];
-        $chantier->date_butoir = $validated['date_butoir'];
-        $chantier->etat = $validated['etat'];
-        
-        $chantier->save();
-        
-        // Notifier le client si le chantier vient d'être marqué comme terminé
-        if ($validated['etat'] === 'termine' && $oldEtat !== 'termine') {
-            try {
-                $emailService = new \App\Services\EmailService();
-                $emailService->sendChantierCompletedEmail($chantier);
-            } catch (\Exception $e) {
-                \Log::error('Erreur lors de l\'envoi de l\'email de fin de chantier: ' . $e->getMessage());
-            }
-        }
-        
-        // Notifier le client si le chantier vient d'être marqué comme en cours
-        if ($validated['etat'] === 'en_cours' && $oldEtat !== 'en_cours') {
-            try {
-                $emailService = new \App\Services\EmailService();
-                $emailService->sendInterventionsStartedEmail($chantier);
-            } catch (\Exception $e) {
-                \Log::error('Erreur lors de l\'envoi de l\'email de début d\'interventions: ' . $e->getMessage());
-            }
-        }
-        
-        return redirect()->route('chantiers.show', $chantier)
-            ->with('success', 'Chantier mis à jour avec succès.');
-    }
-    
-    /**
-     * Mettre à jour rapidement l'état d'un chantier
-     */
-    public function updateState(Request $request, Chantier $chantier)
-    {
-        $validated = $request->validate([
-            'etat' => 'required|in:non_commence,en_cours,termine',
-        ]);
-        
-        $oldEtat = $chantier->etat;
-        
-        // Cas spécial : si on marque comme terminé, vérifier l'état des modules
-        if ($validated['etat'] === 'termine' && $chantier->etat !== 'termine') {
-            // Calculer combien de modules sont terminés
-            $totalModules = 0;
-            $completedModules = 0;
-            
-            foreach ($chantier->produits as $produit) {
-                foreach ($produit->dalles as $dalle) {
-                    foreach ($dalle->modules as $module) {
-                        $totalModules++;
-                        if ($module->etat === 'termine' || $module->etat === 'defaillant') {
-                            $completedModules++;
-                        }
-                    }
-                }
-            }
-            
-            // Si tous les modules ne sont pas terminés, ajouter un warning
-            if ($totalModules > 0 && $completedModules < $totalModules) {
-                session()->flash('warning', 'Attention: ' . ($totalModules - $completedModules) . ' modules sur ' . $totalModules . ' ne sont pas encore terminés ou défaillants.');
-            }
-        }
-        
-        $chantier->etat = $validated['etat'];
-        $chantier->save();
-        
-        // Notifier le client si le chantier vient d'être marqué comme terminé
-        if ($validated['etat'] === 'termine' && $oldEtat !== 'termine') {
-            try {
-                $emailService = new \App\Services\EmailService();
-                $emailService->sendChantierCompletedEmail($chantier);
-            } catch (\Exception $e) {
-                \Log::error('Erreur lors de l\'envoi de l\'email de fin de chantier: ' . $e->getMessage());
-            }
-        }
-        
-        // Notifier le client si le chantier vient d'être marqué comme en cours
-        if ($validated['etat'] === 'en_cours' && $oldEtat !== 'en_cours') {
-            try {
-                $emailService = new \App\Services\EmailService();
-                $emailService->sendInterventionsStartedEmail($chantier);
-            } catch (\Exception $e) {
-                \Log::error('Erreur lors de l\'envoi de l\'email de début d\'interventions: ' . $e->getMessage());
-            }
-        }
-        
-        return redirect()->back()->with('success', 'État du chantier mis à jour avec succès.');
-    }
-
-    /**
-     * Supprimer un chantier
-     */
-    public function destroy(Chantier $chantier)
-    {
-        $chantier->delete();
-        
-        return redirect()->route('chantiers.index')
-            ->with('success', 'Chantier supprimé avec succès.');
-    }
-
-    /**
-     * Afficher le formulaire de création - Étape 1 : Client
-     */
-    public function createStep1(Request $request)
-    {
-        // Réinitialiser toutes les données de session pour éviter les problèmes
-        session()->forget(['chantier_data_step1', 'chantier_data_step2', 'chantier_data_step3', 'chantier_data_step4']);
-        
-        // Récupérer le type de projet (maintenance ou vente)
-        $type = $request->query('type', 'maintenance');
-        
-        // Valider que le type est correct
-        if (!in_array($type, ['maintenance', 'vente'])) {
-            $type = 'maintenance'; // Par défaut
-        }
-        
-        // Debug - afficher la valeur
-        \Illuminate\Support\Facades\Log::info('Type de projet:', ['type' => $type]);
-        
-        // Stocker le type dans la session
-        session(['projet_type' => $type]);
-        
-        // Récupérer tous les clients pour la liste déroulante
-        $clients = Client::all();
-        
-        return view('chantiers.create_step1', compact('clients', 'type'));
-    }
-    
-    /**
-     * Créer un client via AJAX pendant la création d'un chantier
+     * Stocker un nouveau client via AJAX lors de la création d'un chantier
      */
     public function storeClientAjax(Request $request)
     {
@@ -454,9 +176,23 @@ class ChantierController extends Controller
     }
     
     /**
+     * Afficher le formulaire de création - Étape 1
+     */
+    public function createStep1(Request $request)
+    {
+        // Récupérer tous les clients
+        $clients = Client::all();
+        
+        // Déterminer le type de projet depuis la session
+        $type = session('projet_type', 'maintenance');
+        
+        return view('chantiers.create_step1', compact('clients', 'type'));
+    }
+    
+    /**
      * Traiter les données pour l'étape 1
      */
-    public function storeNewStep1(Request $request)
+    public function storeStep1(Request $request)
     {
         // Définir des règles de validation de base
         $rules = [
@@ -479,1177 +215,1524 @@ class ChantierController extends Controller
         
         $validated = $request->validate($rules);
         
-        // Convertir les valeurs booléennes
-        $validated['is_client_achat'] = isset($validated['is_client_achat']) && $validated['is_client_achat'] ? true : false;
-        $validated['is_under_warranty'] = isset($validated['is_under_warranty']) && $validated['is_under_warranty'] ? true : false;
+        // Créer un chantier avec les données de base
+        $client = Client::find($validated['client_id']);
         
-        // Si ce n'est pas sous garantie, effacer les données de garantie
-        if (!$validated['is_under_warranty']) {
-            $validated['warranty_end_date'] = null;
-            $validated['warranty_type'] = null;
+        // Générer le nom du chantier automatiquement
+        $societe = $client->societe ? $client->societe : $client->nom_complet;
+        $date = date('d/m/Y');
+        $nom = "Réparation écran - {$societe} - {$date}";
+        if ($request->input('is_client_achat') == 1) {
+            $nom = "Commande écran - {$societe} - {$date}";
         }
-
-        // Stocker les données en session
-        session(['chantier_data_step1' => $validated]);
-
-        // Stocker un placeholder pour l'étape 2 (sera écrasé plus tard)
-        session(['chantier_step2' => [
-            'nom' => '',
-            'reference' => '',
-            'description' => $validated['description'],
-            'date_reception' => $validated['date_reception'],
-            'date_butoir' => $validated['date_butoir'],
-            'etat' => $validated['etat'],
-            'is_client_achat' => $validated['is_client_achat'],
-            'is_under_warranty' => $validated['is_under_warranty'],
-            'warranty_end_date' => $validated['warranty_end_date'],
-            'warranty_type' => $validated['warranty_type']
-        ]]);
-
-        return redirect()->route('chantiers.create.step2');
-    }
-
-    /**
-     * Afficher le formulaire de création - Étape 2 : Produit
-     */
-    public function createNewStep2()
-    {
-        // Vérifier si l'étape 1 a été complétée
-        if (!session()->has('chantier_data_step1')) {
-            return redirect()->route('chantiers.create.step1');
-        }
-        
-        // Récupérer les données du client depuis l'étape 1
-        $step1Data = session('chantier_data_step1');
-        $client = Client::findOrFail($step1Data['client_id']);
-        
-        $produitsCatalogue = ProduitCatalogue::all();
-        
-        // Récupérer toutes les fiches techniques LED disponibles
-        $ledDatasheets = \App\Models\LedDatasheet::orderBy('created_at', 'desc')->get();
-        
-        return view('chantiers.create_step2_product', compact('produitsCatalogue', 'client', 'ledDatasheets'));
-    }
-
-    /**
-     * Traiter les données pour l'étape 2
-     */
-    public function storeNewStep2(Request $request)
-    {
-        // Debug: Enregistrer toutes les données reçues dans un fichier log
-        \Illuminate\Support\Facades\Log::info('Données reçues dans storeNewStep2', [
-            'all_request' => $request->all(),
-            'from_catalogue' => $request->input('from_catalogue'),
-            'catalogue_id' => $request->input('catalogue_id')
-        ]);
-        
-        // Vérifier si nous avons besoin d'un catalogue_id
-        if ($request->input('from_catalogue') == 1 && empty($request->input('catalogue_id'))) {
-            return back()->with('error', 'Veuillez sélectionner un produit du catalogue')->withInput();
-        }
-        
-        // Validation des données
-        $validated = $request->validate([
-            'marque' => 'nullable|string|max:255',
-            'modele' => 'nullable|string|max:255',
-            'pitch' => 'nullable|numeric|min:0.1|max:100',
-            'utilisation' => 'nullable|in:indoor,outdoor',
-            'electronique' => 'nullable|in:nova,linsn,dbstar,colorlight,barco,brompton,autre',
-            'electronique_detail' => 'nullable|required_if:electronique,autre|string|max:255',
-            'bain_couleur' => 'nullable|string|max:255',
-            'alimentation' => 'nullable|string|max:255',
-            'carte_reception' => 'nullable|string|max:255',
-            'hub' => 'nullable|string|max:255',
-            'largeur_dalle' => 'nullable|numeric|min:1',
-            'hauteur_dalle' => 'nullable|numeric|min:1',
-            'largeur_module' => 'nullable|numeric|min:1',
-            'hauteur_module' => 'nullable|numeric|min:1',
-            'disposition_modules' => 'nullable|string',
-            'modules_largeur' => 'nullable|numeric|min:1|max:10',
-            'modules_hauteur' => 'nullable|numeric|min:1|max:10',
-            'from_catalogue' => 'required|boolean',
-            'catalogue_id' => 'required_if:from_catalogue,1|nullable|exists:produits_catalogue,id',
-            'led_type' => 'nullable|string',
-            'led_color' => 'nullable|string|in:black,white',
-            'led_size' => 'nullable|string',
-            'led_pads' => 'nullable|string',
-            'led_rotation' => 'nullable|string',
-            'led_datasheet_name' => 'nullable|string',
-            'led_datasheet_image' => 'nullable|string',
-        ]);
-        
-        // Créer un nouveau datasheet LED si les informations sont fournies
-        $ledDatasheetId = null;
-        if (!empty($validated['led_datasheet_name']) && !empty($validated['led_datasheet_image'])) {
-            try {
-                // Récolter toutes les données du datasheet
-                $dsType = $validated['led_type'] ?? 'SMD';
-                $dsColor = $validated['led_color'] ?? 'black';
-                $dsReference = $validated['led_datasheet_name'];
-                $dsNbPoles = (int)($validated['led_pads'] ?? 4);
-                $dsSize = $validated['led_size'] ?? '2121';
-                
-                // Logger ces informations pour le débogage
-                \Illuminate\Support\Facades\Log::info('Données datasheet LED', [
-                    'type' => $dsType,
-                    'color' => $dsColor,
-                    'reference' => $dsReference,
-                    'nb_poles' => $dsNbPoles,
-                    'size' => $dsSize,
-                    'user_id' => auth()->id(),
-                ]);
-                
-                // Force un format unique pour la référence, garantissant qu'elle est distincte
-                $uniqueReference = $dsType . $dsSize . '_' . $dsColor . '_' . $dsNbPoles . 'P_' . uniqid();
-                
-                // Créer un nouveau datasheet - toujours créer un nouveau pour éviter les confusions
-                $ledDatasheet = \App\Models\LedDatasheet::create([
-                    'type' => $dsType,
-                    'color' => $dsColor,
-                    'reference' => $uniqueReference,
-                    'nb_poles' => $dsNbPoles,
-                    'disposition' => $dsNbPoles . ' poles',
-                    'position_chanfrein' => 'haut_gauche',
-                    'configuration_poles' => json_encode([]),
-                    'notes' => 'Modèle: ' . $dsReference . ' - Créé le ' . date('Y-m-d H:i:s'),
-                    'user_id' => auth()->id(),
-                    'image_data' => $validated['led_datasheet_image']
-                ]);
-                
-                $ledDatasheetId = $ledDatasheet->id;
-                \Illuminate\Support\Facades\Log::info('Nouveau LED Datasheet créé', [
-                    'id' => $ledDatasheetId,
-                    'reference' => $uniqueReference,
-                    'original_reference' => $dsReference
-                ]);
-                
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Erreur lors de la création du datasheet LED', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-            }
-        }
-
-        // Convertir la marque et le modèle en majuscules
-        if (isset($validated['marque'])) {
-            $validated['marque'] = strtoupper($validated['marque']);
-        }
-        if (isset($validated['modele'])) {
-            $validated['modele'] = strtoupper($validated['modele']);
-        }
-
-        // Récupérer la valeur de add_to_catalogue avec une valeur par défaut de false
-        $addToCatalogue = $request->has('add_to_catalogue');
-
-        // Si l'utilisateur veut ajouter le produit au catalogue et ne sélectionne pas depuis le catalogue
-        if ($addToCatalogue && !$validated['from_catalogue']) {
-            try {
-                ProduitCatalogue::create([
-                    'marque' => $validated['marque'],
-                    'modele' => $validated['modele'],
-                    'pitch' => $validated['pitch'],
-                    'utilisation' => $validated['utilisation'],
-                    'electronique' => $validated['electronique'],
-                    'electronique_detail' => $validated['electronique_detail'] ?? null,
-                    'bain_couleur' => $validated['bain_couleur'] ?? null,
-                    'hub' => $validated['hub'] ?? null,
-                    'carte_reception' => $validated['carte_reception'] ?? null,
-                ]);
-            } catch (\Exception $e) {
-                // Log l'erreur mais continuer le processus
-                \Illuminate\Support\Facades\Log::error('Erreur lors de l\'ajout au catalogue: ' . $e->getMessage());
-            }
-        }
-
-        // Stocker les données avec le nom correct et ajouter un champ de type de sélection
-        $chantier_data_step2 = [
-            'selection_type' => $validated['from_catalogue'] ? 'existant' : 'nouveau',
-            'produit_catalogue_id' => $validated['from_catalogue'] ? $validated['catalogue_id'] : null,
-        ];
-
-        // Si c'est un nouveau produit, ajouter tous les champs
-        if (!$validated['from_catalogue']) {
-            $chantier_data_step2 = array_merge($chantier_data_step2, [
-                'marque' => $validated['marque'],
-                'modele' => $validated['modele'],
-                'pitch' => $validated['pitch'],
-                'utilisation' => $validated['utilisation'],
-                'electronique' => $validated['electronique'],
-                'electronique_detail' => $validated['electronique_detail'] ?? null,
-                'bain_couleur' => $validated['bain_couleur'] ?? null,
-                'alimentation' => $validated['alimentation'] ?? null,
-                'hub' => $validated['hub'] ?? null,
-                'carte_reception' => $validated['carte_reception'] ?? null,
-                // On garde ces valeurs pour compatibilité avec l'ancienne interface
-                'largeur_dalle' => $validated['largeur_dalle'],
-                'hauteur_dalle' => $validated['hauteur_dalle'],
-                'largeur_module' => $validated['largeur_module'],
-                'hauteur_module' => $validated['hauteur_module'],
-                'disposition_modules' => $validated['disposition_modules'],
-            ]);
-            
-            // Traiter les types de dalles multiples s'ils existent
-            $dalleTypes = [];
-            if (isset($request->dalle_types) && is_array($request->dalle_types)) {
-                foreach ($request->dalle_types as $key => $dalleType) {
-                    $typeConfig = [
-                        'id' => $key,
-                        'nom' => $dalleType['nom'] ?? "Type " . ($key + 1),
-                        'largeur' => $dalleType['largeur'] ?? 500,
-                        'hauteur' => $dalleType['hauteur'] ?? 500,
-                        'largeur_module' => $dalleType['largeur_module'] ?? 250,
-                        'hauteur_module' => $dalleType['hauteur_module'] ?? 250,
-                        'disposition' => $dalleType['disposition'] ?? '2x2',
-                    ];
-                    
-                    // Si la disposition est personnalisée, ajouter les dimensions personnalisées
-                    if (($dalleType['disposition'] === 'personnalise' || $dalleType['disposition'] === 'custom') 
-                        && isset($dalleType['modules_largeur']) && isset($dalleType['modules_hauteur'])) {
-                        $typeConfig['modules_largeur'] = $dalleType['modules_largeur'];
-                        $typeConfig['modules_hauteur'] = $dalleType['modules_hauteur'];
-                    } else {
-                        // Extraire les dimensions à partir de la valeur de disposition (ex: "2x2")
-                        $dimensions = explode('x', $dalleType['disposition']);
-                        if (count($dimensions) === 2) {
-                            $typeConfig['modules_largeur'] = (int)$dimensions[0];
-                            $typeConfig['modules_hauteur'] = (int)$dimensions[1];
-                        } else {
-                            $typeConfig['modules_largeur'] = 2;
-                            $typeConfig['modules_hauteur'] = 2;
-                        }
-                    }
-                    
-                    $dalleTypes[] = $typeConfig;
-                }
-            }
-            
-            // Si aucun type n'est défini, créer un type par défaut avec les valeurs globales
-            if (empty($dalleTypes)) {
-                $dalleTypes[] = [
-                    'id' => 0,
-                    'nom' => 'Standard',
-                    'largeur' => $validated['largeur_dalle'],
-                    'hauteur' => $validated['hauteur_dalle'],
-                    'largeur_module' => $validated['largeur_module'],
-                    'hauteur_module' => $validated['hauteur_module'],
-                    'disposition' => $validated['disposition_modules'],
-                    'modules_largeur' => $chantier_data_step2['modules_largeur'] ?? 2,
-                    'modules_hauteur' => $chantier_data_step2['modules_hauteur'] ?? 2,
-                ];
-            }
-            
-            // Ajouter les types de dalle à la session
-            $chantier_data_step2['dalle_types'] = $dalleTypes;
-            
-            // Si la disposition globale est personnalisée, ajouter les dimensions personnalisées
-            // (Pour compatibilité avec l'ancienne interface)
-            if (($validated['disposition_modules'] === 'personnalise' || $validated['disposition_modules'] === 'custom') 
-                && isset($validated['modules_largeur']) && isset($validated['modules_hauteur'])) {
-                $chantier_data_step2['modules_largeur'] = $validated['modules_largeur'];
-                $chantier_data_step2['modules_hauteur'] = $validated['modules_hauteur'];
-            } else {
-                // Extraire les dimensions à partir de la valeur de disposition (ex: "2x2")
-                $dimensions = explode('x', $validated['disposition_modules']);
-                if (count($dimensions) === 2) {
-                    $chantier_data_step2['modules_largeur'] = (int)$dimensions[0];
-                    $chantier_data_step2['modules_hauteur'] = (int)$dimensions[1];
-                }
-            }
-        } else {
-            // Si c'est un produit du catalogue, récupérer ses informations
-            $produitCatalogue = ProduitCatalogue::find($validated['catalogue_id']);
-            if ($produitCatalogue) {
-                $chantier_data_step2 = array_merge($chantier_data_step2, [
-                    'marque' => $produitCatalogue->marque,
-                    'modele' => $produitCatalogue->modele,
-                    'pitch' => $produitCatalogue->pitch,
-                    'utilisation' => $produitCatalogue->utilisation,
-                    'electronique' => $produitCatalogue->electronique,
-                    'electronique_detail' => $produitCatalogue->electronique_detail,
-                    'bain_couleur' => $produitCatalogue->bain_couleur ?? null,
-                    'hub' => $produitCatalogue->hub ?? null,
-                    'carte_reception' => $produitCatalogue->carte_reception ?? null,
-                    // Valeurs par défaut pour les autres champs si non présents dans le catalogue
-                    'largeur_dalle' => $produitCatalogue->largeur_dalle ?? 500,
-                    'hauteur_dalle' => $produitCatalogue->hauteur_dalle ?? 500,
-                    'largeur_module' => $produitCatalogue->largeur_module ?? 250,
-                    'hauteur_module' => $produitCatalogue->hauteur_module ?? 250,
-                    'disposition_modules' => '2x2',
-                    'modules_largeur' => 2,
-                    'modules_hauteur' => 2,
-                ]);
-            }
-        }
-
-        // Ajouter l'ID du datasheet LED s'il a été créé
-        if ($ledDatasheetId) {
-            $chantier_data_step2['led_datasheet_id'] = $ledDatasheetId;
-        }
-        
-        // Débogage supplémentaire
-        \Illuminate\Support\Facades\Log::info('Session stockée pour l\'étape 2', [
-            'chantier_data_step2' => $chantier_data_step2
-        ]);
         
         try {
-            // Utiliser le nom correct pour la variable de session et assurer qu'elle est bien stockée
-            session(['chantier_data_step2' => $chantier_data_step2]);
-            session()->save();
+            // Utiliser une transaction pour éviter les problèmes de concurrence
+            \Illuminate\Support\Facades\DB::beginTransaction();
             
-            // Vérifier que les données de l'étape 1 sont toujours présentes
-            \Illuminate\Support\Facades\Log::info('Données de session après stockage', [
-                'step1_exists' => session()->has('chantier_data_step1'),
-                'step2_exists' => session()->has('chantier_data_step2')
+            // Générer une référence unique avec débogage
+            \Illuminate\Support\Facades\Log::info('Génération de référence pour nouveau chantier', [
+                'client' => $societe,
+                'nom' => $nom
             ]);
             
-            return redirect()->route('chantiers.create.step3');
+            $reference = Chantier::genererReference();
+            
+            \Illuminate\Support\Facades\Log::info('Référence générée', [
+                'reference' => $reference
+            ]);
+            
+            // Créer le chantier
+            $chantier = Chantier::create([
+                'nom' => $nom,
+                'reference' => $reference,
+                'client_id' => $validated['client_id'],
+                'description' => $validated['description'],
+                'date_reception' => $validated['date_reception'],
+                'date_butoir' => $validated['date_butoir'] ?? null,
+                'etat' => $validated['etat'],
+                'is_client_achat' => $validated['is_client_achat'] ?? false,
+                'is_under_warranty' => $validated['is_under_warranty'] ?? false,
+                'warranty_end_date' => $validated['warranty_end_date'] ?? null,
+                'warranty_type' => $validated['warranty_type'] ?? null,
+            ]);
+            
+            \Illuminate\Support\Facades\DB::commit();
+            
+            // Rediriger vers l'étape 2
+            return redirect()->route('chantiers.create.step2', $chantier);
+            
         } catch (\Exception $e) {
-            // Capturer toute erreur qui pourrait survenir
-            \Illuminate\Support\Facades\Log::error('Erreur lors de la redirection vers étape 3', [
+            \Illuminate\Support\Facades\DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Erreur lors de la création du chantier', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
             
-            return back()->with('error', 'Une erreur est survenue lors du traitement des données. Veuillez réessayer.')->withInput();
+            // Retourner à la page précédente avec l'erreur
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Erreur lors de la création du chantier: ' . $e->getMessage());
         }
     }
-
+    
     /**
-     * Afficher le formulaire de création - Étape 3 : Configuration des dalles et modules
+     * Afficher le formulaire de création - Étape 2 : Sélection du produit
      */
-    public function createNewStep3()
+    public function createStep2(Chantier $chantier)
     {
-        // Vérifier et logger les données de session pour le débogage
-        \Illuminate\Support\Facades\Log::info('Accès à étape 3 - Données de session disponibles', [
-            'step1_exists' => session()->has('chantier_data_step1'),
-            'step2_exists' => session()->has('chantier_data_step2'),
-            'session_id' => session()->getId()
+        // Charger le chantier avec son client
+        $chantier->load('client');
+        
+        // Récupérer le client directement
+        $client = $chantier->client;
+        
+        // Récupérer les produits du catalogue pour la sélection
+        $produitsCatalogue = ProduitCatalogue::all();
+        
+        // Récupérer les datasheets de LED pour le formulaire
+        $ledDatasheets = \App\Models\LedDatasheet::all();
+        
+        // Utiliser le template create_step2_product qui est le bon template pour l'étape 2
+        return view('chantiers.create_step2_product', compact('chantier', 'produitsCatalogue', 'client', 'ledDatasheets'));
+    }
+    
+    /**
+     * Traiter les données pour l'étape 2
+     */
+    public function storeStep2(Request $request, Chantier $chantier)
+    {
+        // Ajouter un log pour voir les données reçues
+        Log::info('Données reçues dans storeStep2', [
+            'request_data' => $request->all(),
+            'chantier_id' => $chantier->id
         ]);
-        // Vérifier si les étapes précédentes ont été complétées
-        if (!session()->has('chantier_data_step1') || !session()->has('chantier_data_step2')) {
-            return redirect()->route('chantiers.create.step1');
+        
+        // Validation des données adaptée au formulaire
+        $validated = $request->validate([
+            'from_catalogue' => 'required|in:0,1',
+            'catalogue_id' => 'required_if:from_catalogue,1|nullable|exists:produits_catalogue,id',
+            'marque' => 'required_if:from_catalogue,0|nullable|string|max:255',
+            'modele' => 'required_if:from_catalogue,0|nullable|string|max:255',
+            'largeur_dalle' => 'nullable|numeric|min:1',
+            'hauteur_dalle' => 'nullable|numeric|min:1',
+            'disposition_modules' => 'nullable|string',
+            'add_to_catalogue' => 'nullable|boolean',
+        ]);
+        
+        try {
+            // Enregistrer les données du produit dans le chantier
+            if ($validated['from_catalogue'] == '1') {
+                // Récupérer le produit catalogue
+                $produitCatalogue = ProduitCatalogue::find($validated['catalogue_id']);
+                
+                if (!$produitCatalogue) {
+                    throw new \Exception('Produit du catalogue introuvable');
+                }
+                
+                $produit = Produit::create([
+                    'nom' => $produitCatalogue->marque . ' ' . $produitCatalogue->modele,
+                    'chantier_id' => $chantier->id,
+                    'description' => 'Produit principal du chantier',
+                    'marque' => $produitCatalogue->marque,
+                    'modele' => $produitCatalogue->modele,
+                    'pitch' => $produitCatalogue->pitch,
+                    'produit_catalogue_id' => $produitCatalogue->id,
+                    'utilisation' => $produitCatalogue->utilisation,
+                    'electronique' => $produitCatalogue->electronique,
+                    'bain_couleur' => $produitCatalogue->bain_couleur,
+                    'disposition_modules' => $produitCatalogue->disposition_modules,
+                    'etat' => $chantier->etat,
+                ]);
+                
+            } else {
+                // Créer un nouveau produit
+                
+                // Traiter le cas de la disposition personnalisée
+                if ($request->input('disposition_modules') == 'personnalise' && $request->has('modules_largeur') && $request->has('modules_hauteur')) {
+                    // Construire une disposition au format "largeur x hauteur"
+                    $validated['disposition_modules'] = $request->input('modules_largeur') . 'x' . $request->input('modules_hauteur');
+                }
+                
+                $produit = Produit::create([
+                    'nom' => $validated['marque'] . ' ' . $validated['modele'],
+                    'chantier_id' => $chantier->id,
+                    'description' => 'Produit principal du chantier',
+                    'marque' => $validated['marque'],
+                    'modele' => $validated['modele'],
+                    'pitch' => $request->input('pitch'),
+                    'largeur_dalle' => $validated['largeur_dalle'] ?? null,
+                    'hauteur_dalle' => $validated['hauteur_dalle'] ?? null,
+                    'utilisation' => $request->input('utilisation'),
+                    'electronique' => $request->input('electronique'),
+                    'bain_couleur' => $request->input('bain_couleur'),
+                    'disposition_modules' => $validated['disposition_modules'] ?? '2x2',
+                    'etat' => $chantier->etat,
+                ]);
+                
+                // Ajouter le produit au catalogue si demandé
+                if ($request->has('add_to_catalogue')) {
+                    // Créer le produit catalogue avec le bain de couleur
+                    $bainCouleur = $request->input('bain_couleur');
+                    
+                    $produitCatalogue = new ProduitCatalogue([
+                        'marque' => $validated['marque'],
+                        'modele' => $validated['modele'],
+                        'pitch' => $request->input('pitch'),
+                        'utilisation' => $request->input('utilisation'),
+                        'electronique' => $request->input('electronique'),
+                        'electronique_detail' => $request->input('electronique_detail'),
+                        'disposition_modules' => $validated['disposition_modules'] ?? '2x2',
+                        'description' => 'Produit ajouté depuis la création d\'un chantier',
+                    ]);
+                    
+                    // Utiliser l'accesseur pour définir le bain_couleur
+                    if (!empty($bainCouleur)) {
+                        $produitCatalogue->bain_couleur = $bainCouleur;
+                    }
+                    
+                    $produitCatalogue->save();
+                    
+                    // Mettre à jour la référence du produit vers le catalogue
+                    $produit->produit_catalogue_id = $produitCatalogue->id;
+                    $produit->save();
+                    
+                    Log::info('Produit ajouté au catalogue', [
+                        'produit_catalogue_id' => $produitCatalogue->id,
+                        'produit_id' => $produit->id
+                    ]);
+                }
+            }
+            
+            Log::info('Produit créé avec succès', [
+                'produit_id' => $produit->id,
+                'chantier_id' => $chantier->id
+            ]);
+            
+            // Rediriger vers l'étape 3
+            return redirect()->route('chantiers.create.step3', $chantier);
+            
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la création du produit', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Une erreur est survenue lors de la création du produit: ' . $e->getMessage());
         }
-
-        $clientData = session('chantier_data_step1');
-        $produitData = session('chantier_data_step2');
+    }
+    
+    /**
+     * Afficher le formulaire de création - Étape 3
+     */
+    public function createStep3(Chantier $chantier)
+    {
+        // Charger le chantier avec ses produits et son client
+        $chantier->load(['produits', 'client']);
+        
+        // Vérifier si des produits existent
+        if ($chantier->produits->isEmpty()) {
+            return redirect()->route('chantiers.create.step2', $chantier)
+                ->with('error', 'Veuillez d\'abord créer au moins un produit pour ce chantier.');
+        }
+        
+        // Récupérer le produit principal et le client
+        $produit = $chantier->produits->first();
+        $client = $chantier->client;
+        
+        // Déterminer si le produit vient du catalogue
+        $from_catalogue = !empty($produit->produit_catalogue_id);
         $produitRef = null;
         
-        // Récupérer le client pour l'afficher
-        $client = Client::find($clientData['client_id']);
-
-        if ($produitData['selection_type'] == 'existant' && isset($produitData['produit_catalogue_id'])) {
-            $produitRef = ProduitCatalogue::find($produitData['produit_catalogue_id']);
+        if ($from_catalogue) {
+            $produitRef = ProduitCatalogue::find($produit->produit_catalogue_id);
         }
         
-        // Pour la démonstration, nous allons créer deux types de dalles avec des dimensions différentes
+        // Créer un tableau de données pour le produit avec toutes les informations nécessaires
+        $produitData = [
+            'selection_type' => $from_catalogue ? 'existant' : 'personnalise',
+            'marque' => $produit->marque,
+            'modele' => $produit->modele,
+            'pitch' => $produit->pitch,
+            'utilisation' => $produit->utilisation ?? 'indoor',
+            'electronique' => $produit->electronique ?? 'nova',
+            'electronique_detail' => $produit->electronique_detail ?? '',
+            'disposition_modules' => $produit->disposition_modules ?? ($from_catalogue && $produitRef ? $produitRef->disposition_modules : '2x2'),
+            'largeur_dalle' => $produit->largeur_dalle,
+            'hauteur_dalle' => $produit->hauteur_dalle,
+        ];
+        
+        // Log des données produit récupérées pour débogage
+        Log::info('Données produit récupérées pour l\'étape 3', [
+            'produit_id' => $produit->id,
+            'disposition_modules' => $produitData['disposition_modules'],
+            'from_catalogue' => $from_catalogue,
+            'largeur_dalle' => $produitData['largeur_dalle'],
+            'hauteur_dalle' => $produitData['hauteur_dalle']
+        ]);
+        
+        // Créer des types de dalles par défaut
+        // Si l'utilisateur a déjà choisi une disposition, utiliser celle-ci comme format par défaut
+        $defaultDisposition = $produitData['disposition_modules'] ?? '2x2';
+        
+        // Analyser la disposition pour extraire les colonnes et lignes
+        $parts = explode('x', $defaultDisposition);
+        $defaultColonnes = count($parts) == 2 ? (int)$parts[0] : 2;
+        $defaultLignes = count($parts) == 2 ? (int)$parts[1] : 2;
+        
+        Log::info('Disposition par défaut pour dalles', [
+            'disposition' => $defaultDisposition,
+            'colonnes' => $defaultColonnes,
+            'lignes' => $defaultLignes
+        ]);
+        
         $dalleTypes = [
             [
-                'id' => 0,
-                'nom' => 'Dalle 500x500',
+                'id' => 1,
+                'nom' => 'Standard 500x500',
                 'largeur' => 500,
                 'hauteur' => 500,
-                'disposition' => $produitData['disposition_modules'] ?? '2x2',
+                'disposition' => $defaultDisposition // Utiliser la disposition choisie à l'étape 2
             ],
             [
-                'id' => 1,
-                'nom' => 'Dalle 500x1000',
+                'id' => 2,
+                'nom' => 'Format allongé 500x1000',
                 'largeur' => 500,
                 'hauteur' => 1000,
-                'disposition' => $produitData['disposition_modules'] ?? '2x2',
+                'disposition' => '2x4'
+            ],
+            [
+                'id' => 3,
+                'nom' => 'Format large 1000x500',
+                'largeur' => 1000,
+                'hauteur' => 500,
+                'disposition' => '4x2'
             ]
         ];
-
-        return view('chantiers.create_step3', compact('client', 'clientData', 'produitRef', 'produitData', 'dalleTypes'));
-    }
-
-    /**
-     * Traiter l'étape 3 et passer à l'étape 4 (interventions)
-     */
-    public function storeStep3(Request $request)
-    {
-        $validated = $request->validate([
-            'mode' => 'required|in:flightcase,individuel',
-            'nb_flightcases' => 'required_if:mode,flightcase|integer|min:0',
-            'nb_dalles_par_flightcase' => 'required_if:mode,flightcase|integer|min:1',
-            'nb_modules_par_dalle' => 'required_if:mode,flightcase|integer|min:1',
-            'multiple_sizes' => 'nullable|boolean',
-            'config1' => 'nullable|array',
-            'config1.nb_flightcases' => 'nullable|integer|min:0',
-            'config1.nb_dalles' => 'nullable|integer|min:0',
-            'config1.modules_config' => 'nullable|string',
-            'config2' => 'nullable|array',
-            'config2.nb_flightcases' => 'nullable|integer|min:0',
-            'config2.nb_dalles' => 'nullable|integer|min:0',
-            'config2.modules_config' => 'nullable|string',
-            'nb_modules_total' => 'required_if:mode,individuel|integer|min:1',
-            'fc_partiel' => 'nullable|array',
-            'fc_partiel.*' => 'nullable|boolean',
-            'fc_nb_dalles' => 'nullable|array',
-            'fc_nb_dalles.*' => 'nullable|integer|min:1',
-            'flights' => 'nullable|array',
-            'flights.*.dalle_type_id' => 'nullable|integer',
-            'flights.*.modules_config' => 'nullable|string',
-        ]);
-
-        // Traiter les détails des FlightCases
-        $validated['flightcases_details'] = [];
         
-        if ($validated['mode'] == 'flightcase') {
-            // Vérifier si le mode tailles multiples est activé
-            if (isset($validated['multiple_sizes']) && $validated['multiple_sizes']) {
-                // Utiliser les configurations spécifiques pour les différentes tailles
+        return view('chantiers.create_step3', compact('chantier', 'produit', 'client', 'produitRef', 'produitData', 'dalleTypes'));
+    }
+    
+    /**
+     * Traiter les données pour l'étape 3
+     */
+    public function storeStep3(Request $request, Chantier $chantier)
+    {
+        // Ajouter des logs pour comprendre les données reçues
+        Log::info('Données reçues dans storeStep3', [
+            'request_data' => $request->all(),
+            'chantier_id' => $chantier->id
+        ]);
+        
+        try {
+            // Validation des données
+            $validated = $request->validate([
+                'mode_configuration' => 'required|in:flightcase,individuel',
+                'nb_flightcases' => 'required_if:mode_configuration,flightcase|integer|min:1',
+                'nb_dalles_par_flightcase' => 'required_if:mode_configuration,flightcase|integer|min:1',
+                'nb_modules_par_dalle' => 'required_if:mode_configuration,flightcase|integer|min:1',
+                'flights' => 'nullable|array',
+                'fc_partiel' => 'nullable|array',
+                'fc_nb_dalles' => 'nullable|array',
+                'nb_modules_total' => 'required_if:mode_configuration,individuel|integer|min:1',
+                'custom_dalle_types' => 'nullable|array',
+            ]);
+            
+            // Stocker les données importantes temporairement (nous les mettrons à jour
+            // après la création des modules pour refléter le nombre réel créé)
+            $nb_modules_par_dalle = $validated['nb_modules_par_dalle'] ?? 0;
+            $nb_modules_total_theorique = 0;
+            
+            // Calculer le nombre théorique de modules selon le mode choisi
+            // (nous vérifierons et mettrons à jour ce nombre après création réelle)
+            if ($validated['mode_configuration'] === 'flightcase') {
+                $nbFlightcases = $validated['nb_flightcases'] ?? 0;
+                $nbDallesParFC = $validated['nb_dalles_par_flightcase'] ?? 0;
+                $nbModulesDalles = $nb_modules_par_dalle;
                 
-                // Configuration 1 - Dalles 500x500
-                if (isset($request->config1) && $request->config1['nb_flightcases'] > 0) {
-                    $config1 = $request->config1;
-                    $nbFC = intval($config1['nb_flightcases']);
-                    $nbDalles = intval($config1['nb_dalles']);
-                    $modulesConfig = $config1['modules_config'];
-                    
-                    // Calculer le nombre de modules par dalle selon la configuration
-                    $modulesPerDalle = 4; // Par défaut 2x2
-                    if ($modulesConfig === '1x1') $modulesPerDalle = 1;
-                    else if ($modulesConfig === '2x2') $modulesPerDalle = 4;
-                    else if ($modulesConfig === '3x3') $modulesPerDalle = 9;
-                    else if ($modulesConfig === '4x4') $modulesPerDalle = 16;
-                    
-                    // Stocker la configuration 1
-                    $validated['config1'] = [
-                        'nb_flightcases' => $nbFC,
-                        'nb_dalles' => $nbDalles,
-                        'modules_config' => $modulesConfig,
-                        'modules_per_dalle' => $modulesPerDalle,
-                        'dalle_type_id' => 0 // Type 500x500
-                    ];
-                }
-                
-                // Configuration 2 - Dalles 500x1000
-                if (isset($request->config2) && $request->config2['nb_flightcases'] > 0) {
-                    $config2 = $request->config2;
-                    $nbFC = intval($config2['nb_flightcases']);
-                    $nbDalles = intval($config2['nb_dalles']);
-                    $modulesConfig = $config2['modules_config'];
-                    
-                    // Calculer le nombre de modules par dalle selon la configuration
-                    $modulesPerDalle = 8; // Par défaut 2x4
-                    if ($modulesConfig === '1x2') $modulesPerDalle = 2;
-                    else if ($modulesConfig === '2x2') $modulesPerDalle = 4;
-                    else if ($modulesConfig === '2x4') $modulesPerDalle = 8;
-                    
-                    // Stocker la configuration 2
-                    $validated['config2'] = [
-                        'nb_flightcases' => $nbFC,
-                        'nb_dalles' => $nbDalles,
-                        'modules_config' => $modulesConfig,
-                        'modules_per_dalle' => $modulesPerDalle,
-                        'dalle_type_id' => 1 // Type 500x1000
-                    ];
-                }
-                
-                // Indiquer que le mode tailles multiples est activé
-                $validated['has_multiple_sizes'] = true;
+                // Calculer le total théorique
+                $nb_modules_total_theorique = $nbFlightcases * $nbDallesParFC * $nbModulesDalles;
             } else {
-                // Mode standard (un seul type de dalle) - ancienne logique
-                
-                // Récupérer les types de dalles pour chaque flightcase
-                if (isset($request->flights)) {
-                    foreach ($request->flights as $fcIndex => $fcData) {
-                        $dalleTypeId = $fcData['dalle_type_id'] ?? 0;
-                        $modulesConfig = $fcData['modules_config'] ?? null;
-                        $validated['flightcases_details'][$fcIndex] = [
-                            'dalle_type_id' => $dalleTypeId,
-                            'modules_config' => $modulesConfig
-                        ];
-                    }
-                }
-                
-                // Gérer les flightcases partiels
-                if (isset($request->fc_partiel)) {
-                    foreach ($request->fc_partiel as $fcIndex => $isPartial) {
-                        if ($isPartial) {
-                            $nbDalles = $request->fc_nb_dalles[$fcIndex] ?? $validated['nb_dalles_par_flightcase'];
-                            if (!isset($validated['flightcases_details'][$fcIndex])) {
-                                $validated['flightcases_details'][$fcIndex] = [];
-                            }
-                            $validated['flightcases_details'][$fcIndex]['is_partial'] = true;
-                            $validated['flightcases_details'][$fcIndex]['nb_dalles'] = $nbDalles;
-                        }
-                    }
-                }
-                
-                // Indiquer que le mode tailles multiples n'est pas activé
-                $validated['has_multiple_sizes'] = false;
-            }
-        }
-
-        // Stocker les données validées en session pour l'étape 3
-        session(['chantier_data_step3' => $validated]);
-
-        // Rediriger vers l'étape 4
-        return redirect()->route('chantiers.create.step4');
-    }
-
-    /**
-     * Afficher le formulaire de création - Étape 4 : Planification des interventions
-     */
-    public function createStep4()
-    {
-        // Vérifier si les étapes précédentes ont été complétées
-        if (!session()->has('chantier_data_step1') || !session()->has('chantier_data_step2') || !session()->has('chantier_data_step3')) {
-            return redirect()->route('chantiers.create.step1')
-                ->with('error', 'Veuillez compléter les étapes précédentes.');
-        }
-        
-        // Récupérer les techniciens disponibles (utilisateurs ayant le rôle technicien)
-        $techniciens = User::where('role', 'technicien')->orWhere('role', 'admin')->get();
-        
-        return view('chantiers.create_step4', compact('techniciens'));
-    }
-
-    /**
-     * Traiter l'étape 4 et passer à l'étape 5
-     */
-    public function storeStep4(Request $request)
-    {
-        $validated = $request->validate([
-            'planifier_interventions' => 'required|boolean',
-            'technicien_id' => 'nullable|exists:users,id',
-            'date_debut_interventions' => 'nullable|required_if:planifier_interventions,1|date|after_or_equal:today',
-        ]);
-        
-        // Stocker les données validées en session pour l'étape 4
-        session(['chantier_data_step4' => $validated]);
-        
-        // Rediriger vers l'étape 5
-        return redirect()->route('chantiers.create.step5');
-    }
-
-    /**
-     * Afficher le formulaire de création - Étape 5 : Récapitulatif et édition de rapports
-     */
-    public function createStep5()
-    {
-        // Vérifier si les étapes précédentes ont été complétées
-        if (!session()->has('chantier_data_step1') || !session()->has('chantier_data_step2') || 
-            !session()->has('chantier_data_step3') || !session()->has('chantier_data_step4')) {
-            return redirect()->route('chantiers.create.step1')
-                ->with('error', 'Veuillez compléter les étapes précédentes.');
-        }
-        
-        // Récupérer toutes les données des étapes précédentes
-        $step1Data = session('chantier_data_step1');
-        $step2Data = session('chantier_data_step2');
-        $step3Data = session('chantier_data_step3');
-        $step4Data = session('chantier_data_step4');
-        
-        // Récupérer le client
-        $client = Client::find($step1Data['client_id']);
-        
-        // Récupérer le produit de référence si sélectionné depuis le catalogue
-        $produitRef = null;
-        if ($step2Data['selection_type'] == 'existant' && isset($step2Data['produit_catalogue_id'])) {
-            $produitRef = ProduitCatalogue::find($step2Data['produit_catalogue_id']);
-        }
-        
-        // Technicien assigné si des interventions sont planifiées
-        $technicienAssigne = null;
-        if ($step4Data['planifier_interventions'] && isset($step4Data['technicien_id'])) {
-            $technicienAssigne = User::find($step4Data['technicien_id']);
-        }
-        
-        return view('chantiers.create_step5', compact('client', 'produitRef', 'technicienAssigne', 
-            'step1Data', 'step2Data', 'step3Data', 'step4Data'));
-    }
-
-    /**
-     * Finaliser la création du chantier - Étape 5
-     */
-    public function storeStep5(Request $request)
-    {
-        // Récupérer les données des étapes précédentes
-        $step1Data = session('chantier_data_step1');
-        $step2Data = session('chantier_data_step2');
-        $step3Data = session('chantier_data_step3');
-        $step4Data = session('chantier_data_step4');
-        
-        // Créer le chantier
-        $client = Client::find($step1Data['client_id']);
-        $societe = $client->societe ? $client->societe : $client->nom_complet;
-        $date = date('d/m/Y');
-        $reference = Chantier::genererReference();
-        
-        // Marque du produit (si disponible)
-        $marque = '';
-        if (isset($step2Data['marque']) && !empty($step2Data['marque'])) {
-            $marque = $step2Data['marque'];
-        } elseif (isset($step2Data['produit_catalogue_id'])) {
-            $produitRef = ProduitCatalogue::find($step2Data['produit_catalogue_id']);
-            if ($produitRef) {
-                $marque = $produitRef->marque;
-            }
-        }
-        
-        // Générer un nom plus professionnel
-        $nom = "SAV {$societe}";
-        // Éviter la redondance si la marque contient déjà le nom de la société
-        if ($marque && stripos($marque, $societe) === false) {
-            $nom .= " - {$marque}";
-        }
-        // Ajouter la référence pour faciliter l'identification
-        $nom .= " ({$reference})";
-        
-        $chantier = Chantier::create([
-            'client_id' => $step1Data['client_id'],
-            'nom' => $nom,
-            'description' => $step1Data['description'],
-            'date_reception' => $step1Data['date_reception'],
-            'date_butoir' => $step1Data['date_butoir'],
-            'etat' => $step1Data['etat'],
-            'reference' => $reference,
-            'token_suivi' => md5(uniqid() . time()),
-            'is_client_achat' => isset($step2Data['is_client_achat']) ? $step2Data['is_client_achat'] : false,
-            'is_under_warranty' => isset($step2Data['is_under_warranty']) ? $step2Data['is_under_warranty'] : false,
-            'warranty_end_date' => isset($step2Data['warranty_end_date']) ? $step2Data['warranty_end_date'] : null,
-            'warranty_type' => isset($step2Data['warranty_type']) ? $step2Data['warranty_type'] : null,
-        ]);
-
-        // Créer le produit
-        if ($step2Data['selection_type'] == 'existant') {
-            $produitRef = ProduitCatalogue::find($step2Data['produit_catalogue_id']);
-            
-            // Ajouter un log pour voir les valeurs
-            \Illuminate\Support\Facades\Log::info('Données du produit catalogue:', [
-                'produitRef' => $produitRef ? 'trouvé' : 'non trouvé',
-                'id' => $step2Data['produit_catalogue_id'] ?? 'non défini',
-                'marque' => $produitRef->marque ?? 'non défini',
-                'modele' => $produitRef->modele ?? 'non défini'
-            ]);
-            
-            // Créer le produit sans les champs problématiques avec valeurs par défaut
-            // Utiliser des valeurs par défaut significatives au lieu de INCONNU
-            $defaultMarque = $client->societe ? strtoupper($client->societe) : 'Écran LED';
-            $defaultModele = 'Réparation ' . date('Y');
-            
-            $produit = Produit::create([
-                'chantier_id' => $chantier->id,
-                'marque' => $produitRef->marque ?? $defaultMarque,
-                'modele' => $produitRef->modele ?? $defaultModele,
-                'pitch' => $produitRef->pitch ?? 3.0,
-                'utilisation' => $produitRef->utilisation ?? 'indoor',
-                'electronique' => $produitRef->electronique ?? 'autre',
-                'electronique_detail' => $produitRef->electronique_detail ?? 'Non spécifié',
-                'led_datasheet_id' => $step2Data['led_datasheet_id'] ?? null,
-            ]);
-            
-            // Mettre à jour les champs problématiques avec une requête SQL brute
-            if ($produitRef && !empty($produitRef->bain_couleur)) {
-                try {
-                    \DB::statement("UPDATE produits SET bain_couleur = ? WHERE id = ?", [
-                        $produitRef->bain_couleur, 
-                        $produit->id
-                    ]);
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Erreur lors de la mise à jour du bain_couleur: ' . $e->getMessage());
-                }
+                $nb_modules_total_theorique = $validated['nb_modules_total'] ?? 0;
             }
             
-            if (isset($step2Data['hub']) && !empty($step2Data['hub'])) {
-                try {
-                    \DB::statement("UPDATE produits SET hub = ? WHERE id = ?", [
-                        $step2Data['hub'], 
-                        $produit->id
-                    ]);
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Erreur lors de la mise à jour du hub: ' . $e->getMessage());
-                }
-            }
-        } else {
-            // Ajouter un log pour voir les valeurs
-            \Illuminate\Support\Facades\Log::info('Données du produit avant création:', [
-                'marque' => $step2Data['marque'] ?? 'non défini',
-                'modele' => $step2Data['modele'] ?? 'non défini',
-                'pitch' => $step2Data['pitch'] ?? 'non défini',
-                'utilisation' => $step2Data['utilisation'] ?? 'non défini',
-                'step2Data complet' => $step2Data
-            ]);
-            
-            // Créer le produit avec valeurs par défaut si nécessaire
-            // Utiliser des valeurs par défaut significatives au lieu de INCONNU
-            $defaultMarque = $client->societe ? strtoupper($client->societe) : 'Écran LED';
-            $defaultModele = 'Réparation ' . date('Y');
-            
-            $produit = Produit::create([
-                'chantier_id' => $chantier->id,
-                'marque' => $step2Data['marque'] ?? $defaultMarque,
-                'modele' => $step2Data['modele'] ?? $defaultModele,
-                'pitch' => $step2Data['pitch'] ?? 3.0,
-                'utilisation' => $step2Data['utilisation'] ?? 'indoor',
-                'electronique' => $step2Data['electronique'] ?? 'autre',
-                'electronique_detail' => $step2Data['electronique_detail'] ?? 'Non spécifié',
-                'carte_reception' => $step2Data['carte_reception'] ?? null,
-                'hub' => $step2Data['hub'] ?? null,
-                'bain_couleur' => $step2Data['bain_couleur'] ?? null,
-                'led_datasheet_id' => $step2Data['led_datasheet_id'] ?? null,
-            ]);
-            
-            // Comme nous avons déjà inclus tous les champs dans le create(), nous n'avons plus besoin de ces mises à jour
-        }
-
-        // Créer les dalles et modules
-        $modulesCreated = [];
-        
-        // Récupérer les dimensions des dalles et modules depuis l'étape 2
-        $largeurDalle = $step2Data['largeur_dalle'] ?? 500;
-        $hauteurDalle = $step2Data['hauteur_dalle'] ?? 500;
-        $largeurModule = $step2Data['largeur_module'] ?? 250;
-        $hauteurModule = $step2Data['hauteur_module'] ?? 250;
-        $alimentation = $step2Data['alimentation'] ?? 'Standard 5V';
-        
-        // Récupérer la disposition des modules (si disponible dans l'étape 2)
-        $modulesLargeur = $step2Data['modules_largeur'] ?? 2;
-        $modulesHauteur = $step2Data['modules_hauteur'] ?? 2;
-        
-        if ($step3Data['mode'] == 'flightcase') {
-            // Définir les types de dalles disponibles
-            $dalleTypes = [
-                [
-                    'id' => 0,
-                    'nom' => 'Dalle 500x500',
-                    'largeur' => 500,
-                    'hauteur' => 500,
-                    'disposition' => $step2Data['disposition_modules'] ?? '2x2',
-                ],
-                [
-                    'id' => 1,
-                    'nom' => 'Dalle 500x1000',
-                    'largeur' => 500,
-                    'hauteur' => 1000,
-                    'disposition' => $step2Data['disposition_modules'] ?? '2x2',
-                ]
+            // Juste une information temporaire pour la création des modules
+            // Nous stockerons les données réelles après la création
+            $sessionDataTemp = [
+                'mode_configuration' => $validated['mode_configuration'],
+                'nb_flightcases' => $validated['nb_flightcases'] ?? 0,
+                'nb_dalles_par_flightcase' => $validated['nb_dalles_par_flightcase'] ?? 0,
+                'nb_modules_par_dalle' => $nb_modules_par_dalle,
+                'nb_modules_total_theorique' => $nb_modules_total_theorique,
             ];
             
-            // Vérifier si le mode tailles multiples est activé
-            if (isset($step3Data['has_multiple_sizes']) && $step3Data['has_multiple_sizes']) {
-                \Illuminate\Support\Facades\Log::info('Traitement en mode tailles multiples');
-                
-                // Traiter la configuration 1 (500x500)
-                if (isset($step3Data['config1']) && $step3Data['config1']['nb_flightcases'] > 0) {
-                    $config1 = $step3Data['config1'];
-                    $nbFC = $config1['nb_flightcases'];
-                    $nbDalles = $config1['nb_dalles'];
-                    $modulesConfig = $config1['modules_config'];
-                    $modulesPerDalle = $config1['modules_per_dalle'];
-                    
-                    // Extraire les dimensions de la configuration (format: "2x2")
-                    if (preg_match('/^(\d+)x(\d+)$/', $modulesConfig, $matches)) {
-                        $modulesLargeur = intval($matches[1]);
-                        $modulesHauteur = intval($matches[2]);
-                    }
-                    
-                    // Traiter chaque flight case de cette configuration
-                    for ($f = 1; $f <= $nbFC; $f++) {
-                        $flightCaseId = "FC1-{$f}"; // Identifier le flight case comme type 1 (500x500)
-                        
-                        // Traiter chaque dalle de ce flight case
-                        for ($d = 1; $d <= $nbDalles; $d++) {
-                            $dalleId = "{$flightCaseId}-D{$d}";
-                            
-                            // Créer la dalle
-                            $dalle = Dalle::create([
-                                'produit_id' => $produit->id,
-                                'largeur' => 500, // 500x500
-                                'hauteur' => 500,
-                                'nb_modules' => $modulesPerDalle,
-                                'alimentation' => $alimentation,
-                                'carte_reception' => $step3Data['carte_reception'] ?? $step2Data['carte_reception'] ?? null,
-                                'hub' => $step3Data['hub'] ?? $step2Data['hub'] ?? null,
-                                'reference_dalle' => $dalleId,
-                                'disposition_modules' => $modulesConfig
-                            ]);
-                            
-                            // Créer les modules pour cette dalle
-                            for ($m = 1; $m <= $modulesPerDalle; $m++) {
-                                $row = ceil($m / $modulesLargeur);
-                                $col = (($m - 1) % $modulesLargeur) + 1;
-                                
-                                // Calculer les dimensions du module
-                                $currentLargeurModule = 500 / $modulesLargeur;
-                                $currentHauteurModule = 500 / $modulesHauteur;
-                                
-                                $module = Module::create([
-                                    'dalle_id' => $dalle->id,
-                                    'largeur' => $currentLargeurModule,
-                                    'hauteur' => $currentHauteurModule,
-                                    'nb_pixels_largeur' => $step2Data['nb_pixels_largeur'] ?? 100,
-                                    'nb_pixels_hauteur' => $step2Data['nb_pixels_hauteur'] ?? 100,
-                                    'driver' => $step2Data['driver'] ?? null,
-                                    'shift_register' => $step2Data['shift_register'] ?? null,
-                                    'buffer' => $step2Data['buffer'] ?? null,
-                                    'etat' => 'non_commence',
-                                    'reference_module' => "{$dalleId}-M{$m}-R{$row}C{$col}",
-                                    'position_x' => $col,
-                                    'position_y' => $row
-                                ]);
-                                
-                                $modulesCreated[] = $module;
-                            }
-                        }
-                    }
-                }
-                
-                // Traiter la configuration 2 (500x1000)
-                if (isset($step3Data['config2']) && $step3Data['config2']['nb_flightcases'] > 0) {
-                    $config2 = $step3Data['config2'];
-                    $nbFC = $config2['nb_flightcases'];
-                    $nbDalles = $config2['nb_dalles'];
-                    $modulesConfig = $config2['modules_config'];
-                    $modulesPerDalle = $config2['modules_per_dalle'];
-                    
-                    // Extraire les dimensions de la configuration (format: "2x4")
-                    if (preg_match('/^(\d+)x(\d+)$/', $modulesConfig, $matches)) {
-                        $modulesLargeur = intval($matches[1]);
-                        $modulesHauteur = intval($matches[2]);
-                    }
-                    
-                    // Traiter chaque flight case de cette configuration
-                    for ($f = 1; $f <= $nbFC; $f++) {
-                        $flightCaseId = "FC2-{$f}"; // Identifier le flight case comme type 2 (500x1000)
-                        
-                        // Traiter chaque dalle de ce flight case
-                        for ($d = 1; $d <= $nbDalles; $d++) {
-                            $dalleId = "{$flightCaseId}-D{$d}";
-                            
-                            // Créer la dalle
-                            $dalle = Dalle::create([
-                                'produit_id' => $produit->id,
-                                'largeur' => 500, // 500x1000
-                                'hauteur' => 1000,
-                                'nb_modules' => $modulesPerDalle,
-                                'alimentation' => $alimentation,
-                                'carte_reception' => $step3Data['carte_reception'] ?? $step2Data['carte_reception'] ?? null,
-                                'hub' => $step3Data['hub'] ?? $step2Data['hub'] ?? null,
-                                'reference_dalle' => $dalleId,
-                                'disposition_modules' => $modulesConfig
-                            ]);
-                            
-                            // Créer les modules pour cette dalle
-                            for ($m = 1; $m <= $modulesPerDalle; $m++) {
-                                $row = ceil($m / $modulesLargeur);
-                                $col = (($m - 1) % $modulesLargeur) + 1;
-                                
-                                // Calculer les dimensions du module
-                                $currentLargeurModule = 500 / $modulesLargeur;
-                                $currentHauteurModule = 1000 / $modulesHauteur;
-                                
-                                $module = Module::create([
-                                    'dalle_id' => $dalle->id,
-                                    'largeur' => $currentLargeurModule,
-                                    'hauteur' => $currentHauteurModule,
-                                    'nb_pixels_largeur' => $step2Data['nb_pixels_largeur'] ?? 100,
-                                    'nb_pixels_hauteur' => $step2Data['nb_pixels_hauteur'] ?? 100,
-                                    'driver' => $step2Data['driver'] ?? null,
-                                    'shift_register' => $step2Data['shift_register'] ?? null,
-                                    'buffer' => $step2Data['buffer'] ?? null,
-                                    'etat' => 'non_commence',
-                                    'reference_module' => "{$dalleId}-M{$m}-R{$row}C{$col}",
-                                    'position_x' => $col,
-                                    'position_y' => $row
-                                ]);
-                                
-                                $modulesCreated[] = $module;
-                            }
-                        }
-                    }
-                }
-                
-            } else {
-                // Mode standard (un seul type de dalle)
-                // Obtenir les détails des FlightCases
-                $flightcasesDetails = $step3Data['flightcases_details'] ?? [];
-                
-                // Ajouter un log pour le débogage
-                \Illuminate\Support\Facades\Log::info('Traitement FlightCase mode standard:', [
-                    'flightcases_details' => $flightcasesDetails,
-                ]);
-                
-                for ($f = 1; $f <= $step3Data['nb_flightcases']; $f++) {
-                    // Déterminer combien de dalles à créer pour ce FlightCase
-                    $nbDallesForThisFC = $step3Data['nb_dalles_par_flightcase'];
-                    $fcDetails = $flightcasesDetails[$f] ?? null;
-                    
-                    if ($fcDetails && isset($fcDetails['is_partial']) && $fcDetails['is_partial']) {
-                        $nbDallesForThisFC = $fcDetails['nb_dalles'];
-                        \Illuminate\Support\Facades\Log::info("FlightCase {$f} est partiel, création de {$nbDallesForThisFC} dalles au lieu de {$step3Data['nb_dalles_par_flightcase']}");
-                    }
-                    
-                    // Déterminer les dimensions de dalles en fonction du type sélectionné
-                    $dalleTypeId = $fcDetails['dalle_type_id'] ?? 0;
-                    
-                    // Rechercher le type de dalle correspondant
-                    $currentDalleType = null;
-                    foreach ($dalleTypes as $type) {
-                        if ($type['id'] == $dalleTypeId) {
-                            $currentDalleType = $type;
-                            break;
-                        }
-                    }
-                    
-                    // Si on n'a pas trouvé le type, on utilise les dimensions par défaut
-                    if ($currentDalleType) {
-                        $currentLargeurDalle = $currentDalleType['largeur'];
-                        $currentHauteurDalle = $currentDalleType['hauteur'];
-                        $currentDispositionModules = $currentDalleType['disposition'];
-                        \Illuminate\Support\Facades\Log::info("FlightCase {$f} utilise dalle type {$currentDalleType['nom']} ({$currentLargeurDalle}x{$currentHauteurDalle}mm)");
-                    } else {
-                        $currentLargeurDalle = $largeurDalle;
-                        $currentHauteurDalle = $hauteurDalle;
-                        $currentDispositionModules = $step2Data['disposition_modules'] ?? '2x2';
-                    }
-                    
-                    for ($d = 1; $d <= $nbDallesForThisFC; $d++) {
-                        $dalleId = "FC{$f}-D{$d}";
-                        
-                        // Créer la dalle avec les dimensions du type sélectionné
-                        $dalle = Dalle::create([
-                            'produit_id' => $produit->id,
-                            'largeur' => $currentLargeurDalle,
-                            'hauteur' => $currentHauteurDalle,
-                            'nb_modules' => $step3Data['nb_modules_par_dalle'],
-                            'alimentation' => $alimentation,
-                            'carte_reception' => $step3Data['carte_reception'] ?? $step2Data['carte_reception'] ?? null,
-                            'hub' => $step3Data['hub'] ?? $step2Data['hub'] ?? null,
-                            'reference_dalle' => $dalleId,
-                            'disposition_modules' => $currentDispositionModules
-                        ]);
-                        
-                        // Stocker la disposition des modules comme métadonnées dans la session
-                        if (!empty($step2Data['disposition_modules'])) {
-                            session([
-                                'disposition_modules_dalle_' . $dalle->id => $step2Data['disposition_modules']
-                            ]);
-                        }
-
-                        // Créer les modules en tenant compte de la disposition
-                        $totalModules = $step3Data['nb_modules_par_dalle'];
-                        $moduleIndex = 1;
-                        
-                        // Si la disposition est définie, on organise les modules selon cette disposition
-                        if (isset($step2Data['disposition_modules'])) {
-                            // Vérifier si une configuration spéciale des modules a été définie pour ce flightcase
-                            $customModuleConfig = null;
-                            $fcDetails = $flightcasesDetails[$f] ?? null;
-                            if ($fcDetails && isset($fcDetails['modules_config'])) {
-                                $customModuleConfig = $fcDetails['modules_config'];
-                                \Log::info("FlightCase {$f} utilise une configuration de modules personnalisée: {$customModuleConfig}");
-                            }
-                            
-                            // Si une configuration personnalisée est définie ET que c'est une dalle 500x1000
-                            if ($customModuleConfig && $currentLargeurDalle == 500 && $currentHauteurDalle == 1000) {
-                                // Extraire les dimensions x et y de la configuration (format: "2x4", "1x2", etc.)
-                                if (preg_match('/^(\d+)x(\d+)$/', $customModuleConfig, $matches)) {
-                                    $modulesLargeur = intval($matches[1]);
-                                    $modulesHauteur = intval($matches[2]);
-                                    \Log::info("Configuration personnalisée: {$modulesLargeur}x{$modulesHauteur} pour dalle {$currentLargeurDalle}x{$currentHauteurDalle}");
-                                }
-                            }
-                            
-                            // Calculer la capacité de la grille
-                            $gridCapacity = $modulesLargeur * $modulesHauteur;
-                            
-                            // Créer les modules qui peuvent s'adapter à la grille
-                            for ($row = 1; $row <= $modulesHauteur && $moduleIndex <= $totalModules; $row++) {
-                                for ($col = 1; $col <= $modulesLargeur && $moduleIndex <= $totalModules; $col++) {
-                                    // Calculer les dimensions du module en fonction du type de dalle
-                                    $currentLargeurModule = $largeurModule;
-                                    $currentHauteurModule = $hauteurModule;
-                                    
-                                    // Si la dalle est de type 500x1000, adapter les modules en conséquence
-                                    if ($currentLargeurDalle == 500 && $currentHauteurDalle == 1000) {
-                                        // Si on a une configuration personnalisée, l'utiliser pour calculer les dimensions
-                                        if ($customModuleConfig) {
-                                            $currentLargeurModule = $currentLargeurDalle / $modulesLargeur;
-                                            $currentHauteurModule = $currentHauteurDalle / $modulesHauteur;
-                                        }
-                                        // Sinon, utiliser la disposition standard
-                                        else if (preg_match('/^(\d+)x(\d+)$/', $currentDispositionModules, $matches)) {
-                                            $modLargeur = intval($matches[1]);
-                                            $modHauteur = intval($matches[2]);
-                                            
-                                            // Calculer les dimensions en fonction de la disposition
-                                            $currentLargeurModule = $currentLargeurDalle / $modLargeur;
-                                            $currentHauteurModule = $currentHauteurDalle / $modHauteur;
-                                        }
-                                    }
-                                    
-                                    $module = Module::create([
-                                        'dalle_id' => $dalle->id,
-                                        'largeur' => $currentLargeurModule,
-                                        'hauteur' => $currentHauteurModule,
-                                        'nb_pixels_largeur' => $step2Data['nb_pixels_largeur'] ?? 100,
-                                        'nb_pixels_hauteur' => $step2Data['nb_pixels_hauteur'] ?? 100,
-                                        'driver' => $step2Data['driver'] ?? null,
-                                        'shift_register' => $step2Data['shift_register'] ?? null,
-                                        'buffer' => $step2Data['buffer'] ?? null,
-                                        'etat' => 'non_commence',
-                                        'reference_module' => "FC{$f}-D{$d}-R{$row}C{$col}",
-                                        'position_x' => $col,
-                                        'position_y' => $row
-                                    ]);
-                                    
-                                    $modulesCreated[] = $module;
-                                    $moduleIndex++;
-                                }
-                            }
-                            
-                            // Si on a demandé plus de modules que la grille peut contenir, ajouter les modules supplémentaires 
-                            while ($moduleIndex <= $totalModules) {
-                                $module = Module::create([
-                                    'dalle_id' => $dalle->id,
-                                    'largeur' => $largeurModule,
-                                    'hauteur' => $hauteurModule,
-                                    'nb_pixels_largeur' => $step2Data['nb_pixels_largeur'] ?? 100,
-                                    'nb_pixels_hauteur' => $step2Data['nb_pixels_hauteur'] ?? 100,
-                                    'driver' => $step2Data['driver'] ?? null,
-                                    'shift_register' => $step2Data['shift_register'] ?? null,
-                                    'buffer' => $step2Data['buffer'] ?? null,
-                                    'etat' => 'non_commence',
-                                    'reference_module' => "FC{$f}-D{$d}-EXTRA-" . ($moduleIndex - $gridCapacity)
-                                ]);
-                                
-                                $modulesCreated[] = $module;
-                                $moduleIndex++;
-                            }
-                            } else {
-                                // Disposition linéaire par défaut
-                                for ($m = 1; $m <= $totalModules; $m++) {
-                                    $module = Module::create([
-                                        'dalle_id' => $dalle->id,
-                                        'largeur' => $largeurModule,
-                                        'hauteur' => $hauteurModule,
-                                        'nb_pixels_largeur' => $step2Data['nb_pixels_largeur'] ?? 100,
-                                        'nb_pixels_hauteur' => $step2Data['nb_pixels_hauteur'] ?? 100,
-                                        'driver' => $step2Data['driver'] ?? null,
-                                        'shift_register' => $step2Data['shift_register'] ?? null,
-                                        'buffer' => $step2Data['buffer'] ?? null,
-                                        'etat' => 'non_commence',
-                                        'reference_module' => "FC{$f}-D{$d}-M{$m}"
-                                    ]);
-                                    
-                                    $modulesCreated[] = $module;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        
-        // Si le mode n'est pas flightcase, c'est le mode individuel
-        if ($step3Data['mode'] == 'individuel') {
-            // Création de modules individuels - toujours en mode linéaire, sans tenir compte de la disposition
-            $dalle = Dalle::create([
-                'produit_id' => $produit->id,
-                'largeur' => $largeurDalle,
-                'hauteur' => $hauteurDalle,
-                'nb_modules' => $step3Data['nb_modules_total'],
-                'alimentation' => $alimentation,
-                'carte_reception' => $step2Data['carte_reception'] ?? null,
-                'hub' => $step2Data['hub'] ?? null,
-                'reference_dalle' => "INDIVIDUEL"
+            Log::info('Calcul théorique du nombre de modules', [
+                'temp_data' => $sessionDataTemp
             ]);
             
-            // En mode modules individuels, on crée TOUJOURS tous les modules de façon linéaire
-            // sans tenir compte d'une éventuelle disposition définie précédemment
-            for ($m = 1; $m <= $step3Data['nb_modules_total']; $m++) {
-                // Permettre différentes dimensions en fonction du type de dalle sélectionné
-                $currentLargeurModule = $largeurModule;
-                $currentHauteurModule = $hauteurModule;
-                
-                // Si un type de dalle spécifique est mentionné, adapter les dimensions
-                if (isset($step3Data['module_dalle_type']) && $step3Data['module_dalle_type'] == 'large') {
-                    $currentLargeurModule = $currentLargeurModule * 2;
-                    $currentHauteurModule = $currentHauteurModule * 2;
-                } else if (isset($step3Data['module_dimensions']) && is_array($step3Data['module_dimensions'])) {
-                    // Format personnalisé pour les dimensions de module
-                    $currentLargeurModule = $step3Data['module_dimensions']['largeur'] ?? $largeurModule;
-                    $currentHauteurModule = $step3Data['module_dimensions']['hauteur'] ?? $hauteurModule;
-                }
-                
-                $module = Module::create([
-                    'dalle_id' => $dalle->id,
-                    'largeur' => $currentLargeurModule,
-                    'hauteur' => $currentHauteurModule, 
-                    'nb_pixels_largeur' => $step2Data['nb_pixels_largeur'] ?? 64,
-                    'nb_pixels_hauteur' => $step2Data['nb_pixels_hauteur'] ?? 64,
-                    'driver' => $step2Data['driver'] ?? null,
-                    'shift_register' => $step2Data['shift_register'] ?? null,
-                    'buffer' => $step2Data['buffer'] ?? null,
-                    'etat' => 'non_commence',
-                    'reference_module' => "IND-{$m}"
+            // Récupérer le produit principal du chantier
+            $produit = $chantier->produits()->first();
+            
+            if (!$produit) {
+                throw new \Exception('Aucun produit trouvé pour ce chantier');
+            }
+            
+            // Vérifier si des dalles et modules existent déjà pour ce chantier
+            // Si c'est le cas, les supprimer pour éviter la duplication
+            // lorsque l'utilisateur revient en arrière dans le processus
+            $existingDalles = $produit->dalles()->count();
+            if ($existingDalles > 0) {
+                Log::info('Dalles existantes détectées, suppression avant recréation', [
+                    'produit_id' => $produit->id,
+                    'dalles_count' => $existingDalles
                 ]);
                 
-                $modulesCreated[] = $module;
+                try {
+                    // Supprimer en utilisant une transaction pour garantir la cohérence
+                    \Illuminate\Support\Facades\DB::beginTransaction();
+                    
+                    // Supprimer d'abord les interventions liées aux modules
+                    $dalleIds = $produit->dalles()->pluck('id')->toArray();
+                    $moduleIds = Module::whereIn('dalle_id', $dalleIds)->pluck('id')->toArray();
+                    
+                    // Supprimer les diagnostics et réparations liés aux interventions
+                    $interventionIds = \App\Models\Intervention::whereIn('module_id', $moduleIds)->pluck('id')->toArray();
+                    \App\Models\Diagnostic::whereIn('intervention_id', $interventionIds)->delete();
+                    \App\Models\Reparation::whereIn('intervention_id', $interventionIds)->delete();
+                    
+                    // Supprimer les interventions
+                    \App\Models\Intervention::whereIn('module_id', $moduleIds)->delete();
+                    
+                    // Maintenant supprimer les modules
+                    Module::whereIn('dalle_id', $dalleIds)->delete();
+                    
+                    // Finalement supprimer les dalles
+                    $produit->dalles()->delete();
+                    
+                    \Illuminate\Support\Facades\DB::commit();
+                    Log::info('Dalles et modules supprimés avec succès');
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\DB::rollBack();
+                    Log::error('Erreur lors de la suppression des dalles et modules', [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    // Continuer malgré l'erreur, mais noter le problème
+                }
             }
             
-            // Nous n'avons plus besoin des blocs conditionnels, tout le code nécessaire
-            // a été exécuté ci-dessus
-        }
-        
-        // Force disable auto-intervention creation
-        $step4Data['planifier_interventions'] = false;
-        
-        // Si l'utilisateur a choisi de planifier des interventions
-        if ($step4Data['planifier_interventions']) {
-            $technicienId = $step4Data['technicien_id'] ?? null; // Technicien optionnel
-            $dateDebut = $step4Data['date_debut_interventions'];
-            
-            // Créer des interventions préliminaires pour chaque module
-            foreach ($modulesCreated as $module) {
-                $intervention = new Intervention();
-                $intervention->module_id = $module->id;
-                $intervention->technicien_id = $technicienId; // Peut être null
-                $intervention->date_debut = $dateDebut;
-                $intervention->temps_total = 0;
-                $intervention->is_completed = false;
-                $intervention->save();
+            // Traitement selon le mode (FlightCase ou Individuel)
+            if ($request->input('mode_configuration') === 'flightcase') {
+                // Mode FlightCase
+                $nbFlightcases = $request->input('nb_flightcases', 1);
+                $nbDallesParFlightcase = $request->input('nb_dalles_par_flightcase', 8);
+                $nbModulesParDalle = $request->input('nb_modules_par_dalle', 4);
+                $usesMultipleSizes = $request->has('multiple_sizes_mode');
                 
-                // Créer un diagnostic vide
-                $diagnostic = new Diagnostic();
-                $diagnostic->intervention_id = $intervention->id;
-                $diagnostic->nb_leds_hs = 0;
-                $diagnostic->nb_ic_hs = 0;
-                $diagnostic->nb_masques_hs = 0;
-                $diagnostic->save();
+                // Procéder différemment selon si on utilise des tailles multiples ou non
+                if ($usesMultipleSizes) {
+                    // Mode tailles multiples (gestion spéciale des configurations)
+                    Log::info('Mode tailles multiples activé');
+                    $config1Data = $request->input('config1', []);
+                    $config2Data = $request->input('config2', []);
+                    
+                    // Configuration 1 (500x500)
+                    $config1FlightCases = $config1Data['nb_flightcases'] ?? 0;
+                    $config1DallesPerFC = $config1Data['nb_dalles'] ?? 0;
+                    $config1ModulesConfig = $config1Data['modules_config'] ?? '2x2';
+                    
+                    // Configuration 2 (500x1000)
+                    $config2FlightCases = $config2Data['nb_flightcases'] ?? 0;
+                    $config2DallesPerFC = $config2Data['nb_dalles'] ?? 0;
+                    $config2ModulesConfig = $config2Data['modules_config'] ?? '2x4';
+                    
+                    // Créer les dalles pour chaque configuration
+                    $this->createDallesForMultipleSizes(
+                        $chantier, 
+                        $produit, 
+                        $config1FlightCases, 
+                        $config1DallesPerFC, 
+                        $config1ModulesConfig,
+                        1
+                    );
+                    
+                    $this->createDallesForMultipleSizes(
+                        $chantier, 
+                        $produit, 
+                        $config2FlightCases, 
+                        $config2DallesPerFC, 
+                        $config2ModulesConfig,
+                        2
+                    );
+                } else {
+                    // Mode standard (un seul type de FlightCase)
+                    Log::info('Mode standard', [
+                        'nbFlightcases' => $nbFlightcases,
+                        'nbDallesParFlightcase' => $nbDallesParFlightcase, 
+                    ]);
+                    
+                    // Pour chaque FlightCase
+                    for ($f = 1; $f <= $nbFlightcases; $f++) {
+                        // Vérifier si ce FlightCase est partiel
+                        $isPartial = $request->has('fc_partiel.' . $f);
+                        $effectiveNbDalles = $isPartial 
+                            ? (int)$request->input('fc_nb_dalles.' . $f, $nbDallesParFlightcase)
+                            : $nbDallesParFlightcase;
+                            
+                        // Récupérer le type de dalle pour ce FlightCase
+                        $dalleTypeId = $request->input('flights.' . $f . '.dalle_type_id', 1);
+                        $modulesConfig = $request->input('flights.' . $f . '.modules_config', '2x2');
+                        
+                        // Créer les dalles pour ce FlightCase
+                        for ($d = 1; $d <= $effectiveNbDalles; $d++) {
+                            // Déterminer les dimensions selon le type
+                            $largeur = 500;
+                            $hauteur = 500;
+                            $nbColonnes = 2;
+                            $nbLignes = 2;
+                            
+                            // Vérifier si c'est un type personnalisé (commence par "custom_")
+                            if (strpos($dalleTypeId, 'custom_') === 0) {
+                                // C'est un type personnalisé créé dynamiquement
+                                $customTypeData = $request->input('custom_dalle_types.' . $dalleTypeId);
+                                
+                                if ($customTypeData) {
+                                    $largeur = $customTypeData['largeur'] ?? 1000;
+                                    $hauteur = $customTypeData['hauteur'] ?? 1000;
+                                    $modulesConfig = $customTypeData['disposition'] ?? '4x4';
+                                    $nbColonnes = $customTypeData['colonnes'] ?? 4;
+                                    $nbLignes = $customTypeData['lignes'] ?? 4;
+                                    
+                                    Log::info('Utilisation d\'un type de dalle personnalisé', [
+                                        'type_id' => $dalleTypeId,
+                                        'largeur' => $largeur,
+                                        'hauteur' => $hauteur,
+                                        'disposition' => $modulesConfig
+                                    ]);
+                                }
+                            } else if ($dalleTypeId === 'custom') {
+                                // Utiliser les dimensions personnalisées du produit
+                                $largeur = $produit->largeur_dalle ?? 500;
+                                $hauteur = $produit->hauteur_dalle ?? 500;
+                                
+                                Log::info('Utilisation des dimensions personnalisées pour la dalle', [
+                                    'largeur' => $largeur,
+                                    'hauteur' => $hauteur
+                                ]);
+                            } else if ($dalleTypeId == 2) {
+                                $largeur = 500;
+                                $hauteur = 1000;
+                            } else if ($dalleTypeId == 3) {
+                                $largeur = 1000;
+                                $hauteur = 500;
+                            }
+                            
+                            // IMPORTANT: Toujours utiliser la configuration des modules du produit
+                            // Cette configuration est celle choisie par l'utilisateur à l'étape 2
+                            if ($produit && $produit->disposition_modules) {
+                                // Vérifier si la disposition est au format valide AxB
+                                if (preg_match('/^\d+x\d+$/', $produit->disposition_modules)) {
+                                    $modulesConfig = $produit->disposition_modules;
+                                    Log::info('Utilisation de la disposition des modules du produit (choix utilisateur)', [
+                                        'produit_id' => $produit->id,
+                                        'disposition' => $modulesConfig
+                                    ]);
+                                } else {
+                                    // Si format invalide, utiliser 2x2 par défaut
+                                    $modulesConfig = '2x2';
+                                    Log::warning('Disposition des modules du produit invalide, utilisation de 2x2 par défaut', [
+                                        'produit_id' => $produit->id,
+                                        'disposition_invalide' => $produit->disposition_modules
+                                    ]);
+                                }
+                            } else {
+                                // Si aucune disposition définie, utiliser 2x2 par défaut
+                                $modulesConfig = '2x2';
+                                Log::warning('Aucune disposition des modules définie pour le produit, utilisation de 2x2 par défaut', [
+                                    'produit_id' => $produit ? $produit->id : 'null'
+                                ]);
+                            }
+                            
+                            // Log de la configuration qui sera utilisée pour la création des modules
+                            Log::info('Configuration des modules qui sera utilisée', [
+                                'largeur_dalle' => $largeur,
+                                'hauteur_dalle' => $hauteur,
+                                'disposition_modules' => $modulesConfig
+                            ]);
+                            // Calculer le nombre de modules en fonction de la configuration
+                            $modulesConfigParts = explode('x', $modulesConfig);
+                            $nbModules = 4; // Par défaut
+                            if (count($modulesConfigParts) == 2) {
+                                $nbModules = (int)$modulesConfigParts[0] * (int)$modulesConfigParts[1];
+                            }
+                            
+                            // Création de la dalle avec une référence structurée incluant le numéro de flightcase
+                            $reference_dalle = 'FC' . $f . '-D' . $d; // Format: FC1-D1, FC1-D2, etc.
+                            $dalle = Dalle::create([
+                                'largeur' => $largeur,
+                                'hauteur' => $hauteur,
+                                'produit_id' => $produit->id,
+                                'reference_dalle' => $reference_dalle, // Référence structurée pour organisation
+                                'dalle_type_id' => is_numeric($dalleTypeId) ? $dalleTypeId : null, // Seulement les IDs numériques sont valides pour dalle_type_id
+                                'disposition_modules' => $modulesConfig,
+                                'flightcase_number' => $f,
+                                'dalle_number' => $d,
+                                'nb_modules' => $nbModules,
+                                'alimentation' => '5V', // Valeur par défaut
+                                'nb_colonnes' => (int)$modulesConfigParts[0], // Ajouter les dimensions
+                                'nb_lignes' => (int)$modulesConfigParts[1]
+                            ]);
+                            // S'assurer que la disposition des modules est enregistrée correctement sur la dalle
+                            $dalle->disposition_modules = $modulesConfig;
+                            $dalle->save();
+                            
+                            // Créer les modules pour cette dalle
+                            $this->createModulesForDalle($dalle, $modulesConfig);
+                            
+                            // Log pour vérifier exactement ce qui a été créé
+                            Log::info('Dalle créée avec les paramètres finaux', [
+                                'dalle_id' => $dalle->id,
+                                'largeur' => $dalle->largeur,
+                                'hauteur' => $dalle->hauteur,
+                                'disposition' => $dalle->disposition_modules,
+                                'nb_colonnes' => $dalle->nb_colonnes,
+                                'nb_lignes' => $dalle->nb_lignes,
+                                'nb_modules' => $dalle->nb_modules
+                            ]);
+                            // S'assurer que la disposition des modules est enregistrée correctement sur la dalle
+                            $dalle->disposition_modules = $modulesConfig;
+                            $dalle->save();
+                            
+                            // Créer les modules pour cette dalle
+                            $this->createModulesForDalle($dalle, $modulesConfig);
+                        }
+                    }
+                }
+            } else {
+                // Mode Individuel: créer un nombre spécifique de modules individuels
+                $nbModulesTotal = $request->input('nb_modules_total', 0);
                 
-                // Créer une réparation vide
-                $reparation = new Reparation();
-                $reparation->intervention_id = $intervention->id;
-                $reparation->nb_leds_remplacees = 0;
-                $reparation->nb_ic_remplaces = 0;
-                $reparation->nb_masques_remplaces = 0;
-                $reparation->save();
+                // Créer une seule dalle pour tous les modules
+                $dalle = Dalle::create([
+                    'largeur' => 500,
+                    'hauteur' => 500,
+                    'produit_id' => $produit->id,
+                    'reference_dalle' => 'INDIVIDUEL', // Référence spéciale pour les modules individuels
+                    'disposition_modules' => '1x' . $nbModulesTotal, // Indiquer que c'est une dalle virtuelle
+                    'is_virtual' => true,
+                    'nb_modules' => $nbModulesTotal,
+                    'alimentation' => '5V', // Valeur par défaut
+                    'nb_colonnes' => 1,
+                    'nb_lignes' => $nbModulesTotal
+                ]);
+                
+                Log::info('Dalle virtuelle créée pour modules individuels', [
+                    'dalle_id' => $dalle->id,
+                    'nb_modules' => $nbModulesTotal
+                ]);
+                
+                // Créer les modules pour cette dalle
+                $this->createModulesForDalle($dalle, '1x' . $nbModulesTotal);
             }
-        }
-        
-        // Générer le rapport si demandé
-        $generateReport = $request->has('generate_report') && $request->input('generate_report');
-        
-        // Nettoyer la session
-        session()->forget(['chantier_data_step1', 'chantier_data_step2', 'chantier_data_step3', 'chantier_data_step4']);
-        
-        // Envoyer un email au client pour l'informer de la création du chantier
-        try {
-            $emailService = new \App\Services\EmailService();
-            $emailService->sendChantierCreatedEmail($chantier);
+            
+            // IMPORTANT: À ce stade, tous les modules ont été créés
+            // Nous devons calculer les nombres RÉELS plutôt que théoriques
+            
+            // Recharger le produit avec ses dalles et modules
+            $produit->load('dalles.modules');
+            
+            // Calculer le nombre réel de modules et de dalles
+            $totalDalles = $produit->dalles->count();
+            $totalModules = 0;
+            $modulesParDalle = [];
+            
+            foreach ($produit->dalles as $dalle) {
+                $modulesCount = $dalle->modules->count();
+                $totalModules += $modulesCount;
+                $modulesParDalle[] = $modulesCount;
+            }
+            
+            // Calculer le nombre moyen de modules par dalle (arrondi)
+            $avgModulesParDalle = 0;
+            if ($totalDalles > 0) {
+                $avgModulesParDalle = round($totalModules / $totalDalles);
+            }
+            
+            // Récupérer la disposition des modules depuis les données produit
+            $dispositionModules = $produit->disposition_modules;
+            
+            // Maintenant, stocker les valeurs RÉELLES dans la session
+            $sessionData = [
+                'mode_configuration' => $validated['mode_configuration'],
+                'nb_flightcases' => $validated['nb_flightcases'] ?? 0,
+                'nb_dalles_par_flightcase' => $validated['nb_dalles_par_flightcase'] ?? 0,
+                'nb_modules_par_dalle' => $avgModulesParDalle,
+                'nb_modules_total' => $totalModules,
+                'disposition_modules' => $dispositionModules, // Ajout explicite de la disposition
+                // Ajouter des infos supplémentaires pour le débogage
+                'total_dalles' => $totalDalles,
+                'modules_par_dalle_details' => $modulesParDalle,
+                'theorique' => $nb_modules_total_theorique,
+            ];
+            
+            Log::info('Nombre RÉEL de modules calculé et stocké en session', [
+                'session_data' => $sessionData,
+                'difference' => $totalModules - $nb_modules_total_theorique
+            ]);
+            
+            session(['chantier_data_step3' => $sessionData]);
+            
+            // Redirection directe vers l'étape 4 (finale)
+            return redirect()->route('chantiers.create.step4', $chantier);
+            
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur lors de l\'envoi de l\'email de création de chantier: ' . $e->getMessage());
+            Log::error('Erreur dans storeStep3', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Une erreur est survenue lors de la création des dalles: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Méthode pour créer des modules pour une dalle
+     * Version simplifiée qui respecte strictement la configuration spécifiée
+     */
+    private function createModulesForDalle(Dalle $dalle, string $modulesConfig)
+    {
+        // Utiliser en priorité la configuration passée en paramètre
+        $configToUse = $modulesConfig;
+        
+        // Si la configuration n'est pas valide, on essaie d'utiliser celle de la dalle
+        $dimensions = explode('x', $configToUse);
+        if (count($dimensions) != 2) {
+            // Essayer d'utiliser la configuration stockée sur la dalle
+            if (!empty($dalle->disposition_modules) && strpos($dalle->disposition_modules, 'x') !== false) {
+                $configToUse = $dalle->disposition_modules;
+                $dimensions = explode('x', $configToUse);
+            } else {
+                // Si toujours pas valide, utiliser 2x2 par défaut
+                $configToUse = '2x2';
+                $dimensions = [2, 2];
+            }
         }
         
-        if ($generateReport) {
-            return redirect()->route('rapports.chantier', $chantier->id);
-        } else {
-            return redirect()->route('chantiers.show', $chantier)
-                ->with('success', 'Chantier créé avec succès !');
+        // Définir les colonnes et lignes à partir de la configuration choisie (JAMAIS des dimensions de la dalle)
+        $colonnes = (int)$dimensions[0];
+        $lignes = (int)$dimensions[1];
+        $totalModules = $colonnes * $lignes;
+        
+        // Log pour traçabilité
+        Log::info('Configuration de modules utilisée pour la dalle', [
+            'dalle_id' => $dalle->id,
+            'config_passée' => $modulesConfig,
+            'config_utilisée' => $configToUse,
+            'colonnes' => $colonnes,
+            'lignes' => $lignes,
+            'modules_attendus' => $totalModules
+        ]);
+        
+        // Vérifier rapidement si des modules existent encore pour cette dalle
+        // et les supprimer pour éviter les doublons
+        $existingModules = \App\Models\Module::where('dalle_id', $dalle->id)->count();
+        if ($existingModules > 0) {
+            Log::warning('Des modules existent encore pour cette dalle, suppression forcée', [
+                'dalle_id' => $dalle->id,
+                'existing_count' => $existingModules
+            ]);
+            
+            // Supprimer tous les modules existants
+            \App\Models\Module::where('dalle_id', $dalle->id)->delete();
         }
+        
+        // Mettre à jour les propriétés de la dalle pour assurer la cohérence
+        $dalle->disposition_modules = $configToUse;
+        $dalle->nb_colonnes = $colonnes;
+        $dalle->nb_lignes = $lignes;
+        $dalle->nb_modules = $totalModules;
+        $dalle->save();
+        
+        // Calculer la taille de chaque module en fonction des dimensions de la dalle
+        // et de la configuration choisie
+        $moduleWidth = $dalle->largeur / $colonnes;
+        $moduleHeight = $dalle->hauteur / $lignes;
+        
+        // Créer les modules
+        $moduleCount = 0;
+        for ($y = 0; $y < $lignes; $y++) {
+            for ($x = 0; $x < $colonnes; $x++) {
+                $moduleCount++;
+                $positionLettre = chr(65 + $y) . ($x + 1); // A1, A2, B1, B2, etc.
+                
+                // Créer le module
+                \App\Models\Module::create([
+                    'dalle_id' => $dalle->id,
+                    'largeur' => $moduleWidth,
+                    'hauteur' => $moduleHeight,
+                    'nb_pixels_largeur' => 100, // Par défaut
+                    'nb_pixels_hauteur' => 100, // Par défaut
+                    'etat' => 'non_commence', // État par défaut pour les nouveaux modules
+                    'reference_module' => $dalle->reference_dalle . '-M' . $moduleCount,
+                    'position_lettre' => $positionLettre,
+                    'position_x' => $x,
+                    'position_y' => $y
+                ]);
+            }
+        }
+        
+        Log::info('Modules créés pour la dalle', [
+            'dalle_id' => $dalle->id,
+            'nb_modules_créés' => $moduleCount,
+            'config_finale' => $configToUse
+        ]);
+        
+        return $moduleCount;
+    }
+    
+    /**
+     * Méthode auxiliaire pour créer des dalles de différents types
+     */
+    private function createDallesForMultipleSizes($chantier, $produit, $nbFlightcases, $nbDallesPerFC, $modulesConfig, $configType)
+    {
+        // Définir les dimensions de la dalle selon le type de configuration
+        $largeur = 500;
+        $hauteur = $configType == 1 ? 500 : 1000;
+        
+        // IMPORTANT: Dans un premier temps, vérifier si le produit a une configuration définie
+        // Si oui, priorité au choix utilisateur plutôt qu'à la configuration passée en paramètre
+        $configurationAUtiliser = $modulesConfig;
+        if ($produit && !empty($produit->disposition_modules) && preg_match('/^\d+x\d+$/', $produit->disposition_modules)) {
+            $configurationAUtiliser = $produit->disposition_modules;
+            Log::info('Priorité donnée à la configuration du produit dans createDallesForMultipleSizes', [
+                'produit_id' => $produit->id,
+                'config_produit' => $produit->disposition_modules,
+                'config_passée' => $modulesConfig
+            ]);
+        }
+        
+        // Assurer que la configuration est au format valide NxM
+        if (!preg_match('/^\d+x\d+$/', $configurationAUtiliser)) {
+            $configurationAUtiliser = '2x2'; // Configuration par défaut si invalide
+            Log::warning('Configuration invalide détectée dans createDallesForMultipleSizes, utilisation de 2x2', [
+                'config_invalide' => $configurationAUtiliser
+            ]);
+        }
+        
+        // Créer les dalles pour chaque flightcase
+        for ($f = 1; $f <= $nbFlightcases; $f++) {
+            for ($d = 1; $d <= $nbDallesPerFC; $d++) {
+                // Calculer le nombre de modules en fonction de la configuration
+                $modulesConfigParts = explode('x', $configurationAUtiliser);
+                $nbModules = (int)$modulesConfigParts[0] * (int)$modulesConfigParts[1];
+                
+                $reference_dalle = 'FC' . $f . '-D' . $d; // Format: FC1-D1, FC1-D2, etc.
+                $dalle = Dalle::create([
+                    'largeur' => $largeur,
+                    'hauteur' => $hauteur,
+                    'produit_id' => $produit->id,
+                    'reference_dalle' => $reference_dalle, // Référence structurée pour organisation
+                    'dalle_type_id' => $configType,
+                    'disposition_modules' => $configurationAUtiliser, // Utilisation de la bonne configuration
+                    'flightcase_number' => $f,
+                    'dalle_number' => $d,
+                    'nb_modules' => $nbModules,
+                    'alimentation' => '5V', // Valeur par défaut
+                    'nb_colonnes' => (int)$modulesConfigParts[0],
+                    'nb_lignes' => (int)$modulesConfigParts[1]
+                ]);
+                
+                Log::info('Dalle multi-taille créée', [
+                    'dalle_id' => $dalle->id,
+                    'type' => $configType,
+                    'disposition' => $configurationAUtiliser,
+                    'nb_modules' => $nbModules
+                ]);
+                
+                // Créer les modules pour cette dalle en utilisant la même configuration
+                $this->createModulesForDalle($dalle, $configurationAUtiliser);
+            }
+        }
+    }
+    
+    /**
+     * Afficher le formulaire de création - Étape 4 (finale)
+     */
+    public function createStep4(Chantier $chantier)
+    {
+        // Charger le chantier avec toutes ses relations pour la vue finale
+        $chantier->load(['client', 'produits.dalles.modules']);
+        
+        // Récupérer le client et les stats
+        $client = $chantier->client;
+        $produit = $chantier->produits->first();
+        $produitCatalogueId = $produit->produit_catalogue_id ?? null;
+        $produitRef = $produitCatalogueId ? \App\Models\ProduitCatalogue::find($produitCatalogueId) : null;
+        
+        // Calculer quelques statistiques pour le récapitulatif
+        $stats = [
+            'produits' => $chantier->produits->count(),
+            'dalles' => 0,
+            'modules' => 0,
+        ];
+        
+        foreach ($chantier->produits as $produit) {
+            $stats['dalles'] += $produit->dalles->count();
+            foreach ($produit->dalles as $dalle) {
+                $stats['modules'] += $dalle->modules->count();
+            }
+        }
+        
+        // Récupérer les techniciens (pour compatibilité avec le template)
+        $techniciens = \App\Models\User::where('role', 'technicien')->orWhere('role', 'admin')->get();
+        
+        // Construire les données des étapes pour la vue (basé sur le modèle)
+        $step1Data = [
+            'date_reception' => $chantier->date_reception,
+            'date_butoir' => $chantier->date_butoir,
+            'etat' => $chantier->etat
+        ];
+        
+        $step2Data = [
+            'selection_type' => $produitCatalogueId ? 'existant' : 'personnalise',
+            'marque' => $produit->marque,
+            'modele' => $produit->modele,
+            'pitch' => $produit->pitch,
+            'utilisation' => $produit->utilisation ?? 'indoor',
+            'electronique' => $produit->electronique ?? 'nova',
+            'electronique_detail' => $produit->electronique_detail ?? ''
+        ];
+        
+        // Déterminer le mode de configuration à partir des dalles
+        $dalle = $chantier->produits->first()->dalles->first();
+        $isFlightCase = $dalle && !($dalle->is_virtual ?? false);
+        
+        // Calcul amélioré des statistiques de flightcases et dalles
+        $nb_flightcases = 0;
+        $flightcaseDetails = [];
+        $nb_modules_par_dalle = 0;
+        
+        if ($isFlightCase) {
+            // Récupérer tous les numéros de flightcases uniques
+            $flightcaseNumbers = $chantier->produits->first()->dalles
+                ->pluck('flightcase_number')
+                ->filter() // Filtrer les valeurs null ou vides
+                ->unique()
+                ->sort()
+                ->values();
+                
+            // Si une configuration valide a été trouvée dans la session depuis l'étape 3
+            if (session()->has('chantier_data_step3') && 
+                isset(session('chantier_data_step3')['nb_flightcases']) && 
+                session('chantier_data_step3')['nb_flightcases'] > 0) {
+                
+                $nb_flightcases = session('chantier_data_step3')['nb_flightcases'];
+                
+                // Pour la cohérence, s'assurer que le nombre de flightcases n'est pas inférieur 
+                // au nombre détecté dans la base de données
+                if ($flightcaseNumbers->count() > $nb_flightcases) {
+                    $nb_flightcases = $flightcaseNumbers->count();
+                }
+            } else {
+                $nb_flightcases = $flightcaseNumbers->count();
+                if ($nb_flightcases == 0) {
+                    $nb_flightcases = 1; // Garantir qu'il y a au moins 1 flightcase
+                }
+            }
+            
+            // Pour chaque flightcase, calculer son nombre de dalles
+            foreach ($flightcaseNumbers as $fcNumber) {
+                if (!empty($fcNumber)) { // Ignorer les nulls
+                    $dallesCount = $chantier->produits->first()->dalles->where('flightcase_number', $fcNumber)->count();
+                    $flightcaseDetails[] = "FC#$fcNumber: $dallesCount dalles";
+                }
+            }
+            
+            // Déterminer le nombre exact de modules par dalle en fonction de la disposition
+            // Priorité 1: Utiliser la disposition des modules du produit associé
+            if ($produit->disposition_modules && strpos($produit->disposition_modules, 'x') !== false) {
+                $parts = explode('x', $produit->disposition_modules);
+                if (count($parts) == 2) {
+                    $nb_modules_par_dalle = (int)$parts[0] * (int)$parts[1];
+                    
+                    Log::info('Calcul exact du nombre de modules par dalle depuis la disposition du produit', [
+                        'disposition' => $produit->disposition_modules,
+                        'nb_modules_par_dalle' => $nb_modules_par_dalle
+                    ]);
+                }
+            }
+            // Priorité 2: Utiliser la disposition stockée en session
+            else if (session()->has('chantier_data_step3') && 
+                isset(session('chantier_data_step3')['disposition_modules']) && 
+                strpos(session('chantier_data_step3')['disposition_modules'], 'x') !== false) {
+                
+                $parts = explode('x', session('chantier_data_step3')['disposition_modules']);
+                if (count($parts) == 2) {
+                    $nb_modules_par_dalle = (int)$parts[0] * (int)$parts[1];
+                    
+                    Log::info('Calcul exact du nombre de modules par dalle depuis la session', [
+                        'disposition' => session('chantier_data_step3')['disposition_modules'],
+                        'nb_modules_par_dalle' => $nb_modules_par_dalle
+                    ]);
+                }
+            }
+            // Priorité 3: Utiliser le nombre moyen de modules par dalle stocké en session
+            else if (session()->has('chantier_data_step3') && 
+                isset(session('chantier_data_step3')['nb_modules_par_dalle']) && 
+                session('chantier_data_step3')['nb_modules_par_dalle'] > 0) {
+                
+                $nb_modules_par_dalle = session('chantier_data_step3')['nb_modules_par_dalle'];
+                
+                Log::info('Utilisation des données de session pour modules par dalle', [
+                    'session_nb_modules_par_dalle' => $nb_modules_par_dalle
+                ]);
+            } 
+            // Priorité 4: Calculer à partir des données de la base
+            else if ($stats['dalles'] > 0) {
+                $nb_modules_par_dalle = round($stats['modules'] / $stats['dalles']);
+                
+                Log::info('Calcul de la moyenne de modules par dalle', [
+                    'total_modules' => $stats['modules'],
+                    'total_dalles' => $stats['dalles'],
+                    'moyenne' => $nb_modules_par_dalle
+                ]);
+            }
+        }
+        
+        // Calculer le nombre EXACT de modules à partir du nombre de dalles et du nombre de modules par dalle
+        // Cette approche est beaucoup plus précise qu'utiliser le compte de la base de données
+        if ($isFlightCase) {
+            // Pour le mode flightcase, calculer Total modules = Nombre de dalles × Nombre de modules par dalle
+            $nb_modules_total = $stats['dalles'] * $nb_modules_par_dalle;
+            
+            Log::info('Calcul déterministe du nombre total de modules', [
+                'nb_dalles' => $stats['dalles'],
+                'nb_modules_par_dalle' => $nb_modules_par_dalle,
+                'calcul' => "{$stats['dalles']} × {$nb_modules_par_dalle} = {$nb_modules_total}",
+                'ancien_calcul' => $stats['modules']
+            ]);
+        } else {
+            // Pour le mode individuel, utiliser le nombre spécifié
+            // ou le nombre réel dans la base de données si disponible
+            $nb_modules_total = session()->has('chantier_data_step3') && 
+                isset(session('chantier_data_step3')['nb_modules_total']) ? 
+                session('chantier_data_step3')['nb_modules_total'] : $stats['modules'];
+        }
+        
+        // Récupérer la disposition depuis la session ou du produit
+        $disposition_modules = session()->has('chantier_data_step3') && isset(session('chantier_data_step3')['disposition_modules']) 
+            ? session('chantier_data_step3')['disposition_modules'] 
+            : $produit->disposition_modules;
+            
+        Log::info('Utilisation du nombre réel de modules depuis la base de données', [
+            'db_modules_count' => $nb_modules_total,
+            'session_value' => session()->has('chantier_data_step3') ? (session('chantier_data_step3')['nb_modules_total'] ?? 'non défini') : 'session vide',
+            'disposition_modules' => $disposition_modules,
+            'produit_disposition' => $produit->disposition_modules
+        ]);
+        
+        $step3Data = [
+            'mode' => $isFlightCase ? 'flightcase' : 'individuel',
+            'nb_flightcases' => $nb_flightcases,
+            'flightcase_details' => $flightcaseDetails,
+            'nb_modules_par_dalle' => $nb_modules_par_dalle,
+            'nb_modules_total' => $nb_modules_total,
+            'disposition_modules' => $disposition_modules // Ajouter explicitement la disposition
+        ];
+        
+        // Log pour débogage des valeurs finales utilisées dans l'affichage
+        Log::info('Valeurs finales pour l\'étape 4 (finale)', [
+            'nb_flightcases' => $nb_flightcases,
+            'nb_modules_par_dalle' => $nb_modules_par_dalle,
+            'nb_modules_total' => $nb_modules_total,
+            'stats_modules' => $stats['modules'],
+            'disposition_modules' => $disposition_modules,
+            'disposition_produit' => $produit->disposition_modules
+        ]);
+        
+        return view('chantiers.create_step4', compact(
+            'chantier', 'client', 'stats', 'step1Data', 'step2Data', 
+            'step3Data', 'produitRef', 'techniciens'
+        ));
+    }
+    
+    /**
+     * Finaliser la création du chantier (étape 4)
+     */
+    public function storeStep4(Request $request, Chantier $chantier)
+    {
+        $validated = $request->validate([
+            'generate_report' => 'nullable|boolean',
+        ]);
+        
+        // Marquer le chantier comme commencé
+        $chantier->update(['etat' => 'en_cours']);
+        
+        // Si demandé, générer un rapport
+        if ($request->has('generate_report')) {
+            try {
+                // Vérifier si la méthode existe dans le contrôleur de rapports
+                $rapportController = app(\App\Http\Controllers\RapportController::class);
+                if (method_exists($rapportController, 'genererRapportChantier')) {
+                    $rapportController->genererRapportChantier($chantier->id);
+                }
+                
+                return redirect()->route('chantiers.show', $chantier)
+                    ->with('success', 'Le chantier a été créé avec succès et un rapport a été généré!');
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Erreur lors de la génération du rapport', [
+                    'chantier_id' => $chantier->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return redirect()->route('chantiers.show', $chantier)
+                    ->with('warning', 'Le chantier a été créé avec succès, mais la génération du rapport a échoué.')
+                    ->with('error_details', $e->getMessage());
+            }
+        }
+        
+        // Notification de création de chantier
+        try {
+            // Envoyer une notification au client si configuré
+            if (config('app.send_chantier_notifications', false)) {
+                $client = $chantier->client;
+                $emailService = app(\App\Services\EmailService::class);
+                $emailService->sendChantierCreatedEmail($chantier, $client);
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur lors de l\'envoi de la notification de création de chantier', [
+                'chantier_id' => $chantier->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+        
+        return redirect()->route('chantiers.show', $chantier)
+            ->with('success', 'Le chantier a été créé avec succès!');
+    }
+    
+    /**
+     * Finaliser la création du chantier
+     */
+    
+    /**
+     * Afficher un chantier spécifique
+     */
+    public function show(Chantier $chantier)
+    {
+        try {
+            // Charger toutes les relations importantes
+            $chantier->load([
+                'client', 
+                'produits.dalles.modules.interventions.diagnostic',
+                'produits.dalles.modules.interventions.reparation'
+            ]);
+            
+            // Récupérer le client directement
+            $client = $chantier->client;
+            
+            // Calculer quelques statistiques pour l'aperçu
+            $stats = [
+                'produits' => $chantier->produits->count(),
+                'dalles' => 0,
+                'modules' => 0,
+                'modules_repares' => 0,
+                'modules_en_cours' => 0,
+                'interventions' => 0,
+            ];
+            
+            // Nettoyer les éventuelles interventions vides qui auraient été créées automatiquement
+            $emptyInterventionsRemoved = 0;
+            foreach ($chantier->produits as $produit) {
+                foreach ($produit->dalles as $dalle) {
+                    foreach ($dalle->modules as $module) {
+                        // Supprimer les interventions vides sans diagnostic ni réparation
+                        foreach ($module->interventions as $intervention) {
+                            if (!$intervention->diagnostic && !$intervention->reparation) {
+                                // Cette intervention est vide, on va la supprimer
+                                $intervention->delete();
+                                $emptyInterventionsRemoved++;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if ($emptyInterventionsRemoved > 0) {
+                Log::info('Interventions vides supprimées:', [
+                    'chantier_id' => $chantier->id,
+                    'count' => $emptyInterventionsRemoved
+                ]);
+                
+                // Recharger le chantier pour avoir les données à jour
+                $chantier->load([
+                    'client', 
+                    'produits.dalles.modules.interventions.diagnostic',
+                    'produits.dalles.modules.interventions.reparation'
+                ]);
+            }
+            
+            foreach ($chantier->produits as $produit) {
+                $stats['dalles'] += $produit->dalles->count();
+                foreach ($produit->dalles as $dalle) {
+                    $stats['modules'] += $dalle->modules->count();
+                    
+                    foreach ($dalle->modules as $module) {
+                        if ($module->etat === 'Terminé') {
+                            $stats['modules_repares']++;
+                        } elseif ($module->etat === 'En réparation') {
+                            $stats['modules_en_cours']++;
+                        }
+                        
+                        $stats['interventions'] += $module->interventions->count();
+                    }
+                }
+            }
+            
+            // Calculer le pourcentage de progression
+            $stats['progression'] = $stats['modules'] > 0 
+                ? round(($stats['modules_repares'] / $stats['modules']) * 100) 
+                : 0;
+                
+            return view('chantiers.show', compact('chantier', 'client', 'stats'));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur lors de l\'affichage du chantier', [
+                'chantier_id' => $chantier->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->route('chantiers.index')
+                ->with('error', 'Une erreur est survenue lors de l\'affichage du chantier. Veuillez réessayer ou contacter l\'administrateur.');
+        }
+    }
+
+    /**
+     * Afficher le formulaire d'édition
+     */
+    public function edit(Chantier $chantier)
+    {
+        // Charger la relation client
+        $chantier->load('client');
+        
+        // Récupérer tous les clients pour le sélecteur
+        $clients = Client::all();
+        
+        // Récupérer le client actuel
+        $client = $chantier->client;
+        
+        return view('chantiers.edit', compact('chantier', 'clients', 'client'));
+    }
+
+    /**
+     * Mettre à jour un chantier
+     */
+    public function update(Request $request, Chantier $chantier)
+    {
+        $validated = $request->validate([
+            'client_id' => 'required|exists:clients,id',
+            'description' => 'nullable|string',
+            'date_reception' => 'required|date',
+            'date_butoir' => 'required|date|after_or_equal:date_reception',
+            'etat' => 'required|in:non_commence,en_cours,stand_by,termine',
+        ]);
+
+        $chantier->update($validated);
+
+        return redirect()->route('chantiers.show', $chantier)
+            ->with('success', 'Chantier mis à jour avec succès.');
+    }
+
+    /**
+     * Supprimer un chantier
+     */
+    public function destroy(Request $request, Chantier $chantier)
+    {
+        // Valider que la référence et la société/client fournis correspondent
+        $validated = $request->validate([
+            'reference_confirmation' => 'required|string',
+            'client_confirmation' => 'required|string',
+        ]);
+        
+        // Vérifier que la référence correspond
+        if ($validated['reference_confirmation'] !== $chantier->reference) {
+            return redirect()->back()
+                ->with('error', 'La référence saisie ne correspond pas à celle du chantier.');
+        }
+        
+        // Vérifier que le nom du client/société correspond
+        $clientName = $chantier->client->societe ?: $chantier->client->nom_complet;
+        if ($validated['client_confirmation'] !== $clientName) {
+            return redirect()->back()
+                ->with('error', 'Le nom du client/société saisi ne correspond pas à celui du chantier.');
+        }
+        
+        try {
+            // Supprimer le chantier et toutes ses dépendances en utilisant une transaction
+            \Illuminate\Support\Facades\DB::beginTransaction();
+            
+            // Charger toutes les relations pour pouvoir les supprimer
+            $chantier->load(['produits.dalles.modules.interventions.diagnostic', 'produits.dalles.modules.interventions.reparation']);
+            
+            // Supprimer les diagnostics, réparations, interventions, modules et dalles
+            foreach ($chantier->produits as $produit) {
+                foreach ($produit->dalles as $dalle) {
+                    foreach ($dalle->modules as $module) {
+                        foreach ($module->interventions as $intervention) {
+                            // Supprimer le diagnostic associé
+                            if ($intervention->diagnostic) {
+                                $intervention->diagnostic->delete();
+                            }
+                            
+                            // Supprimer la réparation associée
+                            if ($intervention->reparation) {
+                                $intervention->reparation->delete();
+                            }
+                            
+                            // Supprimer l'intervention
+                            $intervention->delete();
+                        }
+                        
+                        // Supprimer le module
+                        $module->delete();
+                    }
+                    
+                    // Supprimer la dalle
+                    $dalle->delete();
+                }
+                
+                // Supprimer le produit
+                $produit->delete();
+            }
+            
+            // Enfin, supprimer le chantier lui-même
+            $chantier->delete();
+            
+            \Illuminate\Support\Facades\DB::commit();
+            
+            return redirect()->route('chantiers.index')
+                ->with('success', 'Chantier supprimé avec succès.');
+                
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            
+            \Illuminate\Support\Facades\Log::error('Erreur lors de la suppression du chantier', [
+                'chantier_id' => $chantier->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'Une erreur est survenue lors de la suppression du chantier : ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Mettre à jour l'état d'un chantier rapidement
+     */
+    public function updateState(Request $request, Chantier $chantier)
+    {
+        $validated = $request->validate([
+            'etat' => 'required|in:non_commence,stand_by,termine,defaillant',
+        ]);
+        
+        $chantier->update(['etat' => $validated['etat']]);
+        
+        return redirect()->back()->with('success', 'État du chantier mis à jour avec succès.');
+    }
+    
+    /**
+     * Afficher le suivi d'un chantier avec un token (accès public)
+     */
+    public function suivi(string $token)
+    {
+        $chantier = Chantier::with([
+                'client', 
+                'produits.dalles.modules.interventions.diagnostic',
+                'produits.dalles.modules.interventions.reparation'
+            ])
+            ->where('token_suivi', $token)
+            ->first();
+        
+        if (!$chantier) {
+            return redirect('/')->with('error', 'Chantier introuvable. Vérifiez le QR code ou l\'URL.');
+        }
+        
+        // Calculer les statistiques pour le chantier
+        $totalModules = 0;
+        $modulesTermines = 0;
+        $modulesEnCours = 0;
+        $modulesStandBy = 0;
+        $modulesDefaillants = 0;
+        $modulesNonCommences = 0;
+        $tempsTotal = 0;
+        $interventionsEnCours = 0;
+        
+        // Pour l'analyse des causes
+        $causes = [
+            'usure_normale' => 0,
+            'choc' => 0,
+            'defaut_usine' => 0,
+            'autre' => 0
+        ];
+        
+        foreach ($chantier->produits as $produit) {
+            foreach ($produit->dalles as $dalle) {
+                $totalModules += $dalle->modules->count();
+                $modulesTermines += $dalle->modules->where('etat', 'termine')->count();
+                $modulesEnCours += $dalle->modules->where('etat', 'en_cours')->count();
+                $modulesStandBy += $dalle->modules->where('etat', 'stand_by')->count();
+                $modulesDefaillants += $dalle->modules->where('etat', 'defaillant')->count();
+                $modulesNonCommences += $dalle->modules->where('etat', 'non_commence')->count();
+                
+                // Compter les interventions en cours et le temps total
+                foreach ($dalle->modules as $module) {
+                    foreach ($module->interventions as $intervention) {
+                        $tempsTotal += $intervention->temps_total ?? 0;
+                        
+                        if (!$intervention->is_completed) {
+                            $interventionsEnCours++;
+                        }
+                        
+                        // Récupérer les causes des diagnostics si disponibles
+                        if ($intervention->diagnostic && $intervention->diagnostic->cause) {
+                            if (isset($causes[$intervention->diagnostic->cause])) {
+                                $causes[$intervention->diagnostic->cause]++;
+                            } else {
+                                $causes['autre']++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Formater le temps total
+        $heures = floor($tempsTotal / 3600);
+        $minutes = floor(($tempsTotal % 3600) / 60);
+        $secondes = $tempsTotal % 60;
+        $tempsFormate = sprintf('%dh %02dm', $heures, $minutes);
+        
+        // Calculer le pourcentage de modules terminés
+        $pourcentageTermines = $totalModules > 0 ? round(($modulesTermines / $totalModules) * 100) : 0;
+        
+        // Date de début des travaux (première intervention)
+        $dateDebutTravaux = now()->format('d/m/Y');
+        
+        // Date prévue de fin
+        $dateFinPrevue = $chantier->date_butoir ? $chantier->date_butoir->format('d/m/Y') : 'Non définie';
+        
+        // Analyser les causes
+        $totalCauses = array_sum($causes);
+        $causePrincipale = 'autre';
+        $pourcentagePrincipal = 0;
+        $causeSecondaire = '';
+        $pourcentageSecondaire = 0;
+        $ecartFaible = false;
+        
+        if ($totalCauses > 0) {
+            // Trouver la cause principale
+            $causePrincipale = array_keys($causes, max($causes))[0];
+            $pourcentagePrincipal = round(($causes[$causePrincipale] / $totalCauses) * 100);
+            
+            // Calculer le reste pour cause secondaire
+            $causesTmp = $causes;
+            unset($causesTmp[$causePrincipale]);
+            $secondMaxValue = !empty($causesTmp) ? max($causesTmp) : 0;
+            $causeSecondaire = !empty($causesTmp) ? array_search($secondMaxValue, $causesTmp) : '';
+            $pourcentageSecondaire = $totalCauses > 0 ? round(($secondMaxValue / $totalCauses) * 100) : 0;
+            
+            // Déterminer si les causes sont assez proches (moins de 20% d'écart)
+            $ecartFaible = ($pourcentagePrincipal - $pourcentageSecondaire) <= 20 && $pourcentageSecondaire >= 30;
+        }
+        
+        // Initialiser les variables pour les composants remplacés
+        $totalLEDsRemplacees = 0;
+        $totalICsRemplaces = 0;
+        $totalMasquesRemplaces = 0;
+        
+        // Calculer le nombre de composants remplacés à partir des réparations
+        foreach ($chantier->produits as $produit) {
+            foreach ($produit->dalles as $dalle) {
+                foreach ($dalle->modules as $module) {
+                    foreach ($module->interventions as $intervention) {
+                        if ($intervention->reparation) {
+                            $totalLEDsRemplacees += $intervention->reparation->nb_leds_remplacees ?? 0;
+                            $totalICsRemplaces += $intervention->reparation->nb_ic_remplaces ?? 0;
+                            $totalMasquesRemplaces += $intervention->reparation->nb_masques_remplaces ?? 0;
+                        }
+                    }
+                }
+            }
+        }
+
+        return view('suivi.chantier', compact(
+            'chantier', 
+            'totalModules', 
+            'modulesTermines', 
+            'modulesEnCours',
+            'modulesStandBy', 
+            'modulesDefaillants',
+            'modulesNonCommences',
+            'pourcentageTermines',
+            'tempsFormate',
+            'interventionsEnCours',
+            'dateDebutTravaux',
+            'dateFinPrevue',
+            'causes',
+            'totalCauses',
+            'causePrincipale',
+            'pourcentagePrincipal',
+            'causeSecondaire',
+            'pourcentageSecondaire',
+            'ecartFaible',
+            'totalLEDsRemplacees',
+            'totalICsRemplaces',
+            'totalMasquesRemplaces'
+        ));
+    }
+    
+    /**
+     * Stocker un nouveau chantier (méthode simple, pour compatibilité)
+     */
+    public function store(Request $request)
+    {
+        // Définir des règles de validation de base
+        $rules = [
+            'client_id' => 'required|exists:clients,id',
+            'description' => 'nullable|string',
+            'date_reception' => 'required|date',
+            'etat' => 'required|in:non_commence,en_cours,stand_by,termine',
+        ];
+        
+        // Validation conditionnelle pour date_butoir selon le type de projet
+        if ($request->input('is_client_achat') == 0 || $request->input('is_client_achat') === null) {
+            // SAV / Réparation ou cas par défaut (ancienne méthode)
+            $rules['date_butoir'] = 'required|date|after_or_equal:date_reception';
+        } else {
+            // Vente / Achat client
+            $rules['date_butoir'] = 'nullable|date|after_or_equal:date_reception';
+        }
+        
+        $validated = $request->validate($rules);
+        
+        // Récupérer le client pour générer le nom automatiquement
+        $client = Client::find($validated['client_id']);
+        
+        // Générer le nom du chantier automatiquement
+        $societe = $client->societe ? $client->societe : $client->nom_complet;
+        $date = date('d/m/Y');
+        $validated['nom'] = "Réparation écran - {$societe} - {$date}";
+        
+        // Générer une référence unique
+        $validated['reference'] = Chantier::genererReference();
+        
+        $chantier = Chantier::create($validated);
+        
+        return redirect()->route('chantiers.show', $chantier)
+            ->with('success', 'Chantier créé avec succès.');
     }
 }
