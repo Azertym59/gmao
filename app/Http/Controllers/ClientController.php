@@ -146,4 +146,21 @@ class ClientController extends Controller
         return redirect()->route('clients.index')
             ->with('success', 'Client supprimé avec succès.');
     }
+    
+    /**
+     * Définir un mot de passe pour le client afin qu'il puisse se connecter
+     */
+    public function setPassword(Request $request, Client $client)
+    {
+        $validated = $request->validate([
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+        
+        // Hasher le mot de passe
+        $client->password = bcrypt($validated['password']);
+        $client->save();
+        
+        return redirect()->route('clients.edit', $client)
+            ->with('success', 'Mot de passe défini avec succès. Le client peut maintenant se connecter.');
+    }
 }

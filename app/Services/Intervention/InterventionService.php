@@ -29,17 +29,53 @@ class InterventionService
     }
     
     /**
-     * Démarre une nouvelle intervention
+     * Démarre une nouvelle intervention avec un verrou de base de données
      */
     public function startIntervention(Module $module, ?int $technicienId = null): Intervention
     {
+        // Utiliser un verrou de table pour éviter les conditions de concurrence
         DB::beginTransaction();
         
         try {
-            // Vérifier si le module est occupé par un technicien actuellement
-            if ($module->est_occupe && $module->technicien_id !== null && $module->technicien_id !== ($technicienId ?? Auth::id())) {
-                throw new \Exception('Ce module est déjà en cours d\'intervention par un autre technicien');
+            // IMPORTANT: Verrouiller la table modules et interventions pour ce module pour éviter les conflits
+            // Faire un SELECT FOR UPDATE explicite pour verrouiller la ligne du module pendant la transaction
+            $lockedModule = DB::table('modules')
+                ->where('id', $module->id)
+                ->lockForUpdate()
+                ->first();
+                
+            if (!$lockedModule) {
+                throw new \Exception("Impossible de verrouiller le module pour l'intervention");
             }
+            
+            // Vérification stricte: rechercher toute intervention active sur ce module
+            $existingIntervention = Intervention::where('module_id', $module->id)
+                ->where('is_completed', false)
+                ->lockForUpdate() // Verrouiller aussi les interventions
+                ->first();
+                
+            if ($existingIntervention) {
+                // S'il y a déjà une intervention active et que ce n'est pas l'utilisateur courant
+                if ($existingIntervention->technicien_id !== ($technicienId ?? Auth::id())) {
+                    $technicien = \App\Models\User::find($existingIntervention->technicien_id);
+                    $techName = $technicien ? $technicien->name : 'Un autre utilisateur';
+                    
+                    // Valider explicitement la transaction avant de lever l'exception
+                    DB::commit();
+                    throw new \Exception("Ce module est déjà en cours d'intervention par {$techName}");
+                }
+                
+                // Si c'est la même personne, retourner l'intervention existante
+                DB::commit();
+                return $existingIntervention;
+            }
+            
+            // Forcer la réinitialisation de l'état du module, qu'il soit marqué occupé ou non
+            // Cela assure une cohérence totale de l'état
+            $module = Module::find($module->id); // Recharger le module frais pour éviter les conflits
+            $module->est_occupe = false;
+            $module->technicien_id = null;
+            $module->save();
             
             // Créer l'intervention
             $intervention = Intervention::create([

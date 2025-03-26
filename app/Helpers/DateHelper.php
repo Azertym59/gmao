@@ -65,16 +65,21 @@ class DateHelper
         
         // Si la date est dépassée
         if ($now->gt($targetDate)) {
-            return 'text-danger';
+            return 'text-red-500';
         }
         
-        // Si moins de 3 jours restants
+        // Si moins de 5 jours restants (rouge)
         $diffDays = $now->diffInDays($targetDate);
-        if ($diffDays < 3) {
-            return 'text-warning';
+        if ($diffDays < 5) {
+            return 'text-red-500';
         }
         
-        // Sinon tout va bien
-        return 'text-success';
+        // Si moins de 10 jours restants (orange)
+        if ($diffDays < 10) {
+            return 'text-orange-500';
+        }
+        
+        // Sinon tout va bien (vert)
+        return 'text-green-500';
     }
 }

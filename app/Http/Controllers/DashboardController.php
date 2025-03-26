@@ -42,7 +42,7 @@ class DashboardController extends Controller
     {
         $total = Module::count();
         $termines = Module::where('etat', 'termine')->count();
-        $en_cours = Module::where('etat', 'en_cours')->count();
+        $stand_by = Module::where('etat', 'stand_by')->count();
         $defaillants = Module::where('etat', 'defaillant')->count();
         $non_commences = Module::where('etat', 'non_commence')->count();
         $pourcentage = $total > 0 ? round(($termines / $total) * 100) : 0;
@@ -50,7 +50,7 @@ class DashboardController extends Controller
         return [
             'total' => $total,
             'termines' => $termines,
-            'en_cours' => $en_cours,
+            'stand_by' => $stand_by,
             'defaillants' => $defaillants,
             'non_commences' => $non_commences,
             'pourcentage' => $pourcentage

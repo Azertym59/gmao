@@ -35,6 +35,12 @@ class InterventionController extends Controller
      */
     public function index(Request $request)
     {
+        // Si le paramètre selectModule est présent, rediriger vers la sélection de module
+        if ($request->has('selectModule')) {
+            $modules = $this->moduleRepository->getModulesNeedingIntervention();
+            return view('interventions.select_module', compact('modules'));
+        }
+        
         // Construire les filtres à partir des paramètres de la requête
         $filters = [];
         
@@ -64,9 +70,10 @@ class InterventionController extends Controller
     /**
      * Afficher le formulaire de création
      */
-    public function create(Request $request)
+    public function create(Request $request, $module = null)
     {
-        $moduleId = $request->input('module_id');
+        // Si l'ID du module est passé dans l'URL, l'utiliser. Sinon, chercher dans les paramètres de requête.
+        $moduleId = $module ?? $request->input('module_id');
         
         if ($moduleId) {
             $module = $this->moduleRepository->findById($moduleId);
@@ -75,27 +82,95 @@ class InterventionController extends Controller
                 return redirect()->route('interventions.index')->with('error', "Module non trouvé.");
             }
             
-            // Vérifier si le module est disponible
-            if ($module->est_occupe) {
-                // Vérifier si une intervention en cours existe déjà pour ce module
-                $existingIntervention = Intervention::where('module_id', $module->id)
-                    ->where('is_completed', false)
-                    ->latest()
-                    ->first();
+            // Double vérification des interventions actives
+            // Vérifier à la fois l'état occupé ET les interventions actives pour être sûr
+            if ($module->est_occupe || $module->hasActiveIntervention()) {
+                // Obtenir l'intervention active
+                $existingIntervention = $module->getActiveIntervention();
                 
                 if ($existingIntervention) {
-                    // Rediriger vers la page d'étape 1 (diagnostic) de l'intervention existante
-                    return redirect()->route('interventions.step1.diagnostic', $existingIntervention);
+                    // Si l'intervention est par un autre technicien, afficher un message explicite
+                    if ($existingIntervention->technicien_id !== Auth::id()) {
+                        $technicien = \App\Models\User::find($existingIntervention->technicien_id);
+                        $techName = $technicien ? $technicien->name : 'Un autre utilisateur';
+                        
+                        // Rediriger avec un message d'erreur
+                        return redirect()->route('interventions.index')
+                            ->with('error', "Ce module est déjà en cours d'intervention par {$techName}. Veuillez choisir un autre module.");
+                    }
+                    
+                    // Rediriger vers la page appropriée de l'intervention existante
+                    return redirect()->route('interventions.diagnostic', $existingIntervention)
+                        ->with('info', 'Vous avez déjà une intervention en cours sur ce module.');
                 }
                 
-                return redirect()->route('interventions.index')->with('error', "Ce module est déjà en cours d'intervention.");
+                // Nettoyage de l'état incohérent (occupé mais sans intervention active)
+                $module->est_occupe = false;
+                $module->technicien_id = null;
+                $module->save();
+                
+                // Log de l'incohérence pour analyse ultérieure
+                \Illuminate\Support\Facades\Log::warning("État incohérent détecté sur le module #{$module->id}: marqué comme occupé sans intervention active.");
             }
             
-            // Créer une nouvelle intervention
+            // VERROU D'EXCLUSION MUTUELLE AVEC UN FICHIER
+            // Cette méthode est beaucoup plus solide pour éviter les doubles interventions
+            $lockFile = storage_path('app/locks/module_' . $module->id . '.lock');
+            
+            // Créer le dossier des verrous s'il n'existe pas
+            if (!file_exists(dirname($lockFile))) {
+                mkdir(dirname($lockFile), 0777, true);
+            }
+            
+            // Essayer d'obtenir un verrou exclusif sur le fichier
+            $lockHandle = fopen($lockFile, 'w+');
+            
+            if (!$lockHandle || !flock($lockHandle, LOCK_EX | LOCK_NB)) {
+                // Impossible d'obtenir le verrou, un autre processus est déjà en train d'intervenir
+                if ($lockHandle) {
+                    fclose($lockHandle);
+                }
+                
+                // Vérifier une dernière fois si une intervention est en cours
+                $activeIntervention = $module->getActiveIntervention();
+                
+                if ($activeIntervention) {
+                    // Si c'est notre propre intervention, on redirige vers celle-ci
+                    if ($activeIntervention->technicien_id === Auth::id()) {
+                        return redirect()->route('interventions.diagnostic', $activeIntervention)
+                            ->with('info', 'Vous avez déjà une intervention en cours sur ce module.');
+                    }
+                    
+                    $technicien = \App\Models\User::find($activeIntervention->technicien_id);
+                    $techName = $technicien ? $technicien->name : 'Un autre technicien';
+                    
+                    return redirect()->route('interventions.index')
+                        ->with('error', "⚠️ MODULE OCCUPÉ ⚠️ - Ce module est déjà en cours d'intervention par {$techName}. Veuillez choisir un autre module.");
+                }
+                
+                return redirect()->route('interventions.index')
+                    ->with('error', "Ce module est actuellement verrouillé, une autre personne y accède probablement. Veuillez essayer à nouveau plus tard.");
+            }
+            
             try {
+                // Créer l'intervention avec le verrou
                 $intervention = $this->interventionService->startIntervention($module, Auth::id());
-                return redirect()->route('interventions.step1.diagnostic', $intervention);
+                
+                // Libérer le verrou
+                flock($lockHandle, LOCK_UN);
+                fclose($lockHandle);
+                
+                return redirect()->route('interventions.diagnostic', $intervention);
             } catch (\Exception $e) {
+                // Libérer le verrou en cas d'erreur
+                if ($lockHandle) {
+                    flock($lockHandle, LOCK_UN);
+                    fclose($lockHandle);
+                }
+                
+                // Nettoyer tous les verrous datant de plus de 10 minutes
+                $this->cleanOldLocks();
+                
                 return redirect()->route('interventions.index')->with('error', $e->getMessage());
             }
         } else {
@@ -126,8 +201,11 @@ class InterventionController extends Controller
                     ->with('info', 'Cette intervention est déjà terminée.');
             }
             
-            // Finaliser l'intervention avec l'état du module spécifié
+            // Finaliser l'intervention avec l'état du module spécifié (mais jamais "en_cours")
             $moduleEtat = $request->input('module_etat', 'termine');
+            if ($moduleEtat === 'en_cours') {
+                $moduleEtat = 'stand_by'; // Plus d'état "en_cours", on utilise "stand_by" à la place
+            }
             $success = $this->interventionService->finalizeIntervention($intervention, $moduleEtat);
             
             if (!$success) {
@@ -193,7 +271,7 @@ class InterventionController extends Controller
             // Utiliser le service pour sauvegarder le diagnostic
             $diagnostic = $this->interventionService->saveDiagnostic($intervention, $diagnosticDTO);
             
-            return redirect()->route('interventions.step2.reparation', $intervention)
+            return redirect()->route('interventions.reparation', $intervention)
                 ->with('success', 'Diagnostic enregistré avec succès.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
@@ -223,7 +301,7 @@ class InterventionController extends Controller
             // Utiliser le service pour sauvegarder la réparation
             $reparation = $this->interventionService->saveReparation($intervention, $reparationDTO);
             
-            return redirect()->route('interventions.step3.finalisation', $intervention)
+            return redirect()->route('interventions.finalisation', $intervention)
                 ->with('success', 'Réparation enregistrée avec succès.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
@@ -413,7 +491,7 @@ class InterventionController extends Controller
         }
         
         if (!$diagnostic) {
-            return redirect()->route('interventions.step1.diagnostic', $intervention)
+            return redirect()->route('interventions.diagnostic', $intervention)
                 ->with('error', 'Vous devez d\'abord compléter le diagnostic.');
         }
         
@@ -436,15 +514,114 @@ class InterventionController extends Controller
         }
         
         if (!$diagnostic) {
-            return redirect()->route('interventions.step1.diagnostic', $intervention)
+            return redirect()->route('interventions.diagnostic', $intervention)
                 ->with('error', 'Vous devez d\'abord compléter le diagnostic.');
         }
         
         if (!$reparation) {
-            return redirect()->route('interventions.step2.reparation', $intervention)
+            return redirect()->route('interventions.reparation', $intervention)
                 ->with('error', 'Vous devez d\'abord compléter la réparation.');
         }
         
         return view('interventions.step3_finalisation', compact('intervention', 'module', 'diagnostic', 'reparation'));
+    }
+    
+    /**
+     * Enregistrer la finalisation d'une intervention
+     */
+    public function storeFinalisation(Request $request, Intervention $intervention)
+    {
+        try {
+            // Vérifier si l'intervention est déjà terminée
+            if ($intervention->is_completed) {
+                return redirect()->route('interventions.show', $intervention)
+                    ->with('info', 'Cette intervention est déjà terminée.');
+            }
+            
+            // Vérifier que le diagnostic et la réparation existent
+            if (!$intervention->diagnostic || !$intervention->reparation) {
+                return redirect()->back()
+                    ->with('error', 'Le diagnostic et la réparation doivent être complétés avant de finaliser l\'intervention.');
+            }
+            
+            // Récupérer l'état final du module (mais jamais "en_cours")
+            $moduleEtat = $request->input('module_etat', 'termine');
+            if ($moduleEtat === 'en_cours') {
+                $moduleEtat = 'stand_by'; // Plus d'état "en_cours", on utilise "stand_by" à la place
+            }
+            
+            // Finaliser l'intervention avec le service
+            $success = $this->interventionService->finalizeIntervention($intervention, $moduleEtat);
+            
+            if (!$success) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Erreur lors de la finalisation de l\'intervention.');
+            }
+            
+            // Récupérer l'ID du chantier associé à cette intervention
+            $chantierId = $intervention->module->dalle->produit->chantier->id;
+            
+            // Rediriger vers la page du chantier
+            return redirect()->route('chantiers.show', $chantierId)
+                ->with('success', 'Intervention terminée avec succès.');
+                
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la finalisation de l\'intervention: ' . $e->getMessage());
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Erreur lors de la finalisation de l\'intervention: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Nettoie les vieux verrous et corrige l'état incohérent des modules
+     * 
+     * Cette méthode:
+     * 1. Supprime les fichiers de verrou datant de plus de 10 minutes
+     * 2. Corrige les modules marqués comme occupés sans intervention active
+     */
+    private function cleanOldLocks()
+    {
+        // 1. Nettoyer les fichiers de verrou
+        $lockDir = storage_path('app/locks');
+        
+        if (!file_exists($lockDir)) {
+            return;
+        }
+        
+        $now = time();
+        foreach (glob($lockDir . '/module_*.lock') as $lockFile) {
+            // Si le fichier de verrou date de plus de 10 minutes
+            if ($now - filemtime($lockFile) > 600) {
+                @unlink($lockFile);
+            }
+        }
+        
+        // 2. Corriger les incohérences de la base de données
+        try {
+            // Identifier les modules marqués comme occupés sans intervention active
+            $modulesIds = \App\Models\Module::where('est_occupe', true)
+                ->get()
+                ->filter(function ($module) {
+                    return !$module->hasActiveIntervention();
+                })
+                ->pluck('id')
+                ->toArray();
+                
+            if (count($modulesIds) > 0) {
+                // Nettoyer les modules incohérents
+                \App\Models\Module::whereIn('id', $modulesIds)
+                    ->update([
+                        'est_occupe' => false,
+                        'technicien_id' => null
+                    ]);
+                    
+                // Journaliser l'opération
+                \Illuminate\Support\Facades\Log::info('Nettoyage auto: ' . count($modulesIds) . ' modules incohérents corrigés: ' . implode(', ', $modulesIds));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur lors du nettoyage des modules incohérents: ' . $e->getMessage());
+        }
     }
 }

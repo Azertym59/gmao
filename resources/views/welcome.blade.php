@@ -175,7 +175,7 @@
                                 @endif
                             @endauth
                         @endif
-                        <a href="{{ route('client.login') }}" class="btn-primary px-8 py-4 rounded-lg font-semibold text-base md:text-lg">Espace Client</a>
+                        <a href="{{ url('client/login') }}" class="btn-primary px-8 py-4 rounded-lg font-semibold text-base md:text-lg">Espace Client</a>
                     </div>
                 </div>
             </div>
@@ -270,7 +270,7 @@
                     <p class="text-lg md:text-xl mb-8 text-gray-300">Une interface intuitive, des fonctionnalités puissantes et un support réactif pour vous accompagner au quotidien.</p>
                     <div class="flex flex-wrap gap-4 justify-center">
                         <a href="{{ route('login') }}" class="btn-primary px-8 py-4 rounded-lg font-semibold text-base md:text-lg">Commencer maintenant</a>
-                        <a href="{{ route('client.login') }}" class="btn-secondary px-8 py-4 rounded-lg font-semibold text-base md:text-lg">Espace Client</a>
+                        <a href="{{ url('client/login') }}" class="btn-secondary px-8 py-4 rounded-lg font-semibold text-base md:text-lg">Espace Client</a>
                     </div>
                 </div>
             </div>

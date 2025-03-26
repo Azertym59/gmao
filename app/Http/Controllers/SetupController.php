@@ -10,7 +10,12 @@ use Illuminate\Support\Facades\Schema;
 
 class SetupController extends Controller
 {
-    public function showAdminSetup()
+    public function index()
+    {
+        return redirect()->route('setup.admin');
+    }
+
+    public function admin()
     {
         // Ne pas vérifier le rôle pour le moment, juste vérifier s'il y a des utilisateurs
         if (User::count() > 0) {
@@ -20,7 +25,7 @@ class SetupController extends Controller
         return view('setup.admin');
     }
 
-    public function createAdmin(Request $request)
+    public function storeAdmin(Request $request)
     {
         // Journaliser les données reçues (sans le mot de passe)
         $debug = [

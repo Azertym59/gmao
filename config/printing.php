@@ -1,89 +1,113 @@
 <?php
 
 return [
-    // Token API pour le client d'impression
-    'client_api_token' => env('PRINT_CLIENT_API_TOKEN', 'generate-a-secure-token-here'),
-    
-    // URL de base de l'API
-    'api_base_url' => env('APP_URL') . '/api/print',
-    
-    // Intervalle de polling en secondes
-    'polling_interval' => env('PRINT_POLLING_INTERVAL', 5),
-    
-    // PrintNode Configuration
-    'printnode_api_key' => env('PRINTNODE_API_KEY', null),
-    'printnode_printer_id' => env('PRINTNODE_PRINTER_ID', null),
-    
-    // Paramètres pour PrintNode
-    'printnode' => [
-        // Activer ou désactiver PrintNode
-        'enabled' => env('PRINTNODE_ENABLED', true),
+    // Paramètres pour Brother QL 820 NWbc
+    'brother' => [
+        // Activer ou désactiver l'impression Brother
+        'enabled' => env('BROTHER_ENABLED', true),
         
-        // API Key pour PrintNode
-        'api_key' => env('PRINTNODE_API_KEY', null),
+        // Type d'imprimante
+        'printer_type' => 'QL-820NWB',
         
-        // ID de l'imprimante PrintNode par défaut
-        'default_printer_id' => env('PRINTNODE_PRINTER_ID', null),
-    ],
-    
-    // Configuration pour Brother b-PAC SDK
-    'bpac' => [
-        'enabled' => env('BPAC_ENABLED', true),
-        'dll_path' => env('BPAC_DLL_PATH', null),
-        'template_path' => env('BPAC_TEMPLATE_PATH', storage_path('app/templates/brother')),
-        // Correspondance entre modèles et ID de template
-        'models' => [
-            'QL-820NWB' => [
-                'DK22205' => '62mm_continuous',
-                'DK22210' => '29mm_continuous',
-                'DK22214' => '12mm_continuous',
-                'DK11201' => '29x90mm_address',
-                'DK11202' => '62x100mm_shipping',
-                'DK11208' => '38x90mm_label',
-                'DK11209' => '62x29mm_address_small',
-            ]
+        // Paramètres par défaut pour les rouleaux continus
+        'default_settings' => [
+            'width' => 62,           // Largeur en mm (DK-22205) - en nombre
+            'height' => 100,         // Hauteur en mm - en nombre 
+            'margin' => '0mm',       // Aucune marge
+            'dpi' => 300,            // Résolution d'impression (en nombre)
+            'rotate' => 0,           // Rotation (en integer)
+            'cut' => true,           // Couper automatiquement (boolean)
+            'roll' => 'dk22205',     // Type de rouleau spécifique
+            'paper' => 'Custom.62x100mm', // Format personnalisé
+            'printer-model' => 'QL-820NWB', // Modèle d'imprimante Brother
+            'media' => 'dc-22205',   // Type de média spécifique au rouleau
+            'bin' => 'default',      // Bac par défaut
+            'density' => 'normal',   // Densité d'impression normale
+            'fit-to-page' => true    // Ajuster à la page
+        ],
+        
+        // Types d'étiquettes disponibles
+        'media_types' => [
+            'DK22205' => [
+                'name' => 'Ruban continu 62mm',
+                'width' => 62,
+                'continuous' => true,
+                'paper' => 'dk-22205',
+                'rollType' => 'continuous',
+                'media' => 'continuous',
+                'printer-model' => 'QL-820NWB',
+            ],
+            'DK22210' => [
+                'name' => 'Ruban continu 29mm',
+                'width' => 29,
+                'continuous' => true,
+                'paper' => 'dk-22210',
+                'rollType' => 'continuous',
+                'media' => 'continuous',
+                'printer-model' => 'QL-820NWB',
+            ],
+            'DK22214' => [
+                'name' => 'Ruban continu 12mm',
+                'width' => 12,
+                'continuous' => true,
+                'paper' => 'dk-22214',
+                'rollType' => 'continuous',
+                'media' => 'continuous',
+                'printer-model' => 'QL-820NWB',
+            ],
+            'DK11201' => [
+                'name' => 'Étiquettes adresse standard 29x90mm',
+                'width' => 29,
+                'height' => 90,
+                'continuous' => false,
+                'paper' => 'dk-11201',
+                'media' => 'die-cut',
+                'printer-model' => 'QL-820NWB',
+            ],
+            'DK11202' => [
+                'name' => 'Étiquettes expédition 62x100mm',
+                'width' => 62,
+                'height' => 100,
+                'continuous' => false,
+                'paper' => 'dk-11202',
+                'media' => 'die-cut',
+                'printer-model' => 'QL-820NWB',
+            ],
         ],
     ],
     
-    // Paramètres par défaut pour les différents types d'imprimantes
-    'printer_defaults' => [
-        'thermal' => [
-            'dpi' => 203,
-            'width' => 57,
-            'height' => 25,
-            'orientation' => 'portrait',
-        ],
-        'label' => [
+    // Paramètres pour DomPDF
+    'dompdf' => [
+        'options' => [
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+            'defaultFont' => 'sans-serif',
+            'defaultMediaType' => 'screen',
             'dpi' => 300,
+        ],
+    ],
+    
+    // Types d'étiquettes prédéfinis
+    'label_templates' => [
+        'module' => [
             'width' => 62,
             'height' => 29,
-            'orientation' => 'landscape',
+            'template' => 'etiquettes.module',
         ],
-        'standard' => [
-            'dpi' => 300,
-            'paper_size' => 'A4',
-            'orientation' => 'portrait',
+        'dalle' => [
+            'width' => 62,
+            'height' => 50,
+            'template' => 'etiquettes.dalle',
         ],
-        'brother_label' => [
-            'dpi' => 300,
+        'chantier' => [
             'width' => 62,
             'height' => 100,
-            'orientation' => 'portrait',
-            // Simplifier les options de PrintNode pour éviter les erreurs
-            'media_type' => 'na_letter',
-            'paper_size' => 'A4',
-            'use_bpac' => true,
-            'bpac_model' => 'QL-820NWB',
-            'bpac_tape_type' => 'DK22205',
-            'bpac_format' => 'raster'
-        ]
+            'template' => 'etiquettes.chantier',
+        ],
     ],
     
     // Paramètres de file d'attente d'impression
     'queue' => [
-        // Délai avant de considérer un job comme bloqué (en minutes)
-        'stalled_threshold' => 10,
-        
         // Nombre maximum de tentatives avant d'abandonner l'impression
         'max_attempts' => 3,
         

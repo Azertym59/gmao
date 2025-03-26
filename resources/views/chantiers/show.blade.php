@@ -1,4 +1,8 @@
 <x-app-layout>
+@push('meta')
+<link rel="stylesheet" href="{{ asset('css/module-busy.css') }}?v={{ time() }}">
+<script src="{{ asset('js/components/module-status-tracker.js') }}?v={{ time() }}"></script>
+@endpush
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-white leading-tight">
             {{ __('Détails du chantier') }}
@@ -228,6 +232,37 @@
                                             @endif
                                         </div>
                                         <div><span class="font-medium">Dalles:</span> {{ $produit->dalles->count() }}</div>
+                                        
+                                        <!-- Modules config info -->
+                                        <div class="flex items-center bg-blue-900/20 px-3 py-1 rounded border border-blue-500/30 text-blue-300 text-xs mt-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                            </svg>
+                                            @php
+                                                // Vérifier la première dalle pour obtenir la configuration exacte
+                                                $firstDalle = $produit->dalles->first();
+                                                $moduleCount = $firstDalle ? $firstDalle->modules->count() : 0;
+                                                $disposition = $firstDalle ? $firstDalle->disposition_modules : '';
+                                                
+                                                // Si toutes les dalles ont le même nombre de modules
+                                                $allSame = true;
+                                                foreach ($produit->dalles as $dalle) {
+                                                    if ($dalle->modules->count() != $moduleCount) {
+                                                        $allSame = false;
+                                                        break;
+                                                    }
+                                                }
+                                            @endphp
+                                            <span>
+                                                Modules par dalle: {{ $moduleCount }} 
+                                                @if($disposition)
+                                                    (Disposition: {{ $disposition }})
+                                                @endif
+                                                @if(!$allSame)
+                                                    <span class="text-amber-300 ml-1">(Certaines dalles ont des configurations différentes)</span>
+                                                @endif
+                                            </span>
+                                        </div>
                                     </div>
                                     
                                     <!-- Liste des dalles avec modules -->
@@ -955,15 +990,12 @@
                             Générer QR Code
                         </x-print-button>
                         
-                        <form action="{{ route('print.qrcode.chantier', $chantier->id) }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn-action btn-primary">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                </svg>
-                                Imprimer QR Code
-                            </button>
-                        </form>
+                        <a href="{{ route('qrcode.chantier.print', $chantier->id) }}" class="btn-action btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            Imprimer QR Code
+                        </a>
                     </div>
                 </div>
             </div>

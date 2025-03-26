@@ -2,8 +2,15 @@
     use Illuminate\Support\Facades\Auth;
 ?>
 
+<!-- Mobile menu button (hamburger) -->
+<button id="mobile-menu-button" class="md:hidden fixed top-4 left-4 z-30 bg-sidebar hover:bg-gray-700 p-2 rounded-lg shadow-lg transition-colors duration-200 border border-gray-700/50">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+</button>
+
 <!-- Sidebar / Menu latéral -->
-<div id="sidebar" class="bg-sidebar flex-shrink-0 w-64 fixed h-full z-20 transition-all duration-300 shadow-xl">
+<div id="sidebar" class="bg-sidebar flex-shrink-0 w-64 fixed h-full z-20 transition-all duration-300 shadow-xl transform -translate-x-full md:translate-x-0">
     <div class="flex flex-col h-full">
         <!-- Logo avec taille maximale -->
         <div class="flex items-center justify-center h-[100px] bg-black bg-opacity-50 p-0 border-b border-border-dark">
@@ -11,6 +18,13 @@
                 alt="TecaLED" 
                 class="w-full max-h-[90px] object-contain px-2">
         </div>
+        
+        <!-- Mobile Close Button -->
+        <button id="mobile-close-button" class="md:hidden absolute top-4 right-4 text-white p-2 rounded-full hover:bg-gray-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
         
         <!-- Menu principal avec design moderne et minimaliste -->
         <nav class="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
@@ -123,14 +137,35 @@
                 <span>Gestion des utilisateurs</span>
             </a>
             
-            <!-- Configuration Imprimante (admin seulement) -->
-            <a href="<?php echo e(route('printers.index')); ?>" 
+            <!-- Gestion des étiquettes -->
+            <a href="<?php echo e(route('admin.etiquettes.index')); ?>" 
                class="sidebar-item flex items-center px-4 py-3 text-white rounded-md transition-all duration-200
-               <?php echo e(request()->routeIs('printers.*') ? 'bg-white/10 text-white font-medium' : 'hover:bg-white/5'); ?>">
+               <?php echo e(request()->routeIs('admin.etiquettes.*') ? 'bg-white/10 text-white font-medium' : 'hover:bg-white/5'); ?>">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+                <span>Modèles d'étiquettes</span>
+            </a>
+            
+            <!-- Test d'impression -->
+            <a href="<?php echo e(route('test-etiquette')); ?>" 
+               class="sidebar-item flex items-center px-4 py-3 text-white rounded-md transition-all duration-200
+               <?php echo e(request()->routeIs('test-etiquette') || request()->routeIs('print-test.*') ? 'bg-white/10 text-white font-medium' : 'hover:bg-white/5'); ?>">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
-                <span>Configuration Imprimante</span>
+                <span>Test Impression Brother</span>
+            </a>
+            
+            <!-- Maintenance -->
+            <a href="<?php echo e(route('maintenance.clean-modules')); ?>" 
+               class="sidebar-item flex items-center px-4 py-3 text-white rounded-md transition-all duration-200
+               <?php echo e(request()->routeIs('maintenance.*') ? 'bg-white/10 text-white font-medium' : 'hover:bg-white/5'); ?>">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Nettoyer modules bloqués</span>
             </a>
             <?php endif; ?>
             

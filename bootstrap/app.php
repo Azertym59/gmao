@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\CheckForAdminSetup::class, // Ajout du middleware de vérification d'admin
         ]);
 
         // Middleware d'authentification
@@ -27,6 +28,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
             'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'technicien' => \App\Http\Middleware\TechnicienMiddleware::class,
+            'client' => \App\Http\Middleware\ClientMiddleware::class,
+            'check.admin.setup' => \App\Http\Middleware\CheckForAdminSetup::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

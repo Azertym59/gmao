@@ -10,7 +10,7 @@
 <?php $component->withAttributes([]); ?>
      <?php $__env->slot('header', null, []); ?> 
         <h2 class="font-semibold text-xl text-white leading-tight">
-            <?php echo e(__('Création de projet - Étape 2/5 : Produit')); ?>
+            <?php echo e(__('Création de projet - Étape 2/4 : Produit')); ?>
 
         </h2>
      <?php $__env->endSlot(); ?>
@@ -40,14 +40,6 @@
                     </div>
                     <div class="flex-1 mx-4 border-t-2 border-gray-600 self-center"></div>
                     <div class="flex items-center">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-700 text-gray-400 font-bold">4</div>
-                        <span class="ml-2 font-medium text-gray-400">Interventions</span>
-                    </div>
-                    <div class="flex-1 mx-4 border-t-2 border-gray-600 self-center"></div>
-                    <div class="flex items-center">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-700 text-gray-400 font-bold">5</div>
-                        <span class="ml-2 font-medium text-gray-400">Rapports</span>
-                    </div>
                 </div>
             </div>
 
@@ -62,7 +54,7 @@
                         <p class="text-gray-300"><span class="font-medium">Adresse:</span> <?php echo e($client->adresse); ?>, <?php echo e($client->code_postal); ?> <?php echo e($client->ville); ?></p>
                     </div>
 
-                    <form id="productForm" method="POST" action="<?php echo e(route('chantiers.store.step2')); ?>">
+                    <form id="productForm" method="POST" action="<?php echo e(route('chantiers.store.step2', $chantier)); ?>">
                         <?php echo csrf_field(); ?>
                         
                         <!-- Choix entre produit existant et nouveau produit -->
@@ -121,7 +113,7 @@ unset($__errorArgs, $__bag); ?>
                         <div id="catalogue_form" class="mb-6 p-4 border border-gray-700 rounded-xl bg-gray-800/30 <?php echo e(old('from_catalogue', 1) == '1' ? '' : 'hidden'); ?>">
                             <h3 class="text-lg section-title mb-4">Recherche avancée de produit</h3>
                             
-                            <div x-data="advancedProductSearch()" class="mb-4">
+                            <div x-data="advancedProductSearch()" x-init="syncCatalogueProducts()" class="mb-4">
                                 <!-- Filtres de recherche -->
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                                     <div>
@@ -289,13 +281,14 @@ unset($__errorArgs, $__bag); ?>
                                                     <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Pitch</th>
                                                     <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Util.</th>
                                                     <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Bain</th>
+                                                    <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Modules</th>
                                                     <th scope="col" class="px-3 py-2 text-xs font-medium text-gray-400 uppercase tracking-wider">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody class="bg-gray-800/50 divide-y divide-gray-700">
                                                 <template x-if="filteredProducts.length === 0">
                                                     <tr>
-                                                        <td colspan="6" class="px-3 py-4">
+                                                        <td colspan="7" class="px-3 py-4">
                                                             <div class="text-center py-4">
                                                                 <p class="text-gray-300 text-sm mb-2">Aucun produit ne correspond à ces critères.</p>
                                                                 <button type="button" @click="suggestNewProduct()" class="text-accent-blue hover:text-blue-400 text-sm flex items-center mx-auto">
@@ -315,6 +308,12 @@ unset($__errorArgs, $__bag); ?>
                                                         <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-300" x-text="product.pitch + ' mm'"></td>
                                                         <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-300 capitalize" x-text="product.utilisation"></td>
                                                         <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-300" x-text="product.bain_couleur || '-'"></td>
+                                                        <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-300">
+                                                            <span class="bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs px-1.5 py-0.5 rounded">
+                                                                <span x-text="product.moduleCount"></span>
+                                                                <span> (<span x-text="product.moduleConfig || '2x2'"></span>)</span>
+                                                            </span>
+                                                        </td>
                                                         <td class="px-3 py-3 whitespace-nowrap text-sm text-right">
                                                             <button type="button" @click="selectProduct(product)" 
                                                                 class="text-accent-blue hover:text-blue-400 font-medium">
@@ -348,6 +347,21 @@ unset($__errorArgs, $__bag); ?>
                                             <p class="text-gray-300 text-sm mb-1">Utilisation: <span class="font-medium capitalize" x-text="selectedProduct?.utilisation"></span></p>
                                             <p class="text-gray-300 text-sm mb-1">Électronique: <span class="font-medium capitalize" x-text="selectedProduct?.electronique"></span></p>
                                             <p class="text-gray-300 text-sm mb-1">Bain de couleur: <span class="font-medium" x-text="selectedProduct?.bain_couleur || 'Non spécifié'"></span></p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Module count information -->
+                                    <div class="mt-4 p-3 bg-blue-900/30 rounded-lg border border-blue-500/20">
+                                        <h5 class="text-blue-300 text-sm font-medium mb-2">Information modules</h5>
+                                        <div class="flex items-center">
+                                            <div class="mr-4">
+                                                <span class="text-gray-400 text-xs">Configuration:</span>
+                                                <span class="text-white font-medium ml-1" x-text="selectedProduct?.moduleConfig || '2x2'"></span>
+                                            </div>
+                                            <div class="ml-2">
+                                                <span class="text-gray-400 text-xs">Modules par dalle:</span>
+                                                <span class="text-white font-medium ml-1" x-text="selectedProduct?.moduleCount || '4'"></span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -2211,7 +2225,7 @@ unset($__errorArgs, $__bag); ?>
                         <!-- Option d'ajout au catalogue -->
                         <div id="add_to_catalogue_container" class="mb-6 p-4 border border-gray-600 rounded-xl bg-blue-900/20 <?php echo e(old('from_catalogue') == '0' ? '' : 'hidden'); ?>">
                             <div class="flex items-center">
-                                <input type="checkbox" id="add_to_catalogue" name="add_to_catalogue" value="1" <?php echo e(old('add_to_catalogue') ? 'checked' : ''); ?> class="mr-2 rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500">
+                                <input type="checkbox" id="add_to_catalogue" name="add_to_catalogue" value="1" checked class="mr-2 rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500">
                                 <label for="add_to_catalogue" class="text-white font-medium">Ajouter ce produit au catalogue</label>
                             </div>
                             <p class="text-sm text-gray-400 mt-1">Le produit sera disponible pour d'autres chantiers</p>

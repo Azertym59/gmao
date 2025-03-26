@@ -9,6 +9,10 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="glassmorphism overflow-hidden shadow-lg rounded-xl">
                 <div class="p-6 border-b border-gray-700">
+                    <!-- Champs cachés pour le système de heartbeat -->
+                    <input type="hidden" id="intervention_id" value="{{ $intervention->id }}">
+                    <input type="hidden" id="module_id" value="{{ $module->id }}">
+                    
                     <!-- Barre de progression de l'intervention -->
                     <div class="mb-6">
                         <div class="flex mb-4">
@@ -186,7 +190,7 @@
                         </div>
                     </div>
 
-                    <form id="reparation-form" method="POST" action="{{ route('interventions.store.reparation', $intervention->id) }}">
+                    <form id="reparation-form" method="POST" action="{{ route('interventions.store-reparation', $intervention->id) }}">
                         @csrf
                         <input type="hidden" name="intervention_id" value="{{ $intervention->id }}">
                         <input type="hidden" id="temps_total" name="temps_total" value="{{ $intervention->temps_total }}">

@@ -9,6 +9,10 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="glassmorphism overflow-hidden shadow-lg rounded-xl">
                 <div class="p-6 border-b border-gray-700">
+                    <!-- Champs cachés pour le système de heartbeat -->
+                    <input type="hidden" id="intervention_id" value="{{ $intervention->id }}">
+                    <input type="hidden" id="module_id" value="{{ $module->id }}">
+                    
                     <!-- Barre de progression de l'intervention -->
                     <div class="mb-6">
                         <div class="flex mb-4">
@@ -146,7 +150,7 @@
                         </div>
                     </div>
 
-                    <form id="finalisation-form" method="POST" action="{{ route('interventions.store') }}">
+                    <form id="finalisation-form" method="POST" action="{{ route('interventions.store-finalisation', $intervention->id) }}">
                         @csrf
                         <input type="hidden" name="intervention_id" value="{{ $intervention->id }}">
                         <input type="hidden" id="temps_total" name="temps_total" value="{{ $intervention->temps_total }}">
@@ -175,8 +179,8 @@
                                         <select id="module_etat" name="module_etat" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500/50">
                                             <option value="termine" selected>Réparé</option>
                                             <option value="defaillant">Défaillant (partiellement fonctionnel)</option>
+                                            <option value="stand_by">En attente de pièces (stand by)</option>
                                             <option value="hs">Hors service (irrécupérable)</option>
-                                            <option value="en_attente">En attente de pièces</option>
                                         </select>
                                         <x-input-error :messages="$errors->get('module_etat')" class="mt-2" />
                                     </div>

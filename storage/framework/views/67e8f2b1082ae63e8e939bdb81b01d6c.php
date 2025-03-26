@@ -83,7 +83,7 @@
                                             </a>
                                             
                                             <?php if($user->id !== auth()->id()): ?>
-                                                <form method="POST" action="<?php echo e(route('admin.users.delete', $user)); ?>" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')">
+                                                <form method="POST" action="<?php echo e(route('admin.users.destroy', $user)); ?>" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')">
                                                     <?php echo csrf_field(); ?>
                                                     <?php echo method_field('DELETE'); ?>
                                                     <button type="submit" class="btn-action bg-red-600 hover:bg-red-700 text-white flex items-center">

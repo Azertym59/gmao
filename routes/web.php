@@ -3,7 +3,6 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\PrinterController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ChantierController;
 use App\Http\Controllers\DalleController;
@@ -23,354 +22,12 @@ use App\Http\Middleware\ClientMiddleware;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Printer;
-use PrintNode\Credentials\ApiKey;
-use PrintNode\Client;
-use PrintNode\PrintJob;
-
-// Routes temporaires supprimées
 
 // Routes publiques
 // Route d'accès direct sans authentification (TEMPORAIRE)
 Route::get('/direct-access', function () {
     return view('welcome');
 })->name('direct-access');
-
-// Route de test PrintNode
-Route::get('/test-printnode', function () {
-    $apiKey = config('printing.printnode.api_key');
-    if (empty($apiKey)) {
-        return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
-    }
-    
-    // Initialiser correctement le client PrintNode avec des ApiKey credentials
-    $credentials = new ApiKey($apiKey);
-    $client = new Client($credentials);
-    
-    // Récupérer les imprimantes disponibles
-    try {
-        $printers = $client->getPrinters();
-        
-        if (empty($printers)) {
-            return "Aucune imprimante détectée dans PrintNode. Vérifiez que le client PrintNode est installé et que l'imprimante est connectée.";
-        }
-        
-        // Sélectionner l'imprimante Brother si disponible
-        $brotherPrinter = null;
-        foreach ($printers as $printer) {
-            if (stripos($printer->name, 'Brother') !== false || stripos($printer->name, 'QL-820') !== false) {
-                $brotherPrinter = $printer;
-                break;
-            }
-        }
-        
-        $printerId = $brotherPrinter ? $brotherPrinter->id : $printers[0]->id;
-        $printerName = $brotherPrinter ? $brotherPrinter->name : $printers[0]->name;
-        
-        // Créer un PDF basique pour le test
-        $html = '<html><body style="margin: 0; padding: 5px;">
-            <h3 style="font-size: 14px; text-align: center;">TEST IMPRESSION BROTHER</h3>
-            <p style="font-size: 12px; text-align: center;">Date: ' . date('d/m/Y H:i:s') . '</p>
-            <p style="font-size: 12px; text-align: center;">Imprimante: ' . $printerName . '</p>
-            <div style="text-align: center; margin-top: 10px;">
-                <img src="data:image/png;base64,' . base64_encode(
-                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                    ->size(150)
-                    ->margin(1)
-                    ->generate('Test QR Code - ' . date('d/m/Y H:i:s'))
-                ) . '" style="width: 150px; height: 150px;">
-            </div>
-        </body></html>';
-        
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
-        $pdfContent = base64_encode($pdf->output());
-        
-        // Créer la tâche d'impression avec options A4 et sans marges
-        $printJob = new PrintJob();
-        $printJob->printer = $printerId;
-        $printJob->title = "Test Brother Label - A4 Format";
-        $printJob->contentType = 'pdf_base64';
-        $printJob->content = $pdfContent;
-        $printJob->source = 'GMAO Test PrintNode';
-        $printJob->options = [
-            'paper' => 'a4',
-            'fit' => 'content',
-            'bin' => 'default'
-        ];
-        
-        // Envoyer la tâche d'impression
-        $jobId = $client->createPrintJob($printJob);
-        
-        // Enregistrer l'imprimante dans la base de données si elle n'existe pas déjà
-        $dbPrinter = Printer::where('name', $printerName)->first();
-        if (!$dbPrinter) {
-            $dbPrinter = Printer::create([
-                'name' => $printerName,
-                'type' => stripos($printerName, 'Brother') !== false ? 'brother_label' : 'standard',
-                'is_default' => false,
-                'options' => [
-                    'printnode_id' => $printerId,
-                    'dpi' => 300,
-                    'label_width' => 62,
-                    'label_height' => 100,
-                ]
-            ]);
-        } else if (empty($dbPrinter->printnode_id)) {
-            // Mettre à jour l'ID PrintNode si l'imprimante existe mais sans ID PrintNode
-            $options = $dbPrinter->options ?? [];
-            $options['printnode_id'] = $printerId;
-            $dbPrinter->options = $options;
-            $dbPrinter->save();
-        }
-        
-        return "Tâche d'impression envoyée avec succès vers l'imprimante: " . $printerName . 
-               "<br>ID Tâche PrintNode: " . $jobId . 
-               "<br>Imprimante ID: " . $printerId . 
-               "<br><strong>Format:</strong> A4 (pour éviter l'erreur de type de rouleau)" .
-               "<br><a href='/test-printnode-specific'>Essayer avec un format spécifique pour Brother (62mm x 100mm)</a>";
-               
-    } catch (\Exception $e) {
-        return "Erreur lors du test d'impression PrintNode: " . $e->getMessage() . 
-               "<br>Trace: <pre>" . $e->getTraceAsString() . "</pre>";
-    }
-})->name('test-printnode');
-
-// Route de test PrintNode avec format spécifique
-Route::get('/test-printnode-specific', function () {
-    $apiKey = config('printing.printnode.api_key');
-    if (empty($apiKey)) {
-        return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
-    }
-    
-    // Initialiser correctement le client PrintNode avec des ApiKey credentials
-    $credentials = new ApiKey($apiKey);
-    $client = new Client($credentials);
-    
-    try {
-        $printers = $client->getPrinters();
-        
-        if (empty($printers)) {
-            return "Aucune imprimante détectée dans PrintNode.";
-        }
-        
-        // Sélectionner l'imprimante Brother si disponible
-        $brotherPrinter = null;
-        foreach ($printers as $printer) {
-            if (stripos($printer->name, 'Brother') !== false || stripos($printer->name, 'QL-820') !== false) {
-                $brotherPrinter = $printer;
-                break;
-            }
-        }
-        
-        $printerId = $brotherPrinter ? $brotherPrinter->id : $printers[0]->id;
-        $printerName = $brotherPrinter ? $brotherPrinter->name : $printers[0]->name;
-        
-        // Création d'un PDF au format 62mm x 100mm (176px x 283px à 72dpi)
-        $customPaper = array(0, 0, 176, 283);
-        
-        $html = '<html><body style="margin: 0; padding: 5px; width: 62mm; height: 100mm;">
-            <h3 style="font-size: 12px; text-align: center;">TEST FORMAT SPÉCIFIQUE</h3>
-            <p style="font-size: 10px; text-align: center;">Date: ' . date('d/m/Y H:i:s') . '</p>
-            <p style="font-size: 10px; text-align: center;">Format: 62mm x 100mm</p>
-            <div style="text-align: center; margin-top: 5px;">
-                <img src="data:image/png;base64,' . base64_encode(
-                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                    ->size(120)
-                    ->margin(1)
-                    ->generate('Test Format Spécifique - ' . date('d/m/Y H:i:s'))
-                ) . '" style="width: 120px; height: 120px;">
-            </div>
-        </body></html>';
-        
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
-            ->setPaper($customPaper, 'portrait')
-            ->setOptions([
-                'dpi' => 300,
-                'defaultFont' => 'sans-serif',
-                'isRemoteEnabled' => true,
-                'isHtml5ParserEnabled' => true,
-            ]);
-            
-        $pdfContent = base64_encode($pdf->output());
-        
-        // Créer la tâche d'impression avec des options spécifiques
-        $printJob = new PrintJob();
-        $printJob->printer = $printerId;
-        $printJob->title = "Test Brother Label - Format Spécifique";
-        $printJob->contentType = 'pdf_base64';
-        $printJob->content = $pdfContent;
-        $printJob->source = 'GMAO Test PrintNode Spécifique';
-        $printJob->options = [
-            'paper' => 'dk22205',
-            'width' => '62mm',
-            'height' => '100mm'
-        ];
-        
-        // Envoyer la tâche d'impression
-        $jobId = $client->createPrintJob($printJob);
-        
-        return "Tâche d'impression spécifique envoyée avec succès vers l'imprimante: " . $printerName . 
-               "<br>ID Tâche PrintNode: " . $jobId . 
-               "<br>Imprimante ID: " . $printerId . 
-               "<br><strong>Format:</strong> 62mm x 100mm (spécifique pour Brother)" .
-               "<br><a href='/test-printnode'>Revenir au test avec format A4</a>";
-               
-    } catch (\Exception $e) {
-        return "Erreur lors du test d'impression PrintNode spécifique: " . $e->getMessage() . 
-               "<br>Trace: <pre>" . $e->getTraceAsString() . "</pre>";
-    }
-})->name('test-printnode-specific');
-
-// Route de test simple avec paper=roll
-Route::get('/test-printnode-roll', function () {
-    $apiKey = config('printing.printnode.api_key');
-    if (empty($apiKey)) {
-        return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
-    }
-    
-    // Initialiser correctement le client PrintNode avec des ApiKey credentials
-    $credentials = new ApiKey($apiKey);
-    $client = new Client($credentials);
-    
-    try {
-        $printers = $client->getPrinters();
-        
-        if (empty($printers)) {
-            return "Aucune imprimante détectée dans PrintNode.";
-        }
-        
-        // Sélectionner l'imprimante Brother si disponible
-        $brotherPrinter = null;
-        foreach ($printers as $printer) {
-            if (stripos($printer->name, 'Brother') !== false || stripos($printer->name, 'QL-820') !== false) {
-                $brotherPrinter = $printer;
-                break;
-            }
-        }
-        
-        $printerId = $brotherPrinter ? $brotherPrinter->id : $printers[0]->id;
-        $printerName = $brotherPrinter ? $brotherPrinter->name : $printers[0]->name;
-        
-        // Création d'un PDF simple
-        $html = '<html><body style="margin: 0; padding: 5px;">
-            <h3 style="font-size: 12px; text-align: center;">TEST FORMAT ROULEAU</h3>
-            <p style="font-size: 10px; text-align: center;">Date: ' . date('d/m/Y H:i:s') . '</p>
-            <p style="font-size: 10px; text-align: center;">Option: paper=roll</p>
-            <div style="text-align: center; margin-top: 5px;">
-                <img src="data:image/png;base64,' . base64_encode(
-                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                    ->size(120)
-                    ->margin(1)
-                    ->generate('Test Option Rouleau - ' . date('d/m/Y H:i:s'))
-                ) . '" style="width: 120px; height: 120px;">
-            </div>
-        </body></html>';
-        
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
-        $pdfContent = base64_encode($pdf->output());
-        
-        // Créer la tâche d'impression avec l'option paper=roll
-        $printJob = new PrintJob();
-        $printJob->printer = $printerId;
-        $printJob->title = "Test Brother - Option Roll";
-        $printJob->contentType = 'pdf_base64';
-        $printJob->content = $pdfContent;
-        $printJob->source = 'GMAO Test PrintNode Roll';
-        $printJob->options = [
-            'paper' => 'roll',
-            'fit' => 'content'
-        ];
-        
-        // Envoyer la tâche d'impression
-        $jobId = $client->createPrintJob($printJob);
-        
-        return "Tâche d'impression spécifique envoyée avec succès vers l'imprimante: " . $printerName . 
-               "<br>ID Tâche PrintNode: " . $jobId . 
-               "<br>Imprimante ID: " . $printerId . 
-               "<br><strong>Format:</strong> Option paper=roll" .
-               "<br><a href='/test-printnode'>Revenir au test avec format A4</a>" .
-               "<br><a href='/test-printnode-dk22205'>Essayer avec paper=dk22205</a>";
-               
-    } catch (\Exception $e) {
-        return "Erreur lors du test d'impression PrintNode roll: " . $e->getMessage() . 
-               "<br>Trace: <pre>" . $e->getTraceAsString() . "</pre>";
-    }
-})->name('test-printnode-roll');
-
-// Route de test avec option dk22205 (correspond au rouleau continu 62mm)
-Route::get('/test-printnode-dk22205', function () {
-    $apiKey = config('printing.printnode.api_key');
-    if (empty($apiKey)) {
-        return "Erreur: API Key PrintNode non configurée. Vérifiez le fichier .env";
-    }
-    
-    // Initialiser correctement le client PrintNode avec des ApiKey credentials
-    $credentials = new ApiKey($apiKey);
-    $client = new Client($credentials);
-    
-    try {
-        $printers = $client->getPrinters();
-        
-        if (empty($printers)) {
-            return "Aucune imprimante détectée dans PrintNode.";
-        }
-        
-        // Sélectionner l'imprimante Brother si disponible
-        $brotherPrinter = null;
-        foreach ($printers as $printer) {
-            if (stripos($printer->name, 'Brother') !== false || stripos($printer->name, 'QL-820') !== false) {
-                $brotherPrinter = $printer;
-                break;
-            }
-        }
-        
-        $printerId = $brotherPrinter ? $brotherPrinter->id : $printers[0]->id;
-        $printerName = $brotherPrinter ? $brotherPrinter->name : $printers[0]->name;
-        
-        // Création d'un PDF simple
-        $html = '<html><body style="margin: 0; padding: 5px;">
-            <h3 style="font-size: 12px; text-align: center;">TEST FORMAT DK22205</h3>
-            <p style="font-size: 10px; text-align: center;">Date: ' . date('d/m/Y H:i:s') . '</p>
-            <p style="font-size: 10px; text-align: center;">Option: paper=dk22205</p>
-            <div style="text-align: center; margin-top: 5px;">
-                <img src="data:image/png;base64,' . base64_encode(
-                    \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                    ->size(120)
-                    ->margin(1)
-                    ->generate('Test Option DK22205 - ' . date('d/m/Y H:i:s'))
-                ) . '" style="width: 120px; height: 120px;">
-            </div>
-        </body></html>';
-        
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
-        $pdfContent = base64_encode($pdf->output());
-        
-        // Créer la tâche d'impression avec l'option paper=dk22205
-        $printJob = new PrintJob();
-        $printJob->printer = $printerId;
-        $printJob->title = "Test Brother - Option DK22205";
-        $printJob->contentType = 'pdf_base64';
-        $printJob->content = $pdfContent;
-        $printJob->source = 'GMAO Test PrintNode DK22205';
-        $printJob->options = [
-            'paper' => 'dk22205'
-        ];
-        
-        // Envoyer la tâche d'impression
-        $jobId = $client->createPrintJob($printJob);
-        
-        return "Tâche d'impression spécifique envoyée avec succès vers l'imprimante: " . $printerName . 
-               "<br>ID Tâche PrintNode: " . $jobId . 
-               "<br>Imprimante ID: " . $printerId . 
-               "<br><strong>Format:</strong> Option paper=dk22205" .
-               "<br><a href='/test-printnode'>Revenir au test avec format A4</a>" .
-               "<br><a href='/test-printnode-roll'>Essayer avec paper=roll</a>";
-               
-    } catch (\Exception $e) {
-        return "Erreur lors du test d'impression PrintNode dk22205: " . $e->getMessage() . 
-               "<br>Trace: <pre>" . $e->getTraceAsString() . "</pre>";
-    }
-})->name('test-printnode-dk22205');
 
 // Page d'accueil
 Route::get('/', function () {
@@ -391,12 +48,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // Routes pour les techniciens
-    Route::middleware(['auth', 'role:technicien'])->group(function () {
+    Route::middleware(['auth', 'technicien'])->group(function () {
         Route::get('/technicien/dashboard', [TechnicienDashboardController::class, 'index'])->name('technicien.dashboard');
     });
     
     // Routes pour les administrateurs
-    Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
         
         // Gestion des utilisateurs
@@ -408,11 +65,34 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/admin/users/{user}', [AdminController::class, 'destroyUser'])->name('admin.users.destroy');
         
         // Gestion de la base de données
-        Route::get('/admin/database', [AdminController::class, 'database'])->name('admin.database');
-        Route::get('/admin/database/backups', [AdminController::class, 'databaseBackups'])->name('admin.database.backups');
-        Route::post('/admin/database/backup', [AdminController::class, 'createBackup'])->name('admin.database.backup');
-        Route::get('/admin/database/reset', [AdminController::class, 'confirmDatabaseReset'])->name('admin.database.reset.confirm');
+        Route::get('/admin/database', [AdminController::class, 'databaseManager'])->name('admin.database.manager');
+        Route::get('/admin/database/backups', [AdminController::class, 'listBackups'])->name('admin.database.backups');
+        Route::post('/admin/database/backup', [AdminController::class, 'backupDatabase'])->name('admin.database.backup');
+        Route::get('/admin/database/backups/{filename}/download', [AdminController::class, 'downloadBackup'])->name('admin.database.backup.download');
+        Route::post('/admin/database/backups/{filename}/restore', [AdminController::class, 'restoreBackup'])->name('admin.database.backup.restore');
+        Route::get('/admin/database/reset', [AdminController::class, 'confirmReset'])->name('admin.database.reset.confirm');
         Route::post('/admin/database/reset', [AdminController::class, 'resetDatabase'])->name('admin.database.reset');
+        Route::get('/admin/database/setup-admin', [AdminController::class, 'setupAdmin'])->name('admin.database.setup-admin');
+        Route::post('/admin/database/setup-admin', [AdminController::class, 'storeAdmin'])->name('admin.database.setup-admin.store');
+        
+        // Gestion des templates d'étiquettes
+        Route::get('/admin/etiquettes', [App\Http\Controllers\EtiquetteTemplateController::class, 'index'])->name('admin.etiquettes.index');
+        Route::get('/admin/etiquettes/create', [App\Http\Controllers\EtiquetteTemplateController::class, 'create'])->name('admin.etiquettes.create');
+        Route::post('/admin/etiquettes', [App\Http\Controllers\EtiquetteTemplateController::class, 'store'])->name('admin.etiquettes.store');
+        Route::get('/admin/etiquettes/{template}/edit', [App\Http\Controllers\EtiquetteTemplateController::class, 'edit'])->name('admin.etiquettes.edit');
+        Route::put('/admin/etiquettes/{template}', [App\Http\Controllers\EtiquetteTemplateController::class, 'update'])->name('admin.etiquettes.update');
+        Route::delete('/admin/etiquettes/{template}', [App\Http\Controllers\EtiquetteTemplateController::class, 'destroy'])->name('admin.etiquettes.destroy');
+        Route::post('/admin/etiquettes/{template}/set-default', [App\Http\Controllers\EtiquetteTemplateController::class, 'setDefault'])->name('admin.etiquettes.set-default');
+        Route::get('/admin/etiquettes/{template}/preview', [App\Http\Controllers\EtiquetteTemplateController::class, 'preview'])->name('admin.etiquettes.preview');
+        Route::post('/admin/etiquettes/{template}/test-print', [App\Http\Controllers\EtiquetteTemplateController::class, 'testPrint'])->name('admin.etiquettes.test-print');
+        Route::get('/admin/etiquettes/{template}/duplicate', [App\Http\Controllers\EtiquetteTemplateController::class, 'duplicate'])->name('admin.etiquettes.duplicate');
+        
+        // API pour l'éditeur d'étiquettes
+        Route::prefix('api/etiquettes')->group(function () {
+            Route::get('/variables/{type}', [App\Http\Controllers\EtiquetteTemplateController::class, 'getVariables'])->name('api.etiquettes.variables');
+            Route::post('/render-preview', [App\Http\Controllers\EtiquetteTemplateController::class, 'renderPreview'])->name('api.etiquettes.render-preview');
+            Route::get('/printers', [App\Http\Controllers\EtiquetteTemplateController::class, 'getPrinters'])->name('api.etiquettes.printers');
+        });
     });
     
     // Notifications
@@ -426,24 +106,39 @@ Route::middleware(['auth'])->group(function () {
     // Chantiers
     Route::get('/chantiers', [ChantierController::class, 'index'])->name('chantiers.index');
     Route::get('/chantiers/create', [ChantierController::class, 'create'])->name('chantiers.create');
+    // Route pour le choix de type de projet (maintenance ou vente)
+    Route::get('/chantiers/type-choix', [ChantierController::class, 'typeChoix'])->name('nouveau.projet');
+    // Routes pour créer des projets de maintenance ou vente
+    Route::get('/chantiers/maintenance/create', [ChantierController::class, 'createMaintenanceProject'])->name('chantiers.maintenance.create');
+    Route::get('/chantiers/vente/create', [ChantierController::class, 'createVenteProject'])->name('chantiers.vente.create');
+    // Route pour créer un client via AJAX lors de la création d'un chantier
+    Route::post('/chantiers/store-client-ajax', [ChantierController::class, 'storeClientAjax'])->name('chantiers.store.client-ajax');
     Route::get('/chantiers/create/step1', [ChantierController::class, 'createStep1'])->name('chantiers.create.step1');
     Route::post('/chantiers/create/step1', [ChantierController::class, 'storeStep1'])->name('chantiers.store.step1');
     Route::get('/chantiers/create/step2/{chantier}', [ChantierController::class, 'createStep2'])->name('chantiers.create.step2');
     Route::post('/chantiers/create/step2/{chantier}', [ChantierController::class, 'storeStep2'])->name('chantiers.store.step2');
     Route::get('/chantiers/create/step3/{chantier}', [ChantierController::class, 'createStep3'])->name('chantiers.create.step3');
     Route::post('/chantiers/create/step3/{chantier}', [ChantierController::class, 'storeStep3'])->name('chantiers.store.step3');
+    // Le workflow est maintenant de 4 étapes au lieu de 5 (l'ancienne étape 4 a été supprimée)
     Route::get('/chantiers/create/step4/{chantier}', [ChantierController::class, 'createStep4'])->name('chantiers.create.step4');
     Route::post('/chantiers/create/step4/{chantier}', [ChantierController::class, 'storeStep4'])->name('chantiers.store.step4');
-    Route::get('/chantiers/create/step5/{chantier}', [ChantierController::class, 'createStep5'])->name('chantiers.create.step5');
-    Route::post('/chantiers/create/step5/{chantier}', [ChantierController::class, 'storeStep5'])->name('chantiers.store.step5');
     Route::get('/chantiers/{chantier}', [ChantierController::class, 'show'])->name('chantiers.show');
     Route::get('/chantiers/{chantier}/edit', [ChantierController::class, 'edit'])->name('chantiers.edit');
     Route::put('/chantiers/{chantier}', [ChantierController::class, 'update'])->name('chantiers.update');
+    Route::patch('/chantiers/{chantier}/state', [ChantierController::class, 'updateState'])->name('chantiers.update.state');
     Route::delete('/chantiers/{chantier}', [ChantierController::class, 'destroy'])->name('chantiers.destroy');
     
     // Impression d'étiquettes QR Code pour chantiers
     Route::get('/chantiers/{chantier}/qrcode', [ChantierQrCodeController::class, 'show'])->name('qrcode.chantier.show');
-    Route::get('/chantiers/{chantier}/print-qrcode', [ChantierQrCodeController::class, 'printQrCode'])->name('qrcode.chantier.print');
+    Route::get('/chantiers/{chantier}/print-qrcode', [ChantierQrCodeController::class, 'printLabel'])->name('qrcode.chantier.print');
+    
+    // Routes pour les étiquettes
+    Route::get('/chantiers/{chantier}/etiquette', [App\Http\Controllers\EtiquetteController::class, 'chantierEtiquette'])->name('etiquettes.chantier');
+    Route::get('/chantiers/{chantier}/etiquette/ptouch', [App\Http\Controllers\EtiquetteController::class, 'chantierPTouchTemplate'])->name('etiquettes.chantier.ptouch');
+    Route::get('/dalles/{dalle}/etiquette', [App\Http\Controllers\EtiquetteController::class, 'dalleEtiquette'])->name('etiquettes.dalle');
+    Route::get('/modules/{module}/etiquette', [App\Http\Controllers\EtiquetteController::class, 'moduleEtiquette'])->name('etiquettes.module');
+    Route::get('/etiquettes/test', [App\Http\Controllers\EtiquetteController::class, 'testEtiquettes'])->name('etiquettes.test');
+    Route::post('/modules/batch-etiquettes', [App\Http\Controllers\EtiquetteController::class, 'moduleBatchEtiquettes'])->name('etiquettes.module.batch');
     
     // Dalles
     Route::get('/chantiers/{chantier}/dalles/create', [DalleController::class, 'create'])->name('dalles.create');
@@ -468,6 +163,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/modules/{module}/edit', [ModuleController::class, 'edit'])->name('modules.edit');
     Route::put('/modules/{module}', [ModuleController::class, 'update'])->name('modules.update');
     Route::delete('/modules/{module}', [ModuleController::class, 'destroy'])->name('modules.destroy');
+    Route::post('/modules/{module}/mark-as-completed', [ModuleController::class, 'markAsCompleted'])->name('modules.mark-as-completed');
     
     // Impression d'étiquettes QR Code pour modules
     Route::get('/modules/{module}/qrcode', [ModuleQrCodeController::class, 'show'])->name('qrcode.module.show');
@@ -484,16 +180,28 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/interventions/{intervention}', [InterventionController::class, 'destroy'])->name('interventions.destroy');
     
     // Etape 1 de l'intervention : diagnostic
-    Route::get('/interventions/{intervention}/diagnostic', [InterventionController::class, 'editDiagnostic'])->name('interventions.diagnostic');
+    Route::get('/interventions/{intervention}/diagnostic', [InterventionController::class, 'showDiagnosticStep'])->name('interventions.diagnostic');
     Route::post('/interventions/{intervention}/diagnostic', [InterventionController::class, 'storeDiagnostic'])->name('interventions.store-diagnostic');
     
     // Etape 2 de l'intervention : réparation
-    Route::get('/interventions/{intervention}/reparation', [InterventionController::class, 'editReparation'])->name('interventions.reparation');
+    Route::get('/interventions/{intervention}/reparation', [InterventionController::class, 'showReparationStep'])->name('interventions.reparation');
     Route::post('/interventions/{intervention}/reparation', [InterventionController::class, 'storeReparation'])->name('interventions.store-reparation');
     
     // Etape 3 de l'intervention : finalisation
-    Route::get('/interventions/{intervention}/finalisation', [InterventionController::class, 'editFinalisation'])->name('interventions.finalisation');
+    Route::get('/interventions/{intervention}/finalisation', [InterventionController::class, 'showFinalisationStep'])->name('interventions.finalisation');
     Route::post('/interventions/{intervention}/finalisation', [InterventionController::class, 'storeFinalisation'])->name('interventions.store-finalisation');
+    
+    // Annulation d'intervention
+    Route::post('/interventions/{intervention}/cancel', [InterventionController::class, 'cancel'])->name('interventions.cancel');
+    
+    // Route pour nettoyer les modules bloqués (pour administrateurs)
+    Route::post('/modules/clean-status', [ModuleController::class, 'cleanStatus'])->name('modules.clean-status')->middleware('admin');
+    
+    // Route pour nettoyer les modules incohérents (marqués comme occupés sans intervention active)
+    Route::get('/maintenance/clean-modules', [ModuleController::class, 'cleanStatus'])->name('maintenance.clean-modules');
+    
+    // Route pour l'auto-nettoyage silencieux (via AJAX)
+    Route::get('/maintenance/auto-clean-modules', [ModuleController::class, 'autoCleanStatus'])->name('maintenance.auto-clean-modules');
     
     // Produits du catalogue
     Route::resource('produits-catalogue', ProduitCatalogueController::class);
@@ -503,15 +211,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/produits/create/variante/{produit}', [ProduitController::class, 'createVariante'])->name('produits.create-variante');
     Route::post('/produits/store/variante/{produit}', [ProduitController::class, 'storeVariante'])->name('produits.store-variante');
     
-    // Imprimantes
-    Route::resource('printers', PrinterController::class);
-    Route::get('/printers/{printer}/test', [PrinterController::class, 'test'])->name('printers.test');
-    Route::post('/printers/{printer}/test', [PrinterController::class, 'executeTest'])->name('printers.execute-test');
-    
     // Rapports
     Route::get('/rapports', [RapportController::class, 'index'])->name('rapports.index');
     Route::get('/rapports/chantier/{chantier}', [RapportController::class, 'chantier'])->name('rapports.chantier');
     Route::get('/rapports/intervention/{intervention}', [RapportController::class, 'intervention'])->name('rapports.intervention');
+    
+    // Emails
+    Route::post('/emails/chantier/{chantier}', [\App\Http\Controllers\EmailController::class, 'sendChantierEmail'])->name('emails.chantier');
 });
 
 // Routes de paramétrage initial
@@ -540,6 +246,65 @@ Route::prefix('qr')->group(function () {
         return view('qrcodes.scan');
     })->name('qrcode.scan');
 });
+
+// Routes pour tester l'impression
+Route::middleware(['auth'])->group(function () {
+    // Route simple de test
+    Route::get('/test-etiquette', function () {
+        // Générer un QR code pour le test
+        $service = app(App\Services\PrinterService::class);
+        $qrCode = $service->generateQrCode('TEST_ETIQUETTE_' . date('YmdHis'), 250);
+        
+        return view('etiquettes.brother_test_62x70', [
+            'qrcode' => $qrCode,
+            'test_id' => uniqid('test_'),
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
+    })->name('test-etiquette');
+    
+    // Page de test pour étiquette 62x80mm (rouleau continu)
+    Route::get('/print-test/brother-label', function () {
+        // Générer un QR code pour le test
+        $service = app(App\Services\PrinterService::class);
+        $qrCode = $service->generateQrCode('TEST_ETIQUETTE_' . date('YmdHis'), 250);
+        
+        return view('etiquettes.brother_test_62x70', [
+            'qrcode' => $qrCode,
+            'test_id' => uniqid('test_'),
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
+    })->name('print-test.brother-label');
+    
+    // Ajout d'une route spécifique pour tester l'impression avec les nouveaux paramètres
+    Route::get('/test-impression-rouleau-continu', function (App\Http\Controllers\Api\PrintController $printController) {
+        // Génération d'un QR code pour le test
+        $service = app(App\Services\PrinterService::class);
+        $qrCode = $service->generateQrCode('TEST_ROULEAU_CONTINU_' . date('YmdHis'), 300);
+        
+        // Options d'affichage
+        $viewData = [
+            'qrcode' => $qrCode,
+            'test_id' => uniqid('test_'),
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+        
+        // Rendu de la vue
+        return view('etiquettes.brother_test_62x70', $viewData);
+    })->name('test-impression-rouleau-continu');
+});
+
+// Routes pour l'authentification client
+Route::prefix('client')->group(function () {
+    Route::get('/login', [App\Http\Controllers\ClientAuthController::class, 'showLoginForm'])->name('client.login');
+    Route::post('/login', [App\Http\Controllers\ClientAuthController::class, 'login'])->name('client.login.submit');
+    Route::get('/register', [App\Http\Controllers\ClientAuthController::class, 'showRegisterForm'])->name('client.register');
+    Route::post('/register', [App\Http\Controllers\ClientAuthController::class, 'register'])->name('client.register.submit');
+    Route::post('/logout', [App\Http\Controllers\ClientAuthController::class, 'logout'])->name('client.logout');
+    Route::get('/dashboard', [App\Http\Controllers\ClientAuthController::class, 'dashboard'])->name('client.dashboard');
+});
+
+// Route pour définir le mot de passe d'un client (utilisé dans l'édition de client)
+Route::post('/clients/{client}/set-password', [ClientController::class, 'setPassword'])->name('client.set-password')->middleware('auth');
 
 // Routes d'authentification Laravel (login, register, etc.)
 require __DIR__.'/auth.php';

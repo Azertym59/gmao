@@ -61,6 +61,7 @@
                                 <select id="etat" name="etat" class="block mt-1 w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
                                     <option value="non_commence" {{ old('etat', $chantier->etat) == 'non_commence' ? 'selected' : '' }}>Non commencé</option>
                                     <option value="en_cours" {{ old('etat', $chantier->etat) == 'en_cours' ? 'selected' : '' }}>En cours</option>
+                                    <option value="stand_by" {{ old('etat', $chantier->etat) == 'stand_by' ? 'selected' : '' }}>En attente</option>
                                     <option value="termine" {{ old('etat', $chantier->etat) == 'termine' ? 'selected' : '' }}>Terminé</option>
                                 </select>
                                 <x-input-error :messages="$errors->get('etat')" class="mt-2" />

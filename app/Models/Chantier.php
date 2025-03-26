@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Chantier extends Model
 {
@@ -15,7 +16,8 @@ class Chantier extends Model
     protected $fillable = [
         'client_id', 'nom', 'description', 'date_reception', 
         'date_butoir', 'etat', 'reference', 'token_suivi', 'token_suivi_last_used_at',
-        'is_client_achat', 'is_under_warranty', 'warranty_end_date', 'warranty_type'
+        'is_client_achat', 'is_under_warranty', 'warranty_end_date', 'warranty_type',
+        'intervention_data'
     ];
 
     protected $casts = [
@@ -24,6 +26,7 @@ class Chantier extends Model
         'warranty_end_date' => 'date',
         'is_client_achat' => 'boolean',
         'is_under_warranty' => 'boolean',
+        'intervention_data' => 'json',
     ];
 
     /**
@@ -50,31 +53,69 @@ class Chantier extends Model
         $prefix = 'TCA-'; // TecaLED Assistance
         $year = now()->format('y'); // Année sur 2 chiffres
         $month = now()->format('m'); // Mois
+        $format = $prefix . $year . $month . '-%';
         
-        // Trouver le numéro le plus élevé pour aujourd'hui
-        $latestRef = self::whereDate('created_at', today())
-            ->where('reference', 'LIKE', $prefix . $year . $month . '-%')
-            ->orderBy('reference', 'desc')
-            ->first();
+        // Trouver directement le maximum actuel dans la base de données avec une requête SQL brute pour éviter les bugs
+        try {
+            // Obtenir la référence avec le numéro le plus élevé pour ce format
+            $maxRef = DB::select(
+                "SELECT reference FROM chantiers 
+                WHERE reference LIKE ? 
+                ORDER BY CAST(SUBSTR(reference, -3) AS INTEGER) DESC LIMIT 1", 
+                [$format . '%']
+            );
             
-        if ($latestRef) {
-            // Extraire le numéro de la dernière référence
-            $parts = explode('-', $latestRef->reference);
-            $lastCount = (int)end($parts);
-            $count = $lastCount + 1;
-        } else {
-            $count = 1;
-        }
-        
-        $newRef = $prefix . $year . $month . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
-        
-        // Vérifier si cette référence existe déjà (pour être sûr)
-        while (self::where('reference', $newRef)->exists()) {
-            $count++;
+            $count = 1; // Valeur par défaut
+            
+            if (!empty($maxRef)) {
+                // Extraire le numéro de séquence de la référence
+                $reference = $maxRef[0]->reference;
+                $parts = explode('-', $reference);
+                $num = (int) end($parts);
+                $count = $num + 1;
+                
+                \Illuminate\Support\Facades\Log::info('Référence max trouvée', [
+                    'max_ref' => $reference,
+                    'new_count' => $count
+                ]);
+            }
+            
+            // Générer la nouvelle référence
             $newRef = $prefix . $year . $month . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+            
+            // Vérifier que cette référence n'existe pas déjà (double vérification)
+            while (DB::table('chantiers')->where('reference', $newRef)->exists()) {
+                $count++;
+                $newRef = $prefix . $year . $month . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+                
+                \Illuminate\Support\Facades\Log::info('Collision détectée, incrément de la référence', [
+                    'new_ref' => $newRef
+                ]);
+                
+                // Sécurité pour éviter une boucle infinie
+                if ($count > 999) {
+                    throw new \Exception("Impossible de générer une référence unique après 999 tentatives");
+                }
+            }
+            
+            \Illuminate\Support\Facades\Log::info('Référence générée avec succès', [
+                'reference' => $newRef
+            ]);
+            
+            return $newRef;
+            
+        } catch (\Exception $e) {
+            // En cas d'erreur, utiliser une référence unique basée sur le timestamp
+            \Illuminate\Support\Facades\Log::error('Erreur lors de la génération de référence', [
+                'error' => $e->getMessage()
+            ]);
+            
+            // Fallback sécurisé
+            $timestamp = now()->format('ymdHis');
+            $newRef = $prefix . $timestamp;
+            
+            return $newRef;
         }
-        
-        return $newRef;
     }
     
     /**
@@ -100,16 +141,34 @@ class Chantier extends Model
     }
     
     /**
+     * Obtenir le nombre théorique de modules requis pour le chantier
+     * SIMPLIFIÉ : basé uniquement sur disposition_modules
+     */
+    public function getTotalModulesNeeded(): int
+    {
+        $totalModules = 0;
+        
+        foreach ($this->produits as $produit) {
+            foreach ($produit->dalles as $dalle) {
+                // Utiliser UNIQUEMENT le calcul basé sur disposition_modules
+                $totalModules += $dalle->calculateNbModules();
+            }
+        }
+        
+        return $totalModules;
+    }
+    
+    /**
      * Obtenir le pourcentage de complétion du chantier
+     * Utilisera le nombre théorique de modules maintenant
      */
     public function getCompletionPercentage(): int
     {
-        $totalModules = 0;
+        $totalModules = $this->getTotalModulesNeeded();
         $modulesTermines = 0;
         
         foreach ($this->produits as $produit) {
             foreach ($produit->dalles as $dalle) {
-                $totalModules += $dalle->modules->count();
                 $modulesTermines += $dalle->modules->where('etat', 'termine')->count();
             }
         }

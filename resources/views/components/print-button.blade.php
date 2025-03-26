@@ -1,42 +1,8 @@
-@props([
-    'route',
-    'type' => 'default',
-    'buttonStyle' => '',
-    'tag' => 'button',
-    'onclick' => '',
-    'size' => 'md'
-])
+@props(['url' => '#', 'target' => '_blank', 'text' => 'Imprimer'])
 
-@php
-    $baseClass = 'btn inline-flex items-center justify-center shadow-md transition-all duration-300 hover:scale-105';
-    
-    // Classes selon le type
-    $typeClass = match($type) {
-        'qrcode' => 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border border-blue-700 hover:from-blue-700 hover:to-indigo-700',
-        'brother' => 'text-white border border-fuchsia-700',
-        'zebra' => 'bg-gradient-to-r from-gray-800 to-black text-white border border-gray-700 hover:from-gray-700 hover:to-gray-900',
-        'default' => 'bg-gradient-to-r from-gray-600 to-gray-800 text-white border border-gray-700 hover:from-gray-500 hover:to-gray-700',
-    };
-    
-    // Style inline pour Brother (couleur spécifique)
-    $inlineStyle = $type === 'brother' ? 'background: linear-gradient(135deg, #b01e8e 0%, #d027a6 100%);' : '';
-    
-    // Taille
-    $sizeClass = match($size) {
-        'sm' => 'px-3 py-1 text-xs rounded-md',
-        'lg' => 'px-5 py-3 text-base rounded-xl',
-        default => 'px-4 py-2 text-sm rounded-lg',
-    };
-    
-    $classes = "{$baseClass} {$typeClass} {$sizeClass} {$buttonStyle}";
-@endphp
-
-@if($tag === 'a')
-    <a href="{{ $route }}" {{ $attributes->merge(['class' => $classes]) }} style="{{ $inlineStyle }}">
-        {{ $slot }}
-    </a>
-@else
-    <button onclick="{{ $onclick }}" {{ $attributes->merge(['class' => $classes]) }} style="{{ $inlineStyle }}">
-        {{ $slot }}
-    </button>
-@endif
+<a href="{{ $url }}" {{ $attributes->merge(['class' => 'inline-flex items-center px-4 py-2 bg-blue-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-600 active:bg-blue-700 focus:outline-none focus:border-blue-700 focus:ring focus:ring-blue-200 disabled:opacity-25 transition']) }} target="{{ $target }}">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+    </svg>
+    {{ $text }}
+</a>

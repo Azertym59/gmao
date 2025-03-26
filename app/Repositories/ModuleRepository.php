@@ -83,9 +83,18 @@ class ModuleRepository
      */
     public function getModulesNeedingIntervention(): Collection
     {
-        return Module::with(['dalle.produit.chantier'])
-            ->where('etat', 'En diagnostic')
-            ->orWhere('etat', 'En réparation')
+        // Récupérer tous les modules avec leurs relations
+        return Module::with(['dalle.produit.chantier', 'interventions'])
+            // D'abord les modules qui n'ont aucune intervention
+            ->withCount('interventions')
+            // Puis les modules dont toutes les interventions sont complétées
+            ->whereDoesntHave('interventions', function($query) {
+                $query->where('is_completed', false);
+            })
+            // Trier d'abord par le nombre d'interventions (modules sans intervention en premier)
+            ->orderBy('interventions_count', 'asc')
+            // Puis par date de création (plus récents en premier)
+            ->orderBy('created_at', 'desc')
             ->get();
     }
     

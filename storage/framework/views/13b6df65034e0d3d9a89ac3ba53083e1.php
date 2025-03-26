@@ -12,10 +12,10 @@
         <h2 class="font-semibold text-xl text-white leading-tight">
             <!-- Debug: Type de projet = <?php echo e($type ?? 'non défini'); ?> -->
             <?php if(isset($type) && $type === 'vente'): ?>
-                <?php echo e(__('Créer un projet de vente - Étape 1/5')); ?>
+                <?php echo e(__('Créer un projet de vente - Étape 1/4')); ?>
 
             <?php else: ?>
-                <?php echo e(__('Créer un projet de maintenance - Étape 1/5')); ?>
+                <?php echo e(__('Créer un projet de maintenance - Étape 1/4')); ?>
 
             <?php endif; ?>
         </h2>
@@ -57,15 +57,6 @@
                         <div class="relative flex flex-col items-center">
                             <div class="step-button inactive">
                                 <span class="relative z-10">4</span>
-                            </div>
-                            <div class="text-center mt-1 w-32">
-                                <span class="step-text text-gray-400">Interventions</span>
-                            </div>
-                        </div>
-                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-gray-600/30"></div>
-                        <div class="relative flex flex-col items-center">
-                            <div class="step-button inactive">
-                                <span class="relative z-10">5</span>
                             </div>
                             <div class="text-center mt-1 w-32">
                                 <span class="step-text text-gray-400">Rapports</span>

@@ -65,6 +65,9 @@ class DalleController extends Controller
             ]);
         }
         
+        // Ajouter disposition_modules au format "nbColonnes x nbLignes"
+        $validated['disposition_modules'] = $validated['nb_colonnes'] . 'x' . $validated['nb_lignes'];
+        
         // Créer la dalle
         $dalle = Dalle::create($validated);
         
@@ -191,7 +194,28 @@ class DalleController extends Controller
     public function show(Dalle $dalle)
     {
         $dalle->load(['produit.chantier.client', 'modules']);
-        return view('dalles.show', compact('dalle'));
+        
+        // Récupérer le produit
+        $produit = $dalle->produit;
+        
+        // Récupérer le chantier
+        $chantier = $produit ? $produit->chantier : null;
+        
+        // Récupérer le client
+        $client = $chantier ? $chantier->client : null;
+        
+        // Calculer quelques statistiques pour la dalle
+        $stats = [
+            'nb_modules' => $dalle->modules->count(),
+            'modules_reparation' => $dalle->modules->where('etat', 'En réparation')->count(),
+            'modules_termines' => $dalle->modules->where('etat', 'Terminé')->count(),
+        ];
+        
+        $stats['progression'] = $stats['nb_modules'] > 0 
+            ? round(($stats['modules_termines'] / $stats['nb_modules']) * 100) 
+            : 0;
+        
+        return view('dalles.show', compact('dalle', 'produit', 'chantier', 'client', 'stats'));
     }
 
     /**
@@ -199,8 +223,21 @@ class DalleController extends Controller
      */
     public function edit(Dalle $dalle)
     {
+        $dalle->load(['produit.chantier.client']);
+        
+        // Récupérer le produit actuel
+        $produit = $dalle->produit;
+        
+        // Récupérer le chantier
+        $chantier = $produit ? $produit->chantier : null;
+        
+        // Récupérer le client
+        $client = $chantier ? $chantier->client : null;
+        
+        // Récupérer tous les produits pour le sélecteur
         $produits = Produit::with('chantier.client')->get();
-        return view('dalles.edit', compact('dalle', 'produits'));
+        
+        return view('dalles.edit', compact('dalle', 'produits', 'produit', 'chantier', 'client'));
     }
 
     /**

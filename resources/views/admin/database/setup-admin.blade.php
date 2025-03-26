@@ -23,7 +23,7 @@
 
                     <h2 class="text-lg font-semibold text-white mb-6">Créer un compte administrateur</h2>
 
-                    <form method="POST" action="{{ route('admin.database.store-admin') }}">
+                    <form method="POST" action="{{ route('admin.database.setup-admin.store') }}">
                         @csrf
                         
                         <div class="mb-6">

@@ -12,7 +12,9 @@
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "maatwebsite/excel": "^1.1",
+        "printnode/printnode-php": "^2.1",
         "pusher/pusher-php-server": "^7.2",
+        "setasign/fpdf": "*",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-permission": "^6.16"
     },

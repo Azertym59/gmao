@@ -8,6 +8,10 @@
 <?php $attributes = $attributes->except(\App\View\Components\AppLayout::ignoredParameterNames()); ?>
 <?php endif; ?>
 <?php $component->withAttributes([]); ?>
+<?php $__env->startPush('meta'); ?>
+<link rel="stylesheet" href="<?php echo e(asset('css/module-busy.css')); ?>?v=<?php echo e(time()); ?>">
+<script src="<?php echo e(asset('js/components/module-status-tracker.js')); ?>?v=<?php echo e(time()); ?>"></script>
+<?php $__env->stopPush(); ?>
      <?php $__env->slot('header', null, []); ?> 
         <h2 class="font-semibold text-xl text-white leading-tight">
             <?php echo e(__('Détails du chantier')); ?>
@@ -368,6 +372,37 @@
                                             <?php endif; ?>
                                         </div>
                                         <div><span class="font-medium">Dalles:</span> <?php echo e($produit->dalles->count()); ?></div>
+                                        
+                                        <!-- Modules config info -->
+                                        <div class="flex items-center bg-blue-900/20 px-3 py-1 rounded border border-blue-500/30 text-blue-300 text-xs mt-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                            </svg>
+                                            <?php
+                                                // Vérifier la première dalle pour obtenir la configuration exacte
+                                                $firstDalle = $produit->dalles->first();
+                                                $moduleCount = $firstDalle ? $firstDalle->modules->count() : 0;
+                                                $disposition = $firstDalle ? $firstDalle->disposition_modules : '';
+                                                
+                                                // Si toutes les dalles ont le même nombre de modules
+                                                $allSame = true;
+                                                foreach ($produit->dalles as $dalle) {
+                                                    if ($dalle->modules->count() != $moduleCount) {
+                                                        $allSame = false;
+                                                        break;
+                                                    }
+                                                }
+                                            ?>
+                                            <span>
+                                                Modules par dalle: <?php echo e($moduleCount); ?> 
+                                                <?php if($disposition): ?>
+                                                    (Disposition: <?php echo e($disposition); ?>)
+                                                <?php endif; ?>
+                                                <?php if(!$allSame): ?>
+                                                    <span class="text-amber-300 ml-1">(Certaines dalles ont des configurations différentes)</span>
+                                                <?php endif; ?>
+                                            </span>
+                                        </div>
                                     </div>
                                     
                                     <!-- Liste des dalles avec modules -->
@@ -1120,15 +1155,12 @@
 <?php unset($__componentOriginal653ad55244738a059739a51a5163a501); ?>
 <?php endif; ?>
                         
-                        <form action="<?php echo e(route('print.qrcode.chantier', $chantier->id)); ?>" method="POST">
-                            <?php echo csrf_field(); ?>
-                            <button type="submit" class="btn-action btn-primary">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                </svg>
-                                Imprimer QR Code
-                            </button>
-                        </form>
+                        <a href="<?php echo e(route('qrcode.chantier.print', $chantier->id)); ?>" class="btn-action btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            Imprimer QR Code
+                        </a>
                     </div>
                 </div>
             </div>

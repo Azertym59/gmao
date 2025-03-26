@@ -28,7 +28,7 @@ class EmailService
         }
         
         // Générer le lien de suivi
-        $lienSuivi = url('/suivi/' . $chantier->token_suivi);
+        $lienSuivi = route('suivi.chantier', ['token' => $chantier->token_suivi]);
         
         // Calculer le nombre total de modules et corriger les valeurs INCONNU
         $totalModules = 0;
@@ -81,7 +81,7 @@ class EmailService
         }
         
         // Générer le lien de suivi
-        $lienSuivi = url('/suivi/' . $chantier->token_suivi);
+        $lienSuivi = route('suivi.chantier', ['token' => $chantier->token_suivi]);
         
         // Compter les interventions démarrées
         $interventionsStarted = 0;
@@ -141,7 +141,7 @@ class EmailService
         }
         
         // Générer le lien de suivi
-        $lienSuivi = url('/suivi/' . $chantier->token_suivi);
+        $lienSuivi = route('suivi.chantier', ['token' => $chantier->token_suivi]);
         
         // Calcul des statistiques de base pour l'email
         $totalModules = 0;

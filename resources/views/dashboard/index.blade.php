@@ -49,27 +49,56 @@
             </div>
         </div>
     
-    <!-- Modules en cours -->
+    <!-- Modules occupés en temps réel -->
     <div class="glassmorphism rounded-xl shadow-lg p-6 border border-gray-700">
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-yellow-500/20 text-yellow-500">
+                <div class="p-3 rounded-full bg-orange-500/20 text-orange-500">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <h3 class="text-gray-400 text-sm font-medium">En cours</h3>
-                    <p class="text-3xl font-semibold text-white">{{ $statsModules['en_cours'] }}</p>
+                    <h3 class="text-gray-400 text-sm font-medium">Occupés</h3>
+                    <p class="text-3xl font-semibold text-white">{{ Module::where('est_occupe', true)->count() }}</p>
                 </div>
             </div>
             <div class="mt-4 pt-4 border-t border-gray-700">
                 <div class="flex items-center justify-between">
-                    <span class="text-gray-400 text-sm">Taux d'activité</span>
-                    <span class="text-yellow-500 text-sm font-semibold">
+                    <span class="text-gray-400 text-sm">Activité en temps réel</span>
+                    <span class="text-orange-500 text-sm font-semibold">
                         @php
-                            $tauxActivite = $statsModules['total'] > 0 ? round(($statsModules['en_cours'] / $statsModules['total']) * 100) : 0;
+                            $moduleCount = $statsModules['total'] ?? 0;
+                            $occupiedCount = \App\Models\Module::where('est_occupe', true)->count();
+                            $tauxActivite = $moduleCount > 0 ? round(($occupiedCount / $moduleCount) * 100) : 0;
                         @endphp
                         {{ $tauxActivite }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+    
+    <!-- Modules en attente (stand by) -->
+    <div class="glassmorphism rounded-xl shadow-lg p-6 border border-gray-700">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-500/20 text-yellow-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-gray-400 text-sm font-medium">En attente</h3>
+                    <p class="text-3xl font-semibold text-white">{{ $statsModules['stand_by'] ?? 0 }}</p>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-700">
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-400 text-sm">En attente de pièces</span>
+                    <span class="text-yellow-500 text-sm font-semibold">
+                        @php
+                            $tauxStandBy = $statsModules['total'] > 0 ? round((($statsModules['stand_by'] ?? 0) / $statsModules['total']) * 100) : 0;
+                        @endphp
+                        {{ $tauxStandBy }}%
                     </span>
                 </div>
             </div>

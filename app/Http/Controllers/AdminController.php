@@ -19,6 +19,14 @@ class AdminController extends Controller
         // Nous n'avons pas besoin d'appliquer le middleware ici car
         // nous l'appliquons déjà dans les routes
     }
+    
+    /**
+     * Page d'accueil du tableau de bord administrateur
+     */
+    public function index()
+    {
+        return $this->dashboard();
+    }
 
     public function dashboard()
     {
@@ -80,7 +88,7 @@ class AdminController extends Controller
         return redirect()->route('admin.users')->with('success', 'Utilisateur créé avec succès.');
     }
     
-    public function deleteUser(User $user)
+    public function destroyUser(User $user)
     {
         // Empêcher la suppression de son propre compte
         if ($user->id === auth()->id()) {
@@ -284,8 +292,8 @@ class AdminController extends Controller
             Artisan::call('view:clear');
             Artisan::call('route:clear');
             
-            // Rediriger vers le formulaire de création d'un nouvel administrateur
-            return redirect()->route('admin.database.setup-admin');
+            // Rediriger vers le formulaire de création d'un nouvel administrateur (route publique)
+            return redirect()->route('setup.admin');
         } catch (\Exception $e) {
             return redirect()->route('admin.database.confirm-reset')
                 ->with('error', 'Erreur lors de la réinitialisation de la base de données: ' . $e->getMessage());

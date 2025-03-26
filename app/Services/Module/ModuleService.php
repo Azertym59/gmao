@@ -46,6 +46,7 @@ class ModuleService
     /**
      * Génère automatiquement des modules pour une dalle
      * en fonction des dimensions et de la taille standard des modules
+     * Limité à un maximum de 4 modules par dalle
      */
     public function generateModulesGrid(Dalle $dalle, int $moduleWidth, int $moduleHeight, string $moduleType): array
     {
@@ -55,11 +56,13 @@ class ModuleService
         
         $modulesData = [];
         $moduleCount = 1;
+        $maxModules = 4; // Limitation à 4 modules par dalle
+        $totalModules = 0;
         
-        for ($y = 0; $y < $nbModulesY; $y++) {
-            for ($x = 0; $x < $nbModulesX; $x++) {
+        for ($y = 0; $y < $nbModulesY && $totalModules < $maxModules; $y++) {
+            for ($x = 0; $x < $nbModulesX && $totalModules < $maxModules; $x++) {
                 $modulesData[] = [
-                    'reference' => $dalle->reference . '-M' . str_pad($moduleCount, 3, '0', STR_PAD_LEFT),
+                    'reference' => $dalle->reference . '-M' . $moduleCount,
                     'type' => $moduleType,
                     'largeur' => $moduleWidth,
                     'hauteur' => $moduleHeight,
@@ -68,6 +71,7 @@ class ModuleService
                 ];
                 
                 $moduleCount++;
+                $totalModules++;
             }
         }
         

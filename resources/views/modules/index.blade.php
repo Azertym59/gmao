@@ -11,9 +11,22 @@
                 <div class="p-6 bg-white border-b border-gray-200">
                     <div class="flex justify-between mb-6">
                         <h3 class="text-lg font-semibold">Liste des modules</h3>
-                        <a href="{{ route('modules.create') }}" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                            Ajouter un module
-                        </a>
+                        <div class="flex space-x-2">
+                            <!-- Bouton de nettoyage des modules bloqués (admin seulement) -->
+                            @if(Auth::user()->role === 'admin')
+                            <form action="{{ route('modules.clean-status') }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit" class="px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600" 
+                                    onclick="return confirm('Voulez-vous nettoyer les modules marqués comme occupés qui n\'ont pas d\'intervention active?')">
+                                    Nettoyer les modules bloqués
+                                </button>
+                            </form>
+                            @endif
+                            
+                            <a href="{{ route('modules.create') }}" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                Ajouter un module
+                            </a>
+                        </div>
                     </div>
 
                     @if (session('success'))

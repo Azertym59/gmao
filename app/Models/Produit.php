@@ -25,7 +25,14 @@ class Produit extends Model
         'variante_id',
         'is_variante',
         'variante_nom',
-        'led_datasheet_id'
+        'led_datasheet_id',
+        'produit_catalogue_id',
+        'disposition_modules',
+        'nom',
+        'description',
+        'etat',
+        'largeur_dalle',
+        'hauteur_dalle'
     ];
 
     /**
@@ -88,6 +95,14 @@ class Produit extends Model
     public function ledDatasheet(): BelongsTo
     {
         return $this->belongsTo(LedDatasheet::class);
+    }
+    
+    /**
+     * Le produit du catalogue associé à ce produit
+     */
+    public function produitCatalogue(): BelongsTo
+    {
+        return $this->belongsTo(ProduitCatalogue::class);
     }
 
     /**

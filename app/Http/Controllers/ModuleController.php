@@ -56,7 +56,7 @@ class ModuleController extends Controller
             'position_lettre' => 'nullable|string|max:10',
             'position_x' => 'nullable|integer|min:0',
             'position_y' => 'nullable|integer|min:0',
-            'etat' => 'nullable|in:non_commence,en_cours,defaillant,termine',
+            'etat' => 'nullable|in:non_commence,stand_by,defaillant,termine',
         ]);
         
         // Si un numéro de référence est fourni dans le champ 'reference', l'utiliser pour reference_module
@@ -82,6 +82,12 @@ class ModuleController extends Controller
     {
         $module->load(['dalle.produit.chantier.client', 'interventions.diagnostic', 'interventions.reparation', 'interventions.technicien']);
         
+        // Récupérer les entités parentes
+        $dalle = $module->dalle;
+        $produit = $dalle ? $dalle->produit : null;
+        $chantier = $produit ? $produit->chantier : null;
+        $client = $chantier ? $chantier->client : null;
+        
         // Préparer les données des interventions pour éviter l'erreur "Attempt to read property 'name' on null"
         $interventions = [];
         foreach($module->interventions as $intervention) {
@@ -89,9 +95,30 @@ class ModuleController extends Controller
             $interventions[] = $intervention;
         }
         
+        // Calculer quelques statistiques
+        $stats = [
+            'nb_interventions' => count($interventions),
+            'reparations_reussies' => 0,
+            'diagnostics_complets' => 0
+        ];
+        
+        foreach ($interventions as $intervention) {
+            if ($intervention->diagnostic && isset($intervention->diagnostic->est_complete) && $intervention->diagnostic->est_complete) {
+                $stats['diagnostics_complets']++;
+            }
+            if ($intervention->reparation && isset($intervention->reparation->est_complete) && $intervention->reparation->est_complete) {
+                $stats['reparations_reussies']++;
+            }
+        }
+        
         return view('modules.show', [
             'module' => $module,
+            'dalle' => $dalle,
+            'produit' => $produit,
+            'chantier' => $chantier,
+            'client' => $client,
             'interventions' => $interventions,
+            'stats' => $stats,
             'technicienErrorFixed' => true, // Flag pour le template
         ]);
     }
@@ -101,8 +128,19 @@ class ModuleController extends Controller
      */
     public function edit(Module $module)
     {
+        // Charger les relations
+        $module->load(['dalle.produit.chantier.client']);
+        
+        // Récupérer les entités parentes
+        $dalle = $module->dalle;
+        $produit = $dalle ? $dalle->produit : null;
+        $chantier = $produit ? $produit->chantier : null;
+        $client = $chantier ? $chantier->client : null;
+        
+        // Récupérer toutes les dalles pour le sélecteur
         $dalles = Dalle::with('produit.chantier.client')->get();
-        return view('modules.edit', compact('module', 'dalles'));
+        
+        return view('modules.edit', compact('module', 'dalles', 'dalle', 'produit', 'chantier', 'client'));
     }
 
     /**
@@ -121,7 +159,7 @@ public function update(Request $request, Module $module)
         'driver' => 'nullable|string|max:255',
         'shift_register' => 'nullable|string|max:255',
         'buffer' => 'nullable|string|max:255',
-        'etat' => 'required|in:non_commence,en_cours,defaillant,termine',
+        'etat' => 'required|in:non_commence,stand_by,defaillant,termine',
         'reference_module' => 'nullable|string|max:255',
         'numero_serie' => 'nullable|string|max:255',
         'technicien_id' => 'nullable|exists:users,id',
@@ -161,16 +199,220 @@ public function update(Request $request, Module $module)
      */
     public function destroy(Module $module)
     {
-        $module->delete();
-        
-        return redirect()->route('modules.index')
-            ->with('success', 'Module supprimé avec succès.');
+        try {
+            // Vérifier si le module peut être supprimé
+            $hasInterventions = $module->interventions()->exists();
+            
+            if ($hasInterventions) {
+                return redirect()->back()->with('error', 'Ce module a des interventions associées et ne peut pas être supprimé.');
+            }
+            
+            $module->delete();
+            return redirect()->route('modules.index')->with('success', 'Module supprimé avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur lors de la suppression du module : ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Nettoie les statuts incohérents des modules (pour les administrateurs)
+     */
+    public function cleanStatus(Request $request)
+    {
+        try {
+            // Rechercher les modules marqués comme occupés mais sans intervention active
+            $modules = Module::where('est_occupe', true)->get();
+            $cleaned = 0;
+            $specificModule = null;
+            
+            // Si un ID de module spécifique est fourni, on le traite prioritairement
+            if ($request->has('module_id')) {
+                $specificModule = Module::find($request->input('module_id'));
+                if ($specificModule) {
+                    // Vérifier si ce module a une intervention active
+                    $hasActiveIntervention = $specificModule->interventions()
+                        ->where('is_completed', false)
+                        ->exists();
+                    
+                    if (!$hasActiveIntervention) {
+                        // Nettoyer ce module spécifique
+                        $specificModule->est_occupe = false;
+                        $specificModule->technicien_id = null;
+                        $specificModule->save();
+                        
+                        // Supprimer le fichier de verrouillage s'il existe
+                        $lockFile = storage_path('app/locks/module_' . $specificModule->id . '.lock');
+                        if (file_exists($lockFile)) {
+                            @unlink($lockFile);
+                        }
+                        
+                        $cleaned++;
+                    }
+                }
+            } else {
+                // Traitement groupé de tous les modules occupés
+                foreach ($modules as $module) {
+                    // Vérifier si ce module a une intervention active
+                    $hasActiveIntervention = $module->interventions()
+                        ->where('is_completed', false)
+                        ->exists();
+                    
+                    if (!$hasActiveIntervention) {
+                        // Pas d'intervention active, donc on réinitialise l'état du module
+                        $module->est_occupe = false;
+                        $module->technicien_id = null;
+                        $module->save();
+                        
+                        // Supprimer le fichier de verrouillage s'il existe
+                        $lockFile = storage_path('app/locks/module_' . $module->id . '.lock');
+                        if (file_exists($lockFile)) {
+                            @unlink($lockFile);
+                        }
+                        
+                        $cleaned++;
+                    }
+                }
+            }
+            
+            // Rechercher et supprimer les fichiers de verrouillage orphelins
+            $lockDir = storage_path('app/locks');
+            if (file_exists($lockDir)) {
+                foreach (glob($lockDir . '/module_*.lock') as $lockFile) {
+                    // Si le fichier de verrouillage existe depuis plus de 30 minutes
+                    if (time() - filemtime($lockFile) > 1800) {
+                        @unlink($lockFile);
+                    }
+                }
+            }
+            
+            if ($specificModule) {
+                return redirect()->back()->with('success', "Le module #{$specificModule->id} a été libéré avec succès.");
+            } else {
+                return redirect()->back()->with('success', "Nettoyage terminé : $cleaned modules ont été réinitialisés.");
+            }
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur lors du nettoyage des modules : ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Fonction d'auto-nettoyage silencieux des modules, appelée par AJAX
+     * Nettoie les modules orphelins sans générer de réponse visible pour l'utilisateur
+     */
+    public function autoCleanStatus(Request $request)
+    {
+        try {
+            // Rechercher les modules marqués comme occupés mais sans intervention active
+            $modules = Module::where('est_occupe', true)->get();
+            $cleaned = 0;
+            $cleanedIds = [];
+            
+            // Vérifier chaque module pour voir s'il est vraiment occupé
+            foreach ($modules as $module) {
+                // Vérifier si ce module a une intervention active
+                $hasActiveIntervention = $module->interventions()
+                    ->where('is_completed', false)
+                    ->exists();
+                
+                // Vérifier si le fichier de verrouillage existe et s'il est récent
+                $lockFile = storage_path('app/locks/module_' . $module->id . '.lock');
+                $lockExists = file_exists($lockFile);
+                $lockFresh = $lockExists && (time() - filemtime($lockFile) < 1800); // 30 min max
+                
+                // Si pas d'intervention active et pas de verrouillage récent, on libère le module
+                if (!$hasActiveIntervention && (!$lockExists || !$lockFresh)) {
+                    // Pas d'intervention active, donc on réinitialise l'état du module
+                    $module->est_occupe = false;
+                    $module->technicien_id = null;
+                    $module->save();
+                    
+                    // Supprimer le fichier de verrouillage s'il existe
+                    if ($lockExists) {
+                        @unlink($lockFile);
+                    }
+                    
+                    $cleaned++;
+                    $cleanedIds[] = $module->id;
+                }
+            }
+            
+            // Rechercher et supprimer les fichiers de verrouillage orphelins
+            $lockDir = storage_path('app/locks');
+            $orphanedLockFiles = 0;
+            if (file_exists($lockDir)) {
+                foreach (glob($lockDir . '/module_*.lock') as $lockFile) {
+                    // Extraire l'ID du module du nom de fichier
+                    $moduleId = str_replace(['module_', '.lock'], '', basename($lockFile));
+                    
+                    // Vérifier si le module existe
+                    $moduleExists = Module::where('id', $moduleId)->exists();
+                    
+                    // Vérifier l'âge du fichier de verrouillage
+                    $lockTooOld = time() - filemtime($lockFile) > 1800; // 30 min
+                    
+                    if (!$moduleExists || $lockTooOld) {
+                        @unlink($lockFile);
+                        $orphanedLockFiles++;
+                    }
+                }
+            }
+            
+            // Journaliser l'action si quelque chose a été nettoyé
+            if ($cleaned > 0 || $orphanedLockFiles > 0) {
+                \Illuminate\Support\Facades\Log::info("Auto-nettoyage silencieux: $cleaned modules libérés, $orphanedLockFiles fichiers de verrouillage orphelins supprimés. Modules: " . implode(', ', $cleanedIds));
+            }
+            
+            // Répondre avec un JSON simple
+            return response()->json([
+                'success' => true,
+                'cleaned_modules' => $cleaned,
+                'cleaned_locks' => $orphanedLockFiles,
+                'module_ids' => $cleanedIds
+            ]);
+        } catch (\Exception $e) {
+            // Journaliser l'erreur mais ne pas perturber l'utilisateur
+            \Illuminate\Support\Facades\Log::error('Erreur lors de l\'auto-nettoyage silencieux des modules : ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
- * Afficher le formulaire de création en masse
- */
-public function showMassCreateForm(Produit $produit)
+     * Marquer un module comme terminé (OK)
+     */
+    public function markAsCompleted(Module $module)
+    {
+        try {
+            // Vérifier si le module est occupé
+            if ($module->est_occupe) {
+                return redirect()->back()->with('error', 'Ce module est actuellement occupé. Impossible de le marquer comme terminé.');
+            }
+            
+            // Marquer le module comme terminé
+            $module->etat = 'termine';
+            $module->save();
+            
+            // Si on vient de la page détail du chantier
+            $referer = request()->headers->get('referer');
+            if (strpos($referer, 'chantiers/') !== false) {
+                $chantierId = $module->dalle->produit->chantier->id;
+                return redirect()->route('chantiers.show', $chantierId)
+                    ->with('success', 'Module #' . $module->id . ' marqué comme terminé avec succès.');
+            }
+            
+            return redirect()->back()->with('success', 'Module #' . $module->id . ' marqué comme terminé avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur lors du marquage du module comme terminé : ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Afficher le formulaire de création en masse
+     */
+    public function showMassCreateForm(Produit $produit)
 {
     return view('modules.mass-create', compact('produit'));
 }
@@ -341,6 +583,64 @@ public function printBatch(Request $request)
     // Pour simplifier, nous allons transmettre à la vue des QR codes seulement les modules
     return redirect()->route('qrcode.module.batch', [
         'module_ids' => implode(',', $moduleIds)
+    ]);
+}
+
+/**
+ * Affiche la page de suivi public d'un module
+ */
+public function suivi(string $token)
+{
+    // Obtenir l'ID du module depuis la requête GET
+    $moduleId = request()->query('module');
+    if (!$moduleId) {
+        abort(404, 'Module non spécifié');
+    }
+    
+    // Obtenir le module
+    $module = Module::findOrFail($moduleId);
+    
+    // Charger les relations nécessaires
+    $module->load(['dalle.produit.chantier.client', 'interventions.diagnostic', 'interventions.reparation', 'interventions.technicien']);
+    
+    // Vérifier que le chantier a le bon token de suivi
+    $chantier = $module->dalle->produit->chantier;
+    if ($chantier->token_suivi !== $token) {
+        abort(403, 'Token de suivi invalide');
+    }
+    
+    // Préparer les données des interventions
+    $interventions = [];
+    foreach($module->interventions as $intervention) {
+        $intervention->technicienName = $intervention->technicien ? $intervention->technicien->name : 'Non assigné';
+        $interventions[] = $intervention;
+    }
+    
+    // Calculer quelques statistiques
+    $stats = [
+        'nb_interventions' => count($interventions),
+        'reparations_reussies' => 0,
+        'diagnostics_complets' => 0
+    ];
+    
+    foreach ($interventions as $intervention) {
+        if ($intervention->diagnostic && isset($intervention->diagnostic->est_complete) && $intervention->diagnostic->est_complete) {
+            $stats['diagnostics_complets']++;
+        }
+        if ($intervention->reparation && isset($intervention->reparation->est_complete) && $intervention->reparation->est_complete) {
+            $stats['reparations_reussies']++;
+        }
+    }
+    
+    return view('suivi.module', [
+        'module' => $module,
+        'dalle' => $module->dalle,
+        'produit' => $module->dalle->produit,
+        'chantier' => $chantier,
+        'client' => $chantier->client,
+        'interventions' => $interventions,
+        'stats' => $stats,
+        'token' => $token,
     ]);
 }
 }

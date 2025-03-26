@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-white leading-tight">
-            {{ __('Créer un chantier - Étape 3/5 : Produit et composition') }}
+            {{ __('Créer un chantier - Étape 3/4 : Produit et composition') }}
         </h2>
     </x-slot>
 
@@ -33,11 +33,13 @@
                             </div>
                         </div>
                         <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-green-500"></div>
-                        <div class="relative flex flex-col items-center text-accent-blue">
-                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 bg-accent-blue border-accent-blue text-white font-bold flex items-center justify-center">
-                                3
+                        <div class="relative flex flex-col items-center text-green-500">
+                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 bg-green-500 border-green-500 text-white font-bold flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
                             </div>
-                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-accent-blue">
+                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-green-500">
                                 <span class="font-bold">Produit</span>
                             </div>
                         </div>
@@ -45,15 +47,6 @@
                         <div class="relative flex flex-col items-center text-gray-500">
                             <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 border-gray-700 text-gray-400 font-bold flex items-center justify-center">
                                 4
-                            </div>
-                            <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-gray-500">
-                                <span>Interventions</span>
-                            </div>
-                        </div>
-                        <div class="flex-auto border-t-2 transition duration-500 ease-in-out border-gray-700"></div>
-                        <div class="relative flex flex-col items-center text-gray-500">
-                            <div class="rounded-full transition duration-500 ease-in-out h-12 w-12 py-3 border-2 border-gray-700 text-gray-400 font-bold flex items-center justify-center">
-                                5
                             </div>
                             <div class="absolute top-0 -ml-10 text-center mt-16 w-32 text-xs font-medium text-gray-500">
                                 <span>Rapports</span>
@@ -93,7 +86,7 @@
                         @endif
                     </div>
 
-                    <form id="compositionForm" method="POST" action="{{ route('chantiers.store.step3') }}">
+                    <form id="compositionForm" method="POST" action="{{ route('chantiers.store.step3', $chantier) }}">
                         @csrf
                         
                         <!-- Sélection du mode -->
@@ -102,8 +95,8 @@
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="mode_flightcase" class="flex items-center p-4 border border-gray-700 rounded-xl cursor-pointer transition-all hover:border-accent-blue hover:bg-gray-800/50 @error('mode') border-red-500 @enderror" id="flightcase_container">
-                                        <input type="radio" name="mode" id="mode_flightcase" value="flightcase" class="mr-2 accent-accent-blue" checked>
+                                    <label for="mode_flightcase" class="flex items-center p-4 border border-gray-700 rounded-xl cursor-pointer transition-all hover:border-accent-blue hover:bg-gray-800/50 @error('mode_configuration') border-red-500 @enderror" id="flightcase_container">
+                                        <input type="radio" name="mode_configuration" id="mode_flightcase" value="flightcase" class="mr-2 accent-accent-blue" checked>
                                         <div>
                                             <span class="font-medium text-white">Structure Flight Case</span>
                                             <p class="text-sm text-gray-400">Pour les envois structurés en flight cases contenant des dalles</p>
@@ -112,8 +105,8 @@
                                 </div>
                                 
                                 <div>
-                                    <label for="mode_individuel" class="flex items-center p-4 border border-gray-700 rounded-xl cursor-pointer transition-all hover:border-accent-blue hover:bg-gray-800/50 @error('mode') border-red-500 @enderror" id="individuel_container">
-                                        <input type="radio" name="mode" id="mode_individuel" value="individuel" class="mr-2 accent-accent-blue">
+                                    <label for="mode_individuel" class="flex items-center p-4 border border-gray-700 rounded-xl cursor-pointer transition-all hover:border-accent-blue hover:bg-gray-800/50 @error('mode_configuration') border-red-500 @enderror" id="individuel_container">
+                                        <input type="radio" name="mode_configuration" id="mode_individuel" value="individuel" class="mr-2 accent-accent-blue">
                                         <div>
                                             <span class="font-medium text-white">Modules individuels</span>
                                             <p class="text-sm text-gray-400">Pour les envois de modules en pièces détachées</p>
@@ -122,7 +115,7 @@
                                 </div>
                             </div>
                             
-                            @error('mode')
+                            @error('mode_configuration')
                                 <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -155,16 +148,64 @@
                                 </div>
                                 
                                 <div>
-                                    <x-input-label for="nb_modules_par_dalle" :value="__('Modules par Dalle')" class="text-gray-300" />
-                                    <div class="relative">
-                                        <x-text-input id="nb_modules_par_dalle" class="block mt-1 w-full bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" type="number" name="nb_modules_par_dalle" :value="old('nb_modules_par_dalle', isset($produitData['disposition_modules']) ? 
-                                        (preg_match('/^(\d+)x(\d+)$/', $produitData['disposition_modules'], $matches) ? ($matches[1] * $matches[2]) : 4) : 4)" min="1" />
-                                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                            <span class="text-xs text-amber-400">Variable selon le type de dalle</span>
+                                    <x-input-label :value="__('Modules par Dalle')" class="text-gray-300" />
+                                    <div class="flex items-center mt-1">
+                                        <div class="bg-gray-800 border border-accent-blue rounded-lg px-4 py-2 flex-1">
+                                            @php
+                                                // Récupérer la disposition des modules depuis les données du produit
+                                                $dispositionText = $produitData['disposition_modules'] ?? '2x2';
+                                                
+                                                // Calculer le nombre de modules à partir de la disposition
+                                                $moduleCount = 4; // Valeur par défaut (2x2)
+                                                
+                                                if (preg_match('/^(\d+)x(\d+)$/', $dispositionText, $matches)) {
+                                                    $moduleCount = (int)$matches[1] * (int)$matches[2];
+                                                }
+                                            @endphp
+                                            <span class="text-white font-medium">{{ $moduleCount }} modules</span>
+                                            <span class="text-gray-400 ml-2">(Disposition {{ $dispositionText }})</span>
+                                        </div>
+                                        <button type="button" id="customize_modules_btn" class="ml-2 py-2 px-3 bg-accent-blue hover:bg-blue-600 text-white rounded-lg text-sm flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                            Personnaliser
+                                        </button>
+                                    </div>
+                                    <input type="hidden" id="nb_modules_par_dalle" name="nb_modules_par_dalle" value="{{ $moduleCount }}" />
+                                    <input type="hidden" id="disposition_modules" name="disposition_modules" value="{{ $dispositionText }}" />
+                                    <p class="text-xs text-gray-400 mt-1">Configuration issue de la définition du produit. Vous pouvez la personnaliser au besoin.</p>
+                                    <x-input-error :messages="$errors->get('nb_modules_par_dalle')" class="mt-2" />
+                                    
+                                    <!-- Modal pour personnaliser la disposition des modules -->
+                                    <div id="modules_modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70" x-data>
+                                        <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-xl">
+                                            <h3 class="text-xl font-medium text-white mb-4">Personnaliser la disposition des modules</h3>
+                                            <div class="mb-4">
+                                                <label class="block text-gray-300 mb-2">Disposition</label>
+                                                <div class="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label class="block text-gray-400 mb-1">Colonnes</label>
+                                                        <input type="number" id="modal_colonnes" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-accent-blue focus:ring focus:ring-accent-blue focus:ring-opacity-50" value="{{ $matches[1] ?? substr($dispositionText, 0, 1) }}" min="1" max="10">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-gray-400 mb-1">Lignes</label>
+                                                        <input type="number" id="modal_lignes" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-accent-blue focus:ring focus:ring-accent-blue focus:ring-opacity-50" value="{{ $matches[2] ?? substr($dispositionText, 2, 1) }}" min="1" max="10">
+                                                    </div>
+                                                </div>
+                                                <p class="mt-3 font-medium text-accent-blue text-center">
+                                                    <span id="modal_total_modules">4</span> modules par dalle au total
+                                                </p>
+                                                <div class="mt-2 p-2 bg-blue-900/20 border border-blue-500/30 rounded-lg text-sm text-gray-300">
+                                                    <p>La taille de chaque module sera ajustée en fonction des dimensions de la dalle et de cette disposition.</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex justify-end space-x-3">
+                                                <button type="button" id="modules_modal_cancel" class="px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-800">Annuler</button>
+                                                <button type="button" id="modules_modal_apply" class="px-4 py-2 bg-accent-blue text-white rounded-lg hover:bg-blue-600">Appliquer</button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <p class="text-xs text-gray-400 mt-1">Basé sur la disposition {{isset($produitData['disposition_modules']) ? $produitData['disposition_modules'] : '2x2'}} par défaut, modifiable selon les besoins</p>
-                                    <x-input-error :messages="$errors->get('nb_modules_par_dalle')" class="mt-2" />
                                 </div>
                             </div>
                             
@@ -232,26 +273,81 @@
                             <div id="standard_config" class="mt-6 bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl">
                                 <h4 class="font-medium text-blue-300 mb-3">Configuration détaillée des FlightCases</h4>
                                 
-                                <!-- Types de dalles disponibles -->
-                                @if(isset($dalleTypes) && count($dalleTypes) > 0)
-                                <div class="mb-4 bg-gray-800/50 p-3 rounded-lg">
-                                    <h5 class="text-sm font-medium text-white mb-2">Types de dalles disponibles</h5>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                                        @foreach($dalleTypes as $type)
-                                        <div class="bg-gray-700/50 p-2 rounded border border-gray-600">
-                                            <span class="block text-sm font-medium text-white">{{ $type['nom'] }}</span>
-                                            <span class="block text-xs text-gray-300">{{ $type['largeur'] }}x{{ $type['hauteur'] }}mm</span>
-                                            <span class="block text-xs text-gray-400">Disposition: {{ $type['disposition'] }}</span>
-                                            @if($type['largeur'] == 500 && $type['hauteur'] == 1000)
-                                            <div class="mt-1 flex items-center">
-                                                <span class="inline-block px-2 py-1 text-xs font-medium bg-amber-600/30 text-amber-300 rounded">Configuration des modules variable</span>
+                                <!-- Types de dalles disponibles - caché par défaut -->
+                                <div id="dalle_types_section" class="mb-4 bg-gray-800/50 p-3 rounded-lg" style="display: none;">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h5 class="text-sm font-medium text-white">Types de dalles disponibles</h5>
+                                        <button type="button" id="add_dalle_type_btn" class="px-3 py-2 bg-accent-blue hover:bg-blue-600 text-white rounded-lg text-sm flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                            Ajouter un type de dalle
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2" id="dalle_types_container">
+                                        @if(isset($dalleTypes) && count($dalleTypes) > 0)
+                                            @foreach($dalleTypes as $type)
+                                            <div class="bg-gray-700/50 p-2 rounded border border-gray-600">
+                                                <span class="block text-sm font-medium text-white">{{ $type['nom'] }}</span>
+                                                <span class="block text-xs text-gray-300">{{ $type['largeur'] }}x{{ $type['hauteur'] }}mm</span>
+                                                <span class="block text-xs text-gray-400">Disposition: {{ $type['disposition'] }}</span>
+                                                @if($type['largeur'] == 500 && $type['hauteur'] == 1000)
+                                                <div class="mt-1 flex items-center">
+                                                    <span class="inline-block px-2 py-1 text-xs font-medium bg-amber-600/30 text-amber-300 rounded">Configuration des modules variable</span>
+                                                </div>
+                                                @endif
                                             </div>
-                                            @endif
-                                        </div>
-                                        @endforeach
+                                            @endforeach
+                                        @endif
+                                        <!-- Les nouveaux types de dalles seront ajoutés ici -->
                                     </div>
                                 </div>
-                                @endif
+                                
+                                <!-- Modal pour ajouter un nouveau type de dalle -->
+                                <div id="dalle_type_modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+                                    <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-xl">
+                                        <h3 class="text-xl font-medium text-white mb-4">Ajouter un type de dalle</h3>
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label class="block text-gray-300 mb-2">Nom du type</label>
+                                                <input type="text" id="modal_dalle_nom" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-accent-blue focus:ring focus:ring-accent-blue focus:ring-opacity-50" placeholder="Ex: Grande dalle 1000x1000">
+                                            </div>
+                                            
+                                            <div class="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label class="block text-gray-300 mb-2">Largeur (mm)</label>
+                                                    <input type="number" id="modal_dalle_largeur" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-accent-blue focus:ring focus:ring-accent-blue focus:ring-opacity-50" value="1000" min="100" max="5000">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-gray-300 mb-2">Hauteur (mm)</label>
+                                                    <input type="number" id="modal_dalle_hauteur" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-accent-blue focus:ring focus:ring-accent-blue focus:ring-opacity-50" value="1000" min="100" max="5000">
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <label class="block text-gray-300 mb-2">Disposition des modules</label>
+                                                <div class="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label class="block text-gray-400 mb-1">Colonnes</label>
+                                                        <input type="number" id="modal_dalle_colonnes" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-accent-blue focus:ring focus:ring-accent-blue focus:ring-opacity-50" value="4" min="1" max="10">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-gray-400 mb-1">Lignes</label>
+                                                        <input type="number" id="modal_dalle_lignes" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-accent-blue focus:ring focus:ring-accent-blue focus:ring-opacity-50" value="4" min="1" max="10">
+                                                    </div>
+                                                </div>
+                                                <p class="mt-3 font-medium text-accent-blue text-center">
+                                                    <span id="modal_dalle_total_modules">16</span> modules par dalle au total
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex justify-end space-x-3 mt-6">
+                                            <button type="button" id="dalle_type_modal_cancel" class="px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-800">Annuler</button>
+                                            <button type="button" id="dalle_type_modal_apply" class="px-4 py-2 bg-accent-blue text-white rounded-lg hover:bg-blue-600">Ajouter</button>
+                                        </div>
+                                    </div>
+                                </div>
                                 
                                 <div id="flightcases_detail_container" class="space-y-4">
                                     <!-- Ce div sera rempli dynamiquement par JavaScript -->
@@ -283,7 +379,7 @@
                             </div>
                             
                             <div class="flex items-center">
-                                <a href="{{ route('chantiers.create.step2') }}" class="btn-action btn-secondary flex items-center mr-2">
+                                <a href="{{ route('chantiers.create.step2', $chantier) }}" class="btn-action btn-secondary flex items-center mr-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                                     </svg>
@@ -314,6 +410,19 @@
             const totalModulesMessage = document.getElementById('total_modules_message');
             const totalModulesFc = document.getElementById('total_modules_fc');
             
+            // Éléments pour le nouveau modal de type de dalle
+            const addDalleTypeBtn = document.getElementById('add_dalle_type_btn');
+            const dalleTypeModal = document.getElementById('dalle_type_modal');
+            const dalleTypeContainer = document.getElementById('dalle_types_container');
+            const modalDalleNom = document.getElementById('modal_dalle_nom');
+            const modalDalleLargeur = document.getElementById('modal_dalle_largeur');
+            const modalDalleHauteur = document.getElementById('modal_dalle_hauteur');
+            const modalDalleColonnes = document.getElementById('modal_dalle_colonnes');
+            const modalDalleLignes = document.getElementById('modal_dalle_lignes');
+            const modalDalleTotalModules = document.getElementById('modal_dalle_total_modules');
+            const modalDalleCancel = document.getElementById('dalle_type_modal_cancel');
+            const modalDalleApply = document.getElementById('dalle_type_modal_apply');
+            
             // Nouvel élément pour le mode de tailles multiples
             const multipleSizesCheckbox = document.getElementById('multiple_sizes');
             const multipleSizesConfig = document.getElementById('multiple_sizes_config');
@@ -323,6 +432,16 @@
             const nbFlightcases = document.getElementById('nb_flightcases');
             const nbDallesParFlightcase = document.getElementById('nb_dalles_par_flightcase');
             const nbModulesParDalle = document.getElementById('nb_modules_par_dalle');
+            const dispositionModulesInput = document.getElementById('disposition_modules');
+            
+            // Champs pour le modal de personnalisation des modules
+            const customizeModulesBtn = document.getElementById('customize_modules_btn');
+            const modulesModal = document.getElementById('modules_modal');
+            const modalColonnes = document.getElementById('modal_colonnes');
+            const modalLignes = document.getElementById('modal_lignes');
+            const modalTotalModules = document.getElementById('modal_total_modules');
+            const modalCancelBtn = document.getElementById('modules_modal_cancel');
+            const modalApplyBtn = document.getElementById('modules_modal_apply');
             
             // Champs pour la configuration 1 (500x500)
             const config1NbFlightcases = document.getElementById('config1_nb_flightcases');
@@ -352,19 +471,106 @@
                 calculatedModulesPerDalle = parseInt(matches[1]) * parseInt(matches[2]);
             }
             
+            // Configuration du modal de personnalisation des modules
+            customizeModulesBtn.addEventListener('click', function() {
+                // Extraire les valeurs actuelles de la disposition
+                let currentDisposition = dispositionModulesInput.value;
+                let currentColumns = 2;
+                let currentRows = 2;
+                
+                if (currentDisposition.match(/^(\d+)x(\d+)$/)) {
+                    const matches = currentDisposition.match(/^(\d+)x(\d+)$/);
+                    currentColumns = parseInt(matches[1]);
+                    currentRows = parseInt(matches[2]);
+                }
+                
+                // Initialiser le modal avec les valeurs actuelles
+                modalColonnes.value = currentColumns;
+                modalLignes.value = currentRows;
+                modalTotalModules.textContent = currentColumns * currentRows;
+                
+                // Afficher le modal
+                modulesModal.classList.remove('hidden');
+            });
+            
+            // Mise à jour du total lors de la modification des valeurs dans le modal
+            function updateModalTotal() {
+                const columns = parseInt(modalColonnes.value) || 1;
+                const rows = parseInt(modalLignes.value) || 1;
+                modalTotalModules.textContent = columns * rows;
+            }
+            
+            // Ajouter les événements pour le modal
+            modalColonnes.addEventListener('input', updateModalTotal);
+            modalLignes.addEventListener('input', updateModalTotal);
+            
+            // Gestion du bouton Annuler
+            modalCancelBtn.addEventListener('click', function() {
+                modulesModal.classList.add('hidden');
+            });
+            
+            // Gestion du bouton Appliquer
+            modalApplyBtn.addEventListener('click', function() {
+                const columns = parseInt(modalColonnes.value) || 1;
+                const rows = parseInt(modalLignes.value) || 1;
+                const totalModules = columns * rows;
+                
+                // Mettre à jour les champs cachés
+                dispositionModulesInput.value = `${columns}x${rows}`;
+                nbModulesParDalle.value = totalModules;
+                
+                // Mettre à jour l'affichage
+                const moduleCountElement = document.querySelector('#customize_modules_btn').previousElementSibling.querySelector('.text-white');
+                const dispositionElement = document.querySelector('#customize_modules_btn').previousElementSibling.querySelector('.text-gray-400');
+                
+                if (moduleCountElement) {
+                    moduleCountElement.textContent = `${totalModules} modules`;
+                }
+                
+                if (dispositionElement) {
+                    dispositionElement.textContent = `(Disposition ${columns}x${rows})`;
+                }
+                
+                // Mettre à jour la variable calculatedModulesPerDalle pour les calculs
+                calculatedModulesPerDalle = totalModules;
+                
+                // Recalculer le total
+                updateTotalModules();
+                
+                // Fermer le modal
+                modulesModal.classList.add('hidden');
+            });
+            
+            // Référence à la section des types de dalles
+            const dalleTypesSection = document.getElementById('dalle_types_section');
+            
             // Gestionnaire d'événements pour le mode de tailles multiples
             multipleSizesCheckbox.addEventListener('change', function() {
                 if (this.checked) {
+                    // Afficher la configuration multiples tailles
                     multipleSizesConfig.style.display = 'block';
                     standardConfig.style.display = 'none';
                     nbFlightcases.disabled = true;
                     nbDallesParFlightcase.disabled = true;
+                    
+                    // Afficher la section des types de dalles
+                    if (dalleTypesSection) {
+                        dalleTypesSection.style.display = 'block';
+                    }
+                    
                     updateMultipleSizesTotal();
                 } else {
+                    // Masquer la configuration multiples tailles
                     multipleSizesConfig.style.display = 'none';
                     standardConfig.style.display = 'block';
                     nbFlightcases.disabled = false;
                     nbDallesParFlightcase.disabled = false;
+                    
+                    // Masquer la section des types de dalles
+                    if (dalleTypesSection) {
+                        dalleTypesSection.style.display = 'none';
+                    }
+                    
                     generateFlightCaseControls();
                     updateTotalModules();
                 }
@@ -471,11 +677,31 @@
                     
                     // HTML pour le sélecteur de type de dalle
                     let typeDalleOptions = '';
+                    
+                    // Option pour les dimensions personnalisées du produit
+                    @if(isset($produitData['largeur_dalle']) && isset($produitData['hauteur_dalle']) && $produitData['largeur_dalle'] > 0 && $produitData['hauteur_dalle'] > 0)
+                        typeDalleOptions = `<option value="custom" selected>Dimensions du produit ({{ $produitData['largeur_dalle'] }}x{{ $produitData['hauteur_dalle'] }}mm)</option>`;
+                    @elseif(isset($produit) && isset($produit->largeur_dalle) && isset($produit->hauteur_dalle) && $produit->largeur_dalle > 0 && $produit->hauteur_dalle > 0)
+                        typeDalleOptions = `<option value="custom" selected>Dimensions du produit ({{ $produit->largeur_dalle }}x{{ $produit->hauteur_dalle }}mm)</option>`;
+                    @endif
+                    
+                    // Ajouter les types prédéfinis
                     @if(isset($dalleTypes))
                         @foreach($dalleTypes as $type)
                             typeDalleOptions += `<option value="{{ $type['id'] }}">{{ $type['nom'] }} ({{ $type['largeur'] }}x{{ $type['hauteur'] }}mm)</option>`;
                         @endforeach
                     @endif
+                    
+                    // Ajouter les types personnalisés s'ils existent
+                    const customDalleElements = document.querySelectorAll('#dalle_types_container [data-dalle-type-id]');
+                    customDalleElements.forEach(element => {
+                        const typeId = element.getAttribute('data-dalle-type-id');
+                        const nomType = element.querySelector('.text-white').innerText;
+                        const largeur = element.getAttribute('data-dalle-largeur');
+                        const hauteur = element.getAttribute('data-dalle-hauteur');
+                        
+                        typeDalleOptions += `<option value="${typeId}">${nomType} (${largeur}x${hauteur}mm)</option>`;
+                    });
                     
                     const typeDalleHTML = `
                         <div class="w-full">
@@ -516,13 +742,32 @@
                     const dallesControl = document.getElementById(`fc_dalles_control_${f}`);
                     const nbDallesInput = document.getElementById(`fc_nb_dalles_${f}`);
                     
+                    // Toujours afficher les contrôles, indépendamment de l'état de la case à cocher
+                    dallesControl.style.display = 'grid';
+                    
                     checkbox.addEventListener('change', function() {
-                        dallesControl.style.display = this.checked ? 'grid' : 'none';
+                        // Mettre à jour le total lorsque la case est cochée/décochée
                         updateTotalModules();
                     });
                     
                     if (nbDallesInput) {
-                        nbDallesInput.addEventListener('input', updateTotalModules);
+                        nbDallesInput.addEventListener('input', function() {
+                            // Vérifier si le nombre est inférieur au maximum
+                            const maxDalles = parseInt(nbDallesParFlightcaseValue);
+                            const currentDalles = parseInt(this.value) || 0;
+                            
+                            // Si le nombre de dalles est inférieur au maximum, activer l'option "flightcase partiel"
+                            if (currentDalles < maxDalles) {
+                                checkbox.checked = true;
+                            } 
+                            // Si le nombre de dalles est égal au maximum, désactiver l'option "flightcase partiel"
+                            else if (currentDalles === maxDalles) {
+                                checkbox.checked = false;
+                            }
+                            
+                            // Mettre à jour le total
+                            updateTotalModules();
+                        });
                     }
                 }
             }
@@ -551,8 +796,13 @@
                         const dalleTypeSelect = document.getElementById(`fc_dalle_type_${f}`);
                         const modulesConfigSelect = document.getElementById(`fc_modules_config_${f}`);
                         
+                        // Pour le type de dalle personnalisé, utiliser la valeur calculée
+                        if (dalleTypeSelect && dalleTypeSelect.value === "custom") {
+                            // Utiliser la valeur calculée du produit ou celle du modal
+                            modulesPerDalle = calculatedModulesPerDalle;
+                        }
                         // Si c'est un type de dalle 500x1000 et qu'il a une config modules visible
-                        if (dalleTypeSelect && dalleTypeSelect.value == "1" && 
+                        else if (dalleTypeSelect && dalleTypeSelect.value == "1" && 
                             document.getElementById(`modules_config_container_${f}`) && 
                             document.getElementById(`modules_config_container_${f}`).style.display !== 'none') {
                             
@@ -562,15 +812,10 @@
                             else if (configValue === '2x2') modulesPerDalle = 4;
                         }
                         
-                        if (fcPartielCheckbox && fcPartielCheckbox.checked) {
-                            // FlightCase partiel: utiliser le nombre de dalles spécifié
-                            const nbDallesInput = document.getElementById(`fc_nb_dalles_${f}`);
-                            const nbDalles = parseInt(nbDallesInput.value) || 0;
-                            totalModules += nbDalles * modulesPerDalle;
-                        } else {
-                            // FlightCase complet: utiliser le nombre standard de dalles
-                            totalModules += nbDallesParFlightcaseValue * modulesPerDalle;
-                        }
+                        // Toujours utiliser la valeur du champ de saisie pour le nombre de dalles
+                        const nbDallesInput = document.getElementById(`fc_nb_dalles_${f}`);
+                        const nbDalles = nbDallesInput ? (parseInt(nbDallesInput.value) || 0) : nbDallesParFlightcaseValue;
+                        totalModules += nbDalles * modulesPerDalle;
                     }
                     
                     totalModulesFc.textContent = totalModules;
@@ -623,6 +868,93 @@
             
             updateTotalModules();
             
+            // Fermer les modals si l'utilisateur clique en dehors
+            window.addEventListener('click', function(event) {
+                if (event.target === modulesModal) {
+                    modulesModal.classList.add('hidden');
+                }
+                if (event.target === dalleTypeModal) {
+                    dalleTypeModal.classList.add('hidden');
+                }
+            });
+            
+            // Mise à jour du total des modules pour le modal de type de dalle
+            function updateDalleTypeModalTotal() {
+                const colonnes = parseInt(modalDalleColonnes.value) || 1;
+                const lignes = parseInt(modalDalleLignes.value) || 1;
+                modalDalleTotalModules.textContent = colonnes * lignes;
+            }
+            
+            // Gestion du modal de type de dalle
+            addDalleTypeBtn.addEventListener('click', function() {
+                // Initialiser le modal avec des valeurs par défaut
+                modalDalleNom.value = '';
+                modalDalleLargeur.value = '1000';
+                modalDalleHauteur.value = '1000';
+                modalDalleColonnes.value = '4';
+                modalDalleLignes.value = '4';
+                updateDalleTypeModalTotal();
+                
+                // Afficher le modal
+                dalleTypeModal.classList.remove('hidden');
+            });
+            
+            // Ajouter événements pour le modal de dalle
+            modalDalleColonnes.addEventListener('input', updateDalleTypeModalTotal);
+            modalDalleLignes.addEventListener('input', updateDalleTypeModalTotal);
+            
+            // Gestion du bouton Annuler
+            modalDalleCancel.addEventListener('click', function() {
+                dalleTypeModal.classList.add('hidden');
+            });
+            
+            // Gestion du bouton Ajouter
+            modalDalleApply.addEventListener('click', function() {
+                // Récupérer les valeurs
+                const nomType = modalDalleNom.value || `Dalle ${modalDalleLargeur.value}x${modalDalleHauteur.value}`;
+                const largeur = parseInt(modalDalleLargeur.value) || 1000;
+                const hauteur = parseInt(modalDalleHauteur.value) || 1000;
+                const colonnes = parseInt(modalDalleColonnes.value) || 4;
+                const lignes = parseInt(modalDalleLignes.value) || 4;
+                const disposition = `${colonnes}x${lignes}`;
+                const totalModules = colonnes * lignes;
+                
+                // Générer un ID unique pour ce type
+                const typeId = 'custom_' + Date.now();
+                
+                // Créer le nouvel élément HTML
+                const newTypeElement = document.createElement('div');
+                newTypeElement.className = 'bg-green-900/20 p-2 rounded border border-green-600';
+                newTypeElement.setAttribute('data-dalle-type-id', typeId);
+                newTypeElement.setAttribute('data-dalle-largeur', largeur);
+                newTypeElement.setAttribute('data-dalle-hauteur', hauteur);
+                newTypeElement.setAttribute('data-dalle-disposition', disposition);
+                newTypeElement.setAttribute('data-dalle-colonnes', colonnes);
+                newTypeElement.setAttribute('data-dalle-lignes', lignes);
+                
+                // Fournir le contenu HTML
+                newTypeElement.innerHTML = `
+                    <span class="block text-sm font-medium text-white">${nomType} <span class="ml-1 text-xs font-normal text-green-300">(Personnalisé)</span></span>
+                    <span class="block text-xs text-gray-300">${largeur}x${hauteur}mm</span>
+                    <span class="block text-xs text-gray-400">Disposition: ${disposition} (${totalModules} modules)</span>
+                    <input type="hidden" name="custom_dalle_types[${typeId}][nom]" value="${nomType}">
+                    <input type="hidden" name="custom_dalle_types[${typeId}][largeur]" value="${largeur}">
+                    <input type="hidden" name="custom_dalle_types[${typeId}][hauteur]" value="${hauteur}">
+                    <input type="hidden" name="custom_dalle_types[${typeId}][disposition]" value="${disposition}">
+                    <input type="hidden" name="custom_dalle_types[${typeId}][colonnes]" value="${colonnes}">
+                    <input type="hidden" name="custom_dalle_types[${typeId}][lignes]" value="${lignes}">
+                `;
+                
+                // Ajouter au conteneur
+                dalleTypeContainer.appendChild(newTypeElement);
+                
+                // Actualiser les sélecteurs pour les FlightCases
+                generateFlightCaseControls();
+                
+                // Fermer le modal
+                dalleTypeModal.classList.add('hidden');
+            });
+            
             // Fonctions pour gérer les configurations spécifiques des modules
             window.checkDalleType = function(flightcaseIndex) {
                 const dalleTypeSelect = document.getElementById(`fc_dalle_type_${flightcaseIndex}`);
@@ -632,8 +964,49 @@
                     // Si c'est une dalle 500x1000 (type 1), afficher les options de configuration de modules
                     if (dalleTypeSelect.value == "1") {
                         modulesConfigContainer.style.display = "block";
-                    } else {
+                    } else if (dalleTypeSelect.value == "custom") {
+                        // Pour les dalles personnalisées, on peut aussi personnaliser la configuration des modules
+                        // Créer dynamiquement un conteneur si besoin
+                        let customModulesContainer = document.getElementById(`custom_modules_container_${flightcaseIndex}`);
+                        
+                        if (!customModulesContainer) {
+                            customModulesContainer = document.createElement('div');
+                            customModulesContainer.id = `custom_modules_container_${flightcaseIndex}`;
+                            customModulesContainer.className = 'w-full mt-2';
+                            
+                            // Bouton pour personnaliser la configuration des modules
+                            const customizeBtn = document.createElement('button');
+                            customizeBtn.type = 'button';
+                            customizeBtn.className = 'px-3 py-2 bg-accent-blue hover:bg-blue-600 text-white rounded-lg text-sm flex items-center';
+                            customizeBtn.innerHTML = `
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Personnaliser les modules
+                            `;
+                            
+                            // Ajouter un événement au bouton pour ouvrir le modal de personnalisation
+                            customizeBtn.addEventListener('click', function() {
+                                // Réutiliser le modal existant
+                                document.getElementById('customize_modules_btn').click();
+                            });
+                            
+                            customModulesContainer.appendChild(customizeBtn);
+                            
+                            // Insérer le conteneur après le sélecteur de type de dalle
+                            dalleTypeSelect.parentNode.parentNode.appendChild(customModulesContainer);
+                        }
+                        
+                        customModulesContainer.style.display = "block";
                         modulesConfigContainer.style.display = "none";
+                    } else {
+                        // Cacher à la fois le conteneur standard et personnalisé
+                        modulesConfigContainer.style.display = "none";
+                        
+                        const customModulesContainer = document.getElementById(`custom_modules_container_${flightcaseIndex}`);
+                        if (customModulesContainer) {
+                            customModulesContainer.style.display = "none";
+                        }
                     }
                     
                     // Mettre à jour le total après changement

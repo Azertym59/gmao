@@ -11,6 +11,45 @@ function advancedProductSearch() {
         selectedProduct: null,
         isSearching: false,
         isLoading: true,
+        hasSynced: false,
+        
+        // Synchronise les produits avec le catalogue pour s'assurer
+        // que tous les produits ajoutés au catalogue apparaissent
+        syncCatalogueProducts() {
+            // Vérifier si la synchronisation a déjà été effectuée récemment
+            // en utilisant le stockage local (sessionStorage)
+            const lastSync = sessionStorage.getItem('catalogueSyncTimestamp');
+            const currentTime = new Date().getTime();
+            
+            // Si une synchro a été faite dans les dernières 10 minutes, ne pas refaire
+            if (lastSync && (currentTime - parseInt(lastSync)) < 600000) {
+                console.log('Synchronisation déjà effectuée récemment, utilisation du cache');
+                return;
+            }
+            
+            fetch('/api/produits/sync-catalogue')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erreur réseau: ${response.status} ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Synchronisation du catalogue terminée:', data);
+                    this.hasSynced = true;
+                    
+                    // Stocker l'horodatage de la dernière synchronisation
+                    sessionStorage.setItem('catalogueSyncTimestamp', currentTime.toString());
+                    
+                    // Recharger les produits après synchronisation
+                    if (data.count > 0) {
+                        this.init();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la synchronisation des produits:', error);
+                });
+        },
         
         // Filtres
         filters: {
@@ -196,6 +235,26 @@ function advancedProductSearch() {
             this.selectedProduct = product;
             // Mettre à jour la valeur cachée pour le formulaire
             document.getElementById('catalogue_id').value = product.id;
+            
+            // Calculer le nombre de modules (par défaut 2x2 = 4 modules)
+            if (!product.moduleCount) {
+                // Par défaut, on utilise une configuration 2x2 (4 modules par dalle)
+                product.moduleCount = 4;
+                product.moduleConfig = "2x2";
+                
+                // Si le produit a des informations sur la disposition des modules, les utiliser
+                if (product.disposition_modules) {
+                    const configParts = product.disposition_modules.split('x');
+                    if (configParts.length === 2) {
+                        const cols = parseInt(configParts[0]);
+                        const rows = parseInt(configParts[1]);
+                        if (!isNaN(cols) && !isNaN(rows)) {
+                            product.moduleCount = cols * rows;
+                            product.moduleConfig = product.disposition_modules;
+                        }
+                    }
+                }
+            }
             
             // On n'a plus besoin d'ajouter un écouteur au bouton submit
             // car il est maintenant directement lié au formulaire avec form="productForm"

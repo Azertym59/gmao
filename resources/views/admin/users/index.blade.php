@@ -71,7 +71,7 @@
                                             </a>
                                             
                                             @if ($user->id !== auth()->id())
-                                                <form method="POST" action="{{ route('admin.users.delete', $user) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')">
+                                                <form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn-action bg-red-600 hover:bg-red-700 text-white flex items-center">

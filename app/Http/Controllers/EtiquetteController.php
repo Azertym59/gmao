@@ -41,12 +41,12 @@ class EtiquetteController extends Controller
     /**
      * Imprimer directement sur une imprimante Brother via PrintNode
      *
-     * @param int $id ID du chantier
+     * @param int $chantier ID du chantier
      * @return \Illuminate\Http\Response
      */
-    public function chantierPTouchTemplate($id)
+    public function chantierPTouchTemplate($chantier)
     {
-        $chantier = Chantier::with(['client', 'produits', 'produits.dalles', 'produits.dalles.modules'])->findOrFail($id);
+        $chantier = Chantier::with(['client', 'produits', 'produits.dalles', 'produits.dalles.modules'])->findOrFail($chantier);
         
         // Générer le QR code pour le modèle
         $qrValue = route('chantiers.show', $chantier->id);

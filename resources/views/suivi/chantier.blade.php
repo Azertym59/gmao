@@ -1,9 +1,11 @@
+@include("components.module.grid-helper")
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suivi de chantier - {{ $chantier->reference }}</title>
+    <title>Rapport de suivi - {{ $chantier->reference }}</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,6 +14,8 @@
     
     <!-- Chart.js pour les graphiques -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ChartJS Plugin pour les labels -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     
     <!-- Styles -->
     <style>
@@ -33,6 +37,9 @@
             --accent-green: #34d399;
             --accent-red: #f87171;
             --accent-yellow: #fbbf24;
+            --accent-purple: #a78bfa;
+            --accent-indigo: #818cf8;
+            --accent-pink: #f472b6;
         }
         
         * {
@@ -59,7 +66,7 @@
             background: linear-gradient(to right, rgba(17, 24, 39, 0.95), rgba(31, 41, 55, 0.95));
             padding: 0;
             border-bottom: 1px solid var(--border);
-            position: relative; /* Changed from fixed to relative */
+            position: relative;
             width: 100%;
             z-index: 100;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -120,7 +127,7 @@
             gap: 0.5rem;
         }
         
-        .header-title h1 svg {
+        .header-title svg {
             width: 1.5rem;
             height: 1.5rem;
             color: var(--primary-light);
@@ -130,12 +137,6 @@
             font-size: 1rem;
             color: var(--text-light);
             font-weight: 400;
-        }
-        
-        .header-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
         }
         
         .ref-badge {
@@ -175,7 +176,7 @@
         
         /* Main content */
         .main {
-            margin-top: 5.5rem;
+            margin-top: 2rem;
             padding-bottom: 2rem;
         }
         
@@ -249,6 +250,12 @@
             border: 1px solid rgba(239, 68, 68, 0.2);
         }
         
+        .status-stand_by {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        
         .status-indicator {
             width: 0.5rem;
             height: 0.5rem;
@@ -271,6 +278,10 @@
         
         .indicator-defaillant {
             background-color: var(--danger);
+        }
+        
+        .indicator-stand_by {
+            background-color: var(--warning);
         }
         
         @keyframes pulse {
@@ -463,6 +474,95 @@
             background-color: rgba(55, 65, 81, 0.3);
         }
         
+        /* Modules grid */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .module-card {
+            background-color: rgba(31, 41, 55, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .module-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .module-body {
+            padding: 1rem;
+        }
+        
+        .module-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .module-info-item {
+            font-size: 0.75rem;
+        }
+        
+        .module-info-label {
+            color: var(--text-muted);
+            margin-bottom: 0.125rem;
+        }
+        
+        .module-info-value {
+            font-weight: 500;
+        }
+        
+        .interventions-list {
+            border-top: 1px solid rgba(55, 65, 81, 0.5);
+            padding-top: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        
+        .intervention-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed rgba(55, 65, 81, 0.5);
+        }
+        
+        .intervention-item:last-child {
+            border-bottom: none;
+        }
+        
+        .intervention-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .intervention-title {
+            font-weight: 600;
+            color: var(--text-light);
+        }
+        
+        .intervention-date {
+            color: var(--text-muted);
+        }
+        
+        .intervention-detail {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+        
         /* Responsive adjustments */
         @media (max-width: 640px) {
             .header-container {
@@ -498,6 +598,248 @@
             color: var(--text-muted);
         }
         
+        /* Collapsible sections */
+        .flightcase-header {
+            cursor: default;
+        }
+        
+        .flightcase-body {
+            max-height: none !important;
+            overflow: visible !important;
+            transition: none !important;
+        }
+        
+        /* Icônes supprimées */
+        
+        /* Suppression des rotations d'icônes */
+        
+        /* FlightCase and Dalle styles - Enhanced 3D effect matching chantier 001 */
+        .flightcase-section {
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            background-color: rgba(17, 24, 39, 0.4); /* Glassmorphism style */
+            backdrop-filter: blur(10px);
+        }
+        
+        .flightcase-section:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+        
+        .flightcase-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #60a5fa, #3b82f6); /* accent-blue to primary */
+            z-index: 5;
+        }
+        
+        .flightcase-header {
+            padding: 1rem 1.25rem;
+            background-color: rgba(31, 41, 55, 0.8); /* bg-gray-800/80 */
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .flightcase-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            color: #ffffff; /* text-white */
+        }
+        
+        .flightcase-icon {
+            color: #60a5fa; /* accent-blue */
+            filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+        }
+        
+        .flightcase-body {
+            padding: 1.25rem;
+            background-color: rgba(17, 24, 39, 0.3); /* bg-gray-900/30 */
+        }
+        
+        .dalles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+        
+        .dalle-card {
+            background-color: rgba(17, 24, 39, 0.4); /* Glassmorphism style */
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem; /* rounded-xl */
+            overflow: hidden;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease-in-out;
+            position: relative;
+        }
+        
+        .dalle-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+        }
+        
+        .dalle-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #a78bfa, #818cf8); /* accent-purple to accent-indigo */
+            z-index: 5;
+        }
+        
+        .dalle-header {
+            padding: 0.85rem 1.15rem;
+            background-color: rgba(31, 41, 55, 0.7); /* bg-gray-800/70 */
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dalle-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #ffffff; /* text-white */
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+        }
+        
+        .dalle-body {
+            padding: 1rem 1.15rem;
+            background-color: rgba(17, 24, 39, 0.2); /* bg-gray-900/20 */
+        }
+        
+        .dalle-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        /* Styles pour les modules avec une présentation simplifiée */
+        .grid-cols-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        
+        @media (min-width: 768px) {
+            .grid-cols-2 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        
+        /* Animation de survol pour les indicateurs de module */
+        .flex-shrink-0 {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .flex-shrink-0:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Ajuster l'affichage pour l'impression */
+        @media print {
+            .grid-cols-2 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            
+            .bg-green-500 {
+                background-color: #10b981 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .bg-blue-500 {
+                background-color: #3b82f6 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .bg-yellow-500 {
+                background-color: #f59e0b !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .bg-red-500 {
+                background-color: #ef4444 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .bg-gray-500 {
+                background-color: #6b7280 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+        
+        /* Repair details info */
+        .repair-details {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px dashed var(--border);
+        }
+        
+        .repair-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+        
+        .repair-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .repair-item {
+            background-color: rgba(31, 41, 55, 0.3);
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+        }
+        
+        .repair-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+        
+        .repair-value {
+            font-size: 0.9375rem;
+            font-weight: 500;
+        }
+        
         /* Print styles */
         @media print {
             body {
@@ -510,6 +852,11 @@
                 background-color: white;
                 border-bottom: 1px solid #e5e7eb;
                 padding: 1rem 0;
+            }
+            
+            .header-top {
+                background-color: #f3f4f6;
+                border-bottom: 1px solid #e5e7eb;
             }
             
             .print-button {
@@ -531,9 +878,13 @@
                 border-bottom: 1px solid #e5e7eb;
             }
             
-            .info-item, .stat-card {
+            .info-item, .stat-card, .module-card, .dalle-card, .flightcase-section {
                 background-color: white;
                 border: 1px solid #e5e7eb;
+            }
+            
+            .dalle-header, .flightcase-header {
+                background-color: #f9fafb;
             }
             
             table td, table th {
@@ -556,17 +907,45 @@
             .chart-container {
                 height: 200px;
             }
+            
+            .progress-percentage {
+                color: #2563eb;
+            }
+            
+            .module-dot {
+                border: 1px solid #e5e7eb;
+            }
+            
+            .module-non_commence, .module-null {
+                background-color: #9ca3af;
+            }
+            
+            .module-en_cours {
+                background-color: #3b82f6;
+            }
+            
+            .module-termine {
+                background-color: #10b981;
+            }
+            
+            .module-defaillant {
+                background-color: #ef4444;
+            }
+            
+            .module-stand_by {
+                background-color: #f59e0b;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Header fixe avec style rapport professionnel -->
+    <!-- Header avec style rapport professionnel -->
     <header class="header">
         <div class="header-top">
             <div class="container">
                 <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: rgba(255, 255, 255, 0.7);">
                     <div>
-                        @if(Session::has('client_id'))
+                        @if(session()->has('client_id'))
                             <a href="{{ route('client.dashboard') }}" style="color: white; text-decoration: underline;">
                                 Retour à mes projets
                             </a>
@@ -581,9 +960,9 @@
         <div class="header-main">
             <div class="container">
                 <div class="header-logo">
-                    <img src="https://www.tecaled.fr/Logos/Logo%20rectangle%20flag%20repair%20new.png" alt="TecaLED" style="height: 8rem;" />
+                    <img src="https://www.tecaled.fr/Logos/Logo%20rectangle%20flag%20repair%20new.png" alt="TecaLED" style="height: 5.5rem;" />
                     <div class="welcome-message">
-                        Bienvenue {{ $chantier->client->civilite ?? 'M./Mme' }} {{ $chantier->client->getNomCompletSansDoublonAttribute() }}
+                        Bienvenue {{ $chantier->client->civilite ?? 'M./Mme' }} {{ $chantier->client->getNomCompletSansDoublonAttribute() ?? $chantier->client->nom_complet }}
                     </div>
                 </div>
                 
@@ -615,7 +994,7 @@
     </header>
 
     <!-- Contenu principal -->
-    <main class="main" style="margin-top: 2rem;">
+    <main class="main">
         <div class="container">
             <!-- Informations du chantier -->
             <div class="card">
@@ -634,6 +1013,12 @@
                             En cours
                         @elseif($chantier->etat == 'termine')
                             Terminé
+                        @elseif($chantier->etat == 'stand_by')
+                            En attente
+                        @elseif($chantier->etat == 'defaillant')
+                            Défaillant
+                        @else
+                            {{ ucfirst($chantier->etat) }}
                         @endif
                     </div>
                 </div>
@@ -656,7 +1041,7 @@
                         </div>
                         <div class="info-item">
                             <div class="info-label">Date de livraison estimée</div>
-                            <div class="info-value">{{ $chantier->date_butoir->format('d/m/Y') }}</div>
+                            <div class="info-value">{{ $chantier->date_butoir ? $chantier->date_butoir->format('d/m/Y') : 'Non définie' }}</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Dernière mise à jour</div>
@@ -666,9 +1051,86 @@
                         @if($chantier->description)
                         <div class="info-item">
                             <div class="info-label">Description</div>
-                            <div class="info-value">{{ Str::limit($chantier->description, 100) }}</div>
+                            <div class="info-value">{{ \Illuminate\Support\Str::limit($chantier->description, 100) }}</div>
                         </div>
                         @endif
+                    </div>
+                    
+                    <!-- Informations du produit -->
+                    <div style="margin-top: 1.5rem;">
+                        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--primary-light);">
+                            Informations du produit
+                        </h3>
+                        <div class="info-grid">
+                            @if($chantier->produits->isNotEmpty())
+                                @php $produit = $chantier->produits->first(); @endphp
+                                <div class="info-item">
+                                    <div class="info-label">Marque</div>
+                                    <div class="info-value">{{ $produit->marque ?? 'Non spécifiée' }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Modèle</div>
+                                    <div class="info-value">{{ $produit->modele ?? 'Non spécifié' }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Pitch</div>
+                                    <div class="info-value">{{ $produit->pitch ?? 'Non spécifié' }} mm</div>
+                                </div>
+                                @if($produit->electronique)
+                                <div class="info-item">
+                                    <div class="info-label">Électronique</div>
+                                    <div class="info-value">{{ $produit->electronique }}</div>
+                                    @if($produit->electronique_detail)
+                                        <div class="info-value" style="color: var(--text-muted);">{{ $produit->electronique_detail }}</div>
+                                    @endif
+                                </div>
+                                @endif
+                                @if($produit->utilisation)
+                                <div class="info-item">
+                                    <div class="info-label">Utilisation</div>
+                                    <div class="info-value">{{ ucfirst($produit->utilisation) }}</div>
+                                </div>
+                                @endif
+                                @if($produit->bain_couleur)
+                                <div class="info-item">
+                                    <div class="info-label">Bain de couleur</div>
+                                    <div class="info-value">{{ $produit->bain_couleur }}</div>
+                                </div>
+                                @endif
+                                <div class="info-item" style="grid-column: 1 / -1;">
+                                    <div class="info-label">Garantie</div>
+                                    @if($chantier->is_under_warranty)
+                                        <div class="info-value" style="color: var(--success); display: flex; align-items: center;">
+                                            <span style="display: inline-block; width: 32px; height: 32px; margin-right: 8px;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="min-width: 32px; min-height: 32px; max-width: 32px; max-height: 32px;">
+                                                    <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                </svg>
+                                            </span>
+                                            Sous garantie 
+                                            @if($chantier->warranty_end_date)
+                                                jusqu'au {{ $chantier->warranty_end_date->format('d/m/Y') }}
+                                            @endif
+                                            @if($chantier->warranty_type)
+                                                ({{ $chantier->warranty_type }})
+                                            @endif
+                                        </div>
+                                    @else
+                                        <div class="info-value" style="color: var(--danger); display: flex; align-items: center;">
+                                            <span style="display: inline-block; width: 32px; height: 32px; margin-right: 8px;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="min-width: 32px; min-height: 32px; max-width: 32px; max-height: 32px;">
+                                                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                            </span>
+                                            Hors garantie
+                                        </div>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="info-item">
+                                    <div class="info-value" style="color: var(--text-muted);">Aucun produit associé à ce chantier</div>
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -698,895 +1160,645 @@
                             <div class="progress-bar 
                                 @if($pourcentageTermines >= 75)
                                     progress-success
-                                @elseif($pourcentageTermines >= 25)
-                                    progress-warning
-                                @else
+                                @elseif($pourcentageTermines >= 40)
                                     progress-primary
+                                @else
+                                    progress-warning
                                 @endif
-                            " style="width: {{ $pourcentageTermines }}%">
+                                " style="width: {{ $pourcentageTermines }}%">
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+                            <span>Démarrage: {{ $dateDebutTravaux }}</span>
+                            <span>Livraison prévue: {{ $dateFinPrevue }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card" style="--stat-color: var(--success);">
+                            <div class="stat-label">Modules terminés</div>
+                            <div class="stat-value" style="color: var(--success);">{{ $modulesTermines }}</div>
+                        </div>
+                        <div class="stat-card" style="--stat-color: var(--primary);">
+                            <div class="stat-label">Modules en cours</div>
+                            <div class="stat-value" style="color: var(--primary);">{{ $modulesEnCours }}</div>
+                        </div>
+                        <div class="stat-card" style="--stat-color: var(--warning);">
+                            <div class="stat-label">Modules en attente</div>
+                            <div class="stat-value" style="color: var(--warning);">{{ $modulesStandBy }}</div>
+                        </div>
+                        <div class="stat-card" style="--stat-color: var(--neutral);">
+                            <div class="stat-label">Modules non commencés</div>
+                            <div class="stat-value" style="color: var(--neutral);">{{ $modulesNonCommences }}</div>
+                        </div>
+                        <div class="stat-card" style="--stat-color: var(--danger);">
+                            <div class="stat-label">Modules défaillants</div>
+                            <div class="stat-value" style="color: var(--danger);">{{ $modulesDefaillants }}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Temps total des réparations</div>
+                                <div class="info-value">{{ $tempsFormate }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Interventions en cours</div>
+                                <div class="info-value">{{ $interventionsEnCours }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Dalles au total</div>
+                                <div class="info-value">
+                                    @php
+                                        $nbDalles = 0;
+                                        foreach ($chantier->produits as $produit) {
+                                            $nbDalles += $produit->dalles->count();
+                                        }
+                                        echo $nbDalles;
+                                    @endphp
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Nombre total de modules</div>
+                                <div class="info-value">{{ $totalModules }}</div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-label">Temps de réparation</div>
-                            <div class="stat-value">{{ $tempsFormate }}</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Interventions en cours</div>
-                            <div class="stat-value">{{ $interventionsEnCours }}</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Date d'échéance</div>
-                            <div class="stat-value">{{ $chantier->date_butoir->format('d/m/Y') }}</div>
-                        </div>
-                    </div>
                 </div>
             </div>
-
-            <!-- Graphiques -->
-            <div class="charts-grid">
-                <!-- État des modules -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-                            </svg>
-                            État des modules
-                        </h2>
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="modulesChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Composants remplacés -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                            </svg>
-                            Composants remplacés
-                        </h2>
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="componentsChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Analyse des causes -->
+            
+            <!-- Graphiques d'analyse -->
             <div class="card">
                 <div class="card-header">
                     <h2>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                         </svg>
-                        Analyse des causes
+                        Analyse du chantier
                     </h2>
                 </div>
                 <div class="card-body">
                     <div class="charts-grid">
                         <div>
+                            <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-light);">
+                                État des modules
+                            </h3>
+                            <div class="chart-container">
+                                <canvas id="modulesChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-light);">
+                                Composants remplacés
+                            </h3>
+                            <div class="chart-container">
+                                <canvas id="componentsChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-light);">
+                                Causes des défaillances
+                            </h3>
                             <div class="chart-container">
                                 <canvas id="causesChart"></canvas>
                             </div>
                         </div>
                         <div>
-                            <h3 style="font-size: 1rem; margin-bottom: 1rem;">Interprétation des résultats</h3>
+                            <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-light);">
+                                Synthèse des réparations
+                            </h3>
                             
-                            @php
-                                $totalCauses = array_sum($causes);
-                                $causePrincipale = array_search(max($causes), $causes);
-                                $pourcentagePrincipal = $totalCauses > 0 ? round((max($causes) / $totalCauses) * 100) : 0;
-                            @endphp
-                            
-                            @if($totalCauses > 0)
-                                <div>
-                                    @php
-                                        // Trouver la seconde cause la plus fréquente
-                                        $causesTmp = $causes;
-                                        $maxValue = max($causesTmp);
-                                        $causePrincipale = array_search($maxValue, $causesTmp);
-                                        $pourcentagePrincipal = $totalCauses > 0 ? round(($maxValue / $totalCauses) * 100) : 0;
-                                        
-                                        // Retirer la principale pour trouver la seconde
-                                        unset($causesTmp[$causePrincipale]);
-                                        $secondMaxValue = !empty($causesTmp) ? max($causesTmp) : 0;
-                                        $causeSecondaire = !empty($causesTmp) ? array_search($secondMaxValue, $causesTmp) : '';
-                                        $pourcentageSecondaire = $totalCauses > 0 ? round(($secondMaxValue / $totalCauses) * 100) : 0;
-                                        
-                                        // Déterminer si les causes sont assez proches (moins de 20% d'écart)
-                                        $ecartFaible = ($pourcentagePrincipal - $pourcentageSecondaire) <= 20 && $pourcentageSecondaire >= 30;
-                                    @endphp
-                                    
-                                    <!-- Analyse des causes -->
-                                    <div style="background-color: rgba(30, 58, 138, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem;">
-                                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--primary-light);">Analyse des causes</h4>
-                                        
-                                        @if($causePrincipale == 'usure_normale')
-                                            <p style="margin-bottom: 0.5rem; font-weight: 500;">Cause principale ({{ $pourcentagePrincipal }}%) : Usure normale</p>
-                                            <p style="margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-light);">L'usure normale représente la majorité des problèmes détectés, ce qui indique un vieillissement standard du matériel. Ce phénomène est attendu au fil du temps pour tout équipement électronique et ne représente pas de défaillance anormale ou préoccupante.</p>
-                                        @elseif($causePrincipale == 'choc')
-                                            <p style="margin-bottom: 0.5rem; font-weight: 500;">Cause principale ({{ $pourcentagePrincipal }}%) : Dommage physique</p>
-                                            <p style="margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-light);">La plupart des problèmes semblent provenir de dommages physiques subis par les modules. Dans ce cas, nous recommandons une inspection de l'environnement d'installation et des manipulations pour éviter de futurs incidents similaires.</p>
-                                        @elseif($causePrincipale == 'defaut_usine')
-                                            <p style="margin-bottom: 0.5rem; font-weight: 500;">Cause principale ({{ $pourcentagePrincipal }}%) : Défaut de fabrication</p>
-                                            <p style="margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-light);">Les défauts de fabrication constituent la cause majeure des dysfonctionnements. Cela suggère un problème potentiel avec un lot spécifique de composants. Nos techniciens remplacent ces éléments par des composants de qualité supérieure pour assurer une meilleure longévité.</p>
-                                        @else
-                                            <p style="margin-bottom: 0.5rem; font-weight: 500;">Cause principale ({{ $pourcentagePrincipal }}%) : Causes diverses</p>
-                                            <p style="margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-light);">Les problèmes rencontrés proviennent principalement de causes variées ou spécifiques. Chaque module fait l'objet d'un diagnostic précis pour identifier la source exacte du problème et appliquer la solution la plus adaptée.</p>
-                                        @endif
+                            <div class="repair-details">
+                                <div class="repair-grid">
+                                    <div class="repair-item">
+                                        <div class="repair-label">LEDs remplacées</div>
+                                        <div class="repair-value">{{ $totalLEDsRemplacees ?? 0 }}</div>
                                     </div>
-                                    
-                                    <!-- Remarques sur les pannes récurrentes -->
-                                    <div style="background-color: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem;">
-                                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--warning);">Pannes récurrentes identifiées</h4>
-                                        
-                                        <p style="font-size: 0.875rem; color: var(--text-light);">
-                                            <span style="font-weight: 500; color: white;">Analyse des fiches de réparation :</span> Nous avons constaté qu'un composant spécifique est impliqué dans la majorité des pannes de ce chantier. <span style="font-weight: 500; color: white;">Les circuits intégrés 4UR1</span> ont été remplacés 3 fois sur différents modules, provoquant à chaque fois des défaillances des colonnes bleues.
-                                        </p>
+                                    <div class="repair-item">
+                                        <div class="repair-label">ICs remplacés</div>
+                                        <div class="repair-value">{{ $totalICsRemplaces ?? 0 }}</div>
                                     </div>
-                                    
-                                    <!-- Afficher la cause secondaire si elle est proche de la principale -->
-                                    @if($ecartFaible && !empty($causeSecondaire))
-                                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
-                                            <p style="margin-bottom: 0.5rem; font-weight: 500;">Cause secondaire ({{ $pourcentageSecondaire }}%) : 
-                                                @if($causeSecondaire == 'usure_normale')
-                                                    Usure normale
-                                                @elseif($causeSecondaire == 'choc')
-                                                    Dommage physique
-                                                @elseif($causeSecondaire == 'defaut_usine')
-                                                    Défaut de fabrication
-                                                @else
-                                                    Causes diverses
-                                                @endif
-                                            </p>
-                                            
-                                            <p style="font-size: 0.875rem; color: var(--text-light);">
-                                                @if($causeSecondaire == 'usure_normale')
-                                                    Une part significative des problèmes est également due à l'usure normale des composants. Ce vieillissement naturel peut être ralenti par une maintenance préventive régulière.
-                                                @elseif($causeSecondaire == 'choc')
-                                                    Les dommages physiques représentent également une cause importante de dysfonctionnements. Une attention particulière aux manipulations et à la protection des modules est recommandée.
-                                                @elseif($causeSecondaire == 'defaut_usine')
-                                                    Les défauts de fabrication constituent aussi une cause notable des problèmes. Nous effectuons un contrôle qualité renforcé lors des réparations pour pallier ces défauts d'origine.
-                                                @else
-                                                    Diverses autres causes contribuent de manière significative aux problèmes rencontrés. Une analyse au cas par cas permet d'identifier et de résoudre ces problèmes spécifiques.
-                                                @endif
-                                            </p>
+                                    <div class="repair-item">
+                                        <div class="repair-label">Masques remplacés</div>
+                                        <div class="repair-value">{{ $totalMasquesRemplaces ?? 0 }}</div>
+                                    </div>
+                                    <div class="repair-item">
+                                        <div class="repair-label">Cause principale</div>
+                                        <div class="repair-value">
+                                            @if($causePrincipale == 'usure_normale')
+                                                Usure normale ({{ $pourcentagePrincipal }}%)
+                                            @elseif($causePrincipale == 'choc')
+                                                Choc/Impact ({{ $pourcentagePrincipal }}%)
+                                            @elseif($causePrincipale == 'defaut_usine')
+                                                Défaut usine ({{ $pourcentagePrincipal }}%)
+                                            @else
+                                                Autre ({{ $pourcentagePrincipal }}%)
+                                            @endif
                                         </div>
-                                    @endif
+                                    </div>
                                 </div>
-                            @else
-                                <div style="text-align: center; padding: 2rem 0;">
-                                    <p style="color: var(--text-muted);">Aucune donnée sur les causes n'a encore été enregistrée pour ce chantier.</p>
-                                </div>
-                            @endif
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Liste des produits et modules -->
-            @foreach($chantier->produits as $produit)
+            
+            <!-- Détail des dalles et modules -->
             <div class="card">
                 <div class="card-header">
                     <h2>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                         </svg>
-                        {{ $produit->marque }} {{ $produit->modele }}
+                        Flightcases et modules
                     </h2>
                 </div>
                 <div class="card-body">
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <div class="info-label">Type</div>
-                            <div class="info-value">{{ $produit->utilisation == 'indoor' ? 'Intérieur' : 'Extérieur' }}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Pitch</div>
-                            <div class="info-value">{{ $produit->pitch }} mm</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Système électronique</div>
-                            <div class="info-value">
-                                @if($produit->electronique == 'autre')
-                                    {{ $produit->electronique_detail ?: 'Non spécifié' }}
-                                @elseif($produit->electronique_detail && $produit->electronique_detail != 'Non spécifié')
-                                    {{ $produit->electronique }} - {{ $produit->electronique_detail }}
+                    <!-- Organisation par FlightCase/Dalle/Module -->
+                    @if($chantier->produits->isNotEmpty())
+                        @foreach($chantier->produits as $produit)
+                            <div style="margin-bottom: 2rem;">
+                                <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--primary-light);">
+                                    {{ $produit->marque }} {{ $produit->modele }}
+                                </h3>
+                                
+                                @php
+                                    // Organiser les dalles par flightcase et modules individuels de façon identique à la vue admin
+                                    $dallesGrouped = [
+                                        'individuel' => [],
+                                        'flightcases' => [],
+                                        'autres' => []
+                                    ];
+                                    
+                                    // D'abord, grouper les dalles par produit (pour permettre un tri avancé)
+                                    $dallesByProducts = [];
+                                    foreach($produit->dalles as $dalle) {
+                                        $dallesByProducts[] = $dalle;
+                                    }
+
+                                    // Traiter chaque dalle avec le même algorithme que la vue admin
+                                    foreach($dallesByProducts as $dalle) {
+                                        // Cas 1: Dalle individuelle explicite
+                                        if($dalle->reference_dalle == "INDIVIDUEL") {
+                                            $dallesGrouped['individuel'][] = $dalle;
+                                            continue;
+                                        }
+                                        
+                                        // Cas 2: Dalle avec flightcase_number explicite
+                                        if(!empty($dalle->flightcase_number)) {
+                                            $fcNumber = $dalle->flightcase_number;
+                                            if(!isset($dallesGrouped['flightcases'][$fcNumber])) {
+                                                $dallesGrouped['flightcases'][$fcNumber] = [];
+                                            }
+                                            $dallesGrouped['flightcases'][$fcNumber][] = $dalle;
+                                            continue;
+                                        }
+                                        
+                                        // Cas 3: Référence au format FCx-Dx (ex: FC1-D2)
+                                        if(preg_match('/^FC(\d+)[- _]?D\d+$/', $dalle->reference_dalle, $matches)) {
+                                            $fcNumber = $matches[1];
+                                            if(!isset($dallesGrouped['flightcases'][$fcNumber])) {
+                                                $dallesGrouped['flightcases'][$fcNumber] = [];
+                                            }
+                                            $dallesGrouped['flightcases'][$fcNumber][] = $dalle;
+                                            continue;
+                                        }
+                                        
+                                        // Cas 4: Référence contenant FCx n'importe où
+                                        if(preg_match('/FC[- _]?(\d+)/', $dalle->reference_dalle, $matches)) {
+                                            $fcNumber = $matches[1];
+                                            if(!isset($dallesGrouped['flightcases'][$fcNumber])) {
+                                                $dallesGrouped['flightcases'][$fcNumber] = [];
+                                            }
+                                            $dallesGrouped['flightcases'][$fcNumber][] = $dalle;
+                                            continue;
+                                        }
+                                        
+                                        // Cas 5: Numéro explicite de FC sans préfixe
+                                        if(preg_match('/^(\d+)[- _](FC|FLIGHTCASE|FLIGHT)/i', $dalle->reference_dalle, $matches)) {
+                                            $fcNumber = $matches[1];
+                                            if(!isset($dallesGrouped['flightcases'][$fcNumber])) {
+                                                $dallesGrouped['flightcases'][$fcNumber] = [];
+                                            }
+                                            $dallesGrouped['flightcases'][$fcNumber][] = $dalle;
+                                            continue;
+                                        }
+                                        
+                                        // Cas 6: Par défaut, si tous les regroupements échouent
+                                        $dallesGrouped['autres'][] = $dalle;
+                                    }
+                                    
+                                    // Trier les flightcases par numéro
+                                    ksort($dallesGrouped['flightcases']);
+                                @endphp
+                                
+                                @if(!empty($dallesGrouped['individuel']) || !empty($dallesGrouped['flightcases']) || !empty($dallesGrouped['autres']))
+                                    <!-- Modules individuels -->
+                                    @if(!empty($dallesGrouped['individuel']))
+                                        <div class="flightcase-section">
+                                            <div class="flightcase-header">
+                                                <div class="flightcase-title">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="flightcase-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                                    </svg>
+                                                    Modules individuels
+                                                </div>
+                                                <div style="display: flex; align-items: center;">
+                                                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                                        {{ count($dallesGrouped['individuel']) }} dalle(s)
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="individuel-{{ $produit->id }}" class="flightcase-body flightcase-body ">
+                                                <div class="dalles-grid">
+                                                    @foreach($dallesGrouped['individuel'] as $dalle)
+                                                        <div class="dalle-card">
+                                                            <div class="dalle-header">
+                                                                <div class="dalle-title">
+                                                                    Dalle {{ $dalle->reference_dalle ?? $dalle->id }}
+                                                                    @if($dalle->numero_dalle)
+                                                                        <span style="font-size: 0.75rem; color: var(--accent-blue);">[N° {{ $dalle->numero_dalle }}]</span>
+                                                                    @endif
+                                                                </div>
+                                                                <div class="status-badge status-{{ $dalle->etat }}">
+                                                                    <span class="status-indicator indicator-{{ $dalle->etat }}"></span>
+                                                                    @if($dalle->etat == 'non_commence')
+                                                                        Non commencée
+                                                                    @elseif($dalle->etat == 'en_cours')
+                                                                        En cours
+                                                                    @elseif($dalle->etat == 'termine')
+                                                                        Terminée
+                                                                    @elseif($dalle->etat == 'stand_by')
+                                                                        En attente
+                                                                    @elseif($dalle->etat == 'defaillant')
+                                                                        Défaillante
+                                                                    @else
+                                                                        {{ ucfirst($dalle->etat) }}
+                                                                    @endif
+                                                                </div>
+                                                            </div>
+                                                            <div class="dalle-body">
+                                                                <!-- Dalle Content - Uses the same implementation from above -->
+                                                                @include('suivi.partials.dalle-content', ['dalle' => $dalle])
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                    
+                                    <!-- FlightCases -->
+                                    @foreach($dallesGrouped['flightcases'] as $fcNumber => $dalles)
+                                        <div class="flightcase-section">
+                                            <div class="flightcase-header">
+                                                <div class="flightcase-title">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="flightcase-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                                    </svg>
+                                                    FlightCase #{{ $fcNumber }}
+                                                </div>
+                                                <div style="display: flex; align-items: center;">
+                                                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                                        {{ count($dalles) }} dalle(s)
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="fc-{{ $produit->id }}-{{ $fcNumber }}" class="flightcase-body flightcase-body ">
+                                                <div class="dalles-grid">
+                                                    @foreach($dalles as $dalle)
+                                                        <div class="dalle-card">
+                                                            <div class="dalle-header">
+                                                                <div class="dalle-title">
+                                                                    Dalle {{ $dalle->reference_dalle ?? $dalle->id }}
+                                                                    @if($dalle->numero_dalle)
+                                                                        <span style="font-size: 0.75rem; color: var(--accent-blue);">[N° {{ $dalle->numero_dalle }}]</span>
+                                                                    @endif
+                                                                </div>
+                                                                <div class="status-badge status-{{ $dalle->etat }}">
+                                                                    <span class="status-indicator indicator-{{ $dalle->etat }}"></span>
+                                                                    @if($dalle->etat == 'non_commence')
+                                                                        Non commencée
+                                                                    @elseif($dalle->etat == 'en_cours')
+                                                                        En cours
+                                                                    @elseif($dalle->etat == 'termine')
+                                                                        Terminée
+                                                                    @elseif($dalle->etat == 'stand_by')
+                                                                        En attente
+                                                                    @elseif($dalle->etat == 'defaillant')
+                                                                        Défaillante
+                                                                    @else
+                                                                        {{ ucfirst($dalle->etat) }}
+                                                                    @endif
+                                                                </div>
+                                                            </div>
+                                                            <div class="dalle-body">
+                                                                <!-- Dalle Content - Uses the same implementation from above -->
+                                                                @include('suivi.partials.dalle-content', ['dalle' => $dalle])
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                    
+                                    <!-- Autres dalles -->
+                                    @if(!empty($dallesGrouped['autres']))
+                                        <div class="flightcase-section">
+                                            <div class="flightcase-header">
+                                                <div class="flightcase-title">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="flightcase-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                                    </svg>
+                                                    Dalles diverses
+                                                </div>
+                                                <div style="display: flex; align-items: center;">
+                                                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                                        {{ count($dallesGrouped['autres']) }} dalle(s)
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="autres-{{ $produit->id }}" class="flightcase-body flightcase-body ">
+                                                <div class="dalles-grid">
+                                                    @foreach($dallesGrouped['autres'] as $dalle)
+                                                        <div class="dalle-card">
+                                                            <div class="dalle-header">
+                                                                <div class="dalle-title">
+                                                                    Dalle {{ $dalle->reference_dalle ?? $dalle->id }}
+                                                                    @if($dalle->numero_dalle)
+                                                                        <span style="font-size: 0.75rem; color: var(--accent-blue);">[N° {{ $dalle->numero_dalle }}]</span>
+                                                                    @endif
+                                                                </div>
+                                                                <div class="status-badge status-{{ $dalle->etat }}">
+                                                                    <span class="status-indicator indicator-{{ $dalle->etat }}"></span>
+                                                                    @if($dalle->etat == 'non_commence')
+                                                                        Non commencée
+                                                                    @elseif($dalle->etat == 'en_cours')
+                                                                        En cours
+                                                                    @elseif($dalle->etat == 'termine')
+                                                                        Terminée
+                                                                    @elseif($dalle->etat == 'stand_by')
+                                                                        En attente
+                                                                    @elseif($dalle->etat == 'defaillant')
+                                                                        Défaillante
+                                                                    @else
+                                                                        {{ ucfirst($dalle->etat) }}
+                                                                    @endif
+                                                                </div>
+                                                            </div>
+                                                            <div class="dalle-body">
+                                                                <!-- Dalle Content - Uses the same implementation from above -->
+                                                                @include('suivi.partials.dalle-content', ['dalle' => $dalle])
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                    
+                                    <!-- Special case for backwards compatibility -->
+                                    @if(empty($dallesGrouped['individuel']) && empty($dallesGrouped['flightcases']) && empty($dallesGrouped['autres']))
+                                        <!-- No dalles found in our new structure - use legacy approach -->
+                                        @php
+                                            $legacyDallesGrouped = [];
+                                            foreach($produit->dalles as $dalle) {
+                                                $fcNumber = $dalle->flightcase_number ?? 'Individuel';
+                                                if(!isset($legacyDallesGrouped[$fcNumber])) {
+                                                    $legacyDallesGrouped[$fcNumber] = [];
+                                                }
+                                                $legacyDallesGrouped[$fcNumber][] = $dalle;
+                                            }
+                                            ksort($legacyDallesGrouped);
+                                        @endphp
+                                        
+                                        @foreach($legacyDallesGrouped as $fcNumber => $dalles)
+                                            <div class="flightcase-section">
+                                                <div class="flightcase-header">
+                                                    <div class="flightcase-title">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="flightcase-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                                        </svg>
+                                                        @if($fcNumber == 'Individuel')
+                                                            Modules individuels
+                                                        @else
+                                                            FlightCase #{{ $fcNumber }}
+                                                        @endif
+                                                    </div>
+                                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                                        <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                                            {{ count($dalles) }} dalle(s)
+                                                        </div>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="collapsible-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                                <div id="legacy-{{ $produit->id }}-{{ $fcNumber }}" class="flightcase-body flightcase-body ">
+                                                    <div class="dalles-grid">
+                                                        @foreach($dalles as $dalle)
+                                                            <div class="dalle-card">
+                                                                <div class="dalle-header">
+                                                                    <div class="dalle-title">
+                                                                        Dalle {{ $dalle->reference_dalle ?? $dalle->id }}
+                                                                        @if($dalle->numero_dalle)
+                                                                            <span style="font-size: 0.75rem; color: var(--accent-blue);">[N° {{ $dalle->numero_dalle }}]</span>
+                                                                        @endif
+                                                                    </div>
+                                                                    <div class="status-badge status-{{ $dalle->etat }}">
+                                                                        <span class="status-indicator indicator-{{ $dalle->etat }}"></span>
+                                                                        @if($dalle->etat == 'non_commence')
+                                                                            Non commencée
+                                                                        @elseif($dalle->etat == 'en_cours')
+                                                                            En cours
+                                                                        @elseif($dalle->etat == 'termine')
+                                                                            Terminée
+                                                                        @elseif($dalle->etat == 'stand_by')
+                                                                            En attente
+                                                                        @elseif($dalle->etat == 'defaillant')
+                                                                            Défaillante
+                                                                        @else
+                                                                            {{ ucfirst($dalle->etat) }}
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                                <div class="dalle-body">
+                                                                    @include('suivi.partials.dalle-content', ['dalle' => $dalle])
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endif
                                 @else
-                                    {{ $produit->electronique }}
+                                    <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                        Aucune dalle trouvée pour ce produit
+                                    </div>
                                 @endif
                             </div>
-                            @if($produit->carte_reception)
-                                <div style="font-size: 0.75rem; color: var(--text-muted);">Carte de réception: {{ $produit->carte_reception }}</div>
-                            @endif
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Dalles</div>
-                            <div class="info-value">{{ $produit->dalles->count() }}</div>
-                        </div>
-                    </div>
-
-                    @php
-                        // Organiser les dalles par flightcase et modules individuels
-                        $dallesGrouped = [
-                            'individuel' => [],
-                            'flightcases' => []
-                        ];
-                        
-                        foreach($produit->dalles as $d) {
-                            if($d->reference_dalle == "INDIVIDUEL") {
-                                $dallesGrouped['individuel'][] = $d;
-                            } elseif(preg_match('/^FC(\d+)-D\d+$/', $d->reference_dalle, $matches)) {
-                                $fcNumber = $matches[1];
-                                if(!isset($dallesGrouped['flightcases'][$fcNumber])) {
-                                    $dallesGrouped['flightcases'][$fcNumber] = [];
-                                }
-                                $dallesGrouped['flightcases'][$fcNumber][] = $d;
-                            } else {
-                                // Si aucun format reconnu, traiter comme une dalle indépendante
-                                if(!isset($dallesGrouped['autres'])) {
-                                    $dallesGrouped['autres'] = [];
-                                }
-                                $dallesGrouped['autres'][] = $d;
-                            }
-                        }
-                        
-                        // Trier les flightcases par numéro
-                        ksort($dallesGrouped['flightcases']);
-                    @endphp
-
-                    <!-- Modules individuels -->
-                    @if(!empty($dallesGrouped['individuel']))
-                    <div style="margin-top: 1.5rem; padding: 0; border-top: 1px solid var(--border);">
-                        <div style="display: flex; align-items: center; padding: 1rem 1.25rem; background-color: rgba(17, 24, 39, 0.5); border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; color: var(--warning);">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                            </svg>
-                            <h3 style="font-size: 1rem; margin: 0; color: var(--warning);">Modules individuels</h3>
-                        </div>
-                        
-                        <div style="padding: 1.25rem; background-color: rgba(31, 41, 55, 0.3); border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem;">
-                            @foreach($dallesGrouped['individuel'] as $dalle)
-                            <div style="padding: 1rem; margin-bottom: {{ !$loop->last ? '1rem' : '0' }}; background-color: rgba(31, 41, 55, 0.4); border-radius: 0.5rem; border: 1px solid var(--border);">
-                                <h4 style="font-size: 0.9375rem; margin-bottom: 1rem; color: var(--text-white); display: flex; align-items: center;">
-                                    <span>Modules: {{ $dalle->modules->count() }}</span>
-                                    @if($dalle->numero_dalle)
-                                        <span style="margin-left: 0.5rem; font-size: 0.75rem; color: var(--primary-light);">[N° {{ $dalle->numero_dalle }}]</span>
-                                    @endif
-                                </h4>
-                                
-                                @php
-                                    // Les mêmes extractions de disposition et code pour chaque dalle
-                                    $nbColonnes = 2; // Par défaut 2x2
-                                    $nbLignes = 2;
-                                    
-                                    // Récupérer disposition_modules depuis l'objet dalle
-                                    $disposition = $dalle->disposition_modules ?? null;
-                                    
-                                    // Si disposition_modules est définie et au format AxB
-                                    if (!empty($disposition) && strpos($disposition, 'x') !== false) {
-                                        $parts = explode('x', $disposition);
-                                        if (count($parts) == 2) {
-                                            $nbColonnes = (int)$parts[0];
-                                            $nbLignes = (int)$parts[1];
-                                        }
-                                    } else {
-                                        // Essayer de calculer la disposition en fonction du nombre de modules
-                                        $nbModules = $dalle->modules->count();
-                                        if ($nbModules == 4) {
-                                            $nbColonnes = 2;
-                                            $nbLignes = 2;
-                                        } elseif ($nbModules == 6) {
-                                            $nbColonnes = 3;
-                                            $nbLignes = 2;
-                                        } elseif ($nbModules == 9) {
-                                            $nbColonnes = 3;
-                                            $nbLignes = 3;
-                                        }
-                                    }
-                                    
-                                    // Créer une grille pour les modules
-                                    $modules = $dalle->modules->all();
-                                    $grille = [];
-                                    
-                                    // Remplir la grille dans l'ordre ligne par ligne
-                                    $moduleIndex = 0;
-                                    for ($y = 1; $y <= $nbLignes; $y++) {
-                                        for ($x = 1; $x <= $nbColonnes; $x++) {
-                                            if ($moduleIndex < count($modules)) {
-                                                $grille[$y][$x] = $modules[$moduleIndex];
-                                                $moduleIndex++;
-                                            } else {
-                                                $grille[$y][$x] = null;
-                                            }
-                                        }
-                                    }
-                                @endphp
-                                
-                                <!-- Affichage sous forme de grille pour les modules individuels -->
-                                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
-                                    @foreach($dalle->modules as $module)
-                                    <a href="{{ route('suivi.module', ['token' => $chantier->token_suivi, 'moduleId' => $module->id]) }}" 
-                                       class="relative group" style="cursor: pointer; display: block; position: relative;">
-                                        <div style="aspect-ratio: 1/1; width: 3.5rem; height: 3.5rem; 
-                                            @if($module->etat == 'termine') background-color: var(--success);
-                                            @elseif($module->etat == 'en_cours') background-color: var(--primary);
-                                            @elseif($module->etat == 'defaillant') background-color: var(--danger);
-                                            @else background-color: var(--neutral);
-                                            @endif
-                                            border-radius: 0.375rem; 
-                                            border: 1px solid rgba(0,0,0,0.1); 
-                                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                                            transition: all 0.2s;"
-                                            onmouseover="this.style.transform='scale(1.05)'; this.style.filter='brightness(1.1)';"
-                                            onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';"
-                                            title="Module {{ str_replace('Ind', 'Mod', $module->reference_module) }}"
-                                        >
-                                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: white; font-weight: 500; font-size: 0.75rem;">
-                                                <div>{{ preg_replace('/[^0-9]/', '', $module->reference_module) }}</div>
-                                            </div>
-                                        </div>
-                                        <!-- Info-bulle au survol -->
-                                        <div class="module-tooltip" style="display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); background-color: rgba(17, 24, 39, 0.9); color: white; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; margin-top: 0.5rem; white-space: nowrap; z-index: 10; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
-                                            <div style="font-weight: 600; margin-bottom: 0.25rem;">{{ str_replace('Ind', 'Mod', $module->reference_module) }}</div>
-                                            @if($module->numero_serie)
-                                                <div>ID: {{ $module->numero_serie }}</div>
-                                            @endif
-                                            @if($module->interventions->count() > 0)
-                                                <div>Dernière MAJ: {{ $module->interventions->sortByDesc('updated_at')->first()->updated_at->format('d/m/Y') }}</div>
-                                            @endif
-                                            @php
-                                                $tempsTotal = 0;
-                                                foreach($module->interventions as $intervention) {
-                                                    if ($intervention->temps_passe) {
-                                                        $tempsTotal += $intervention->temps_passe;
-                                                    }
-                                                }
-                                                
-                                                $heures = floor($tempsTotal / 60);
-                                                $minutes = $tempsTotal % 60;
-                                                $tempsFormate = '';
-                                                
-                                                if ($heures > 0) {
-                                                    $tempsFormate .= $heures . 'h';
-                                                }
-                                                if ($minutes > 0 || $tempsFormate == '') {
-                                                    $tempsFormate .= ($tempsFormate ? ' ' : '') . $minutes . 'min';
-                                                }
-                                            @endphp
-                                            @if($tempsTotal > 0)
-                                                <div>Temps: {{ $tempsFormate }}</div>
-                                            @endif
-                                        </div>
-                                    </a>
-                                    @endforeach
-                                </div>
-                                
-                                <!-- Barre de progression pour les modules individuels -->
-                                <div style="width: 100%;">
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-muted);">
-                                        <span>{{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%</span>
-                                        <span>{{ $dalle->modules->where('etat', 'termine')->count() }}/{{ $dalle->modules->count() }} modules</span>
-                                    </div>
-                                    <div style="height: 0.5rem; width: 100%; background-color: rgba(55, 65, 81, 0.5); border-radius: 9999px; overflow: hidden;">
-                                        <div style="height: 100%; background-color: var(--success); width: {{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
+                        @endforeach
                     @endif
-
-                    <!-- FlightCases -->
-                    @foreach($dallesGrouped['flightcases'] as $fcNumber => $dalles)
-                    <div style="margin-top: 1.5rem; padding: 0; border-top: 1px solid var(--border);">
-                        <div style="display: flex; align-items: center; padding: 1rem 1.25rem; background-color: rgba(17, 24, 39, 0.5); border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; color: var(--primary-light);">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" />
-                            </svg>
-                            <h3 style="font-size: 1rem; margin: 0; color: var(--text-white);">Flight Case #{{ $fcNumber }} - {{ count($dalles) }} dalles</h3>
-                        </div>
-                        
-                        <div style="padding: 1.25rem; background-color: rgba(31, 41, 55, 0.3); border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem;">
-                            @foreach($dalles as $dalle)
-                            <div style="padding: 1rem; margin-bottom: {{ !$loop->last ? '1rem' : '0' }}; background-color: rgba(31, 41, 55, 0.4); border-radius: 0.5rem; border: 1px solid var(--border);">
-                                <h4 style="font-size: 0.9375rem; margin-bottom: 1rem; color: var(--text-white); display: flex; align-items: center;">
-                                    <span>Dalle: {{ $dalle->reference_dalle }}</span>
-                                    @if($dalle->numero_dalle)
-                                        <span style="margin-left: 0.5rem; font-size: 0.75rem; color: var(--primary-light);">[N° {{ $dalle->numero_dalle }}]</span>
-                                    @endif
-                                </h4>
-                                
-                                @php
-                                    // Les mêmes extractions de disposition et code pour chaque dalle
-                                    $nbColonnes = 2; // Par défaut 2x2
-                                    $nbLignes = 2;
-                                    
-                                    // Récupérer disposition_modules depuis l'objet dalle
-                                    $disposition = $dalle->disposition_modules ?? null;
-                                    
-                                    // Si disposition_modules est définie et au format AxB
-                                    if (!empty($disposition) && strpos($disposition, 'x') !== false) {
-                                        $parts = explode('x', $disposition);
-                                        if (count($parts) == 2) {
-                                            $nbColonnes = (int)$parts[0];
-                                            $nbLignes = (int)$parts[1];
-                                        }
-                                    } else {
-                                        // Essayer de calculer la disposition en fonction du nombre de modules
-                                        $nbModules = $dalle->modules->count();
-                                        if ($nbModules == 4) {
-                                            $nbColonnes = 2;
-                                            $nbLignes = 2;
-                                        } elseif ($nbModules == 6) {
-                                            $nbColonnes = 3;
-                                            $nbLignes = 2;
-                                        } elseif ($nbModules == 9) {
-                                            $nbColonnes = 3;
-                                            $nbLignes = 3;
-                                        }
-                                    }
-                                    
-                                    // Créer une grille pour les modules
-                                    $modules = $dalle->modules->all();
-                                    $grille = [];
-                                    
-                                    // Remplir la grille dans l'ordre ligne par ligne
-                                    $moduleIndex = 0;
-                                    for ($y = 1; $y <= $nbLignes; $y++) {
-                                        for ($x = 1; $x <= $nbColonnes; $x++) {
-                                            if ($moduleIndex < count($modules)) {
-                                                $grille[$y][$x] = $modules[$moduleIndex];
-                                                $moduleIndex++;
-                                            } else {
-                                                $grille[$y][$x] = null;
-                                            }
-                                        }
-                                    }
-                                @endphp
-                                
-                                <!-- Affichage sous forme de grille -->
-                                <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
-                                    <div style="display: grid; grid-template-columns: repeat({{ $nbColonnes }}, minmax(0, 1fr)); gap: 0.5rem;">
-                                        @for ($y = 1; $y <= $nbLignes; $y++)
-                                            @for ($x = 1; $x <= $nbColonnes; $x++)
-                                                @if (isset($grille[$y][$x]))
-                                                    @php $module = $grille[$y][$x]; @endphp
-                                                    <a href="{{ route('suivi.module', ['token' => $chantier->token_suivi, 'moduleId' => $module->id]) }}" 
-                                                       class="relative group" style="cursor: pointer; display: block; position: relative;">
-                                                        <div style="aspect-ratio: 1/1; width: 3.5rem; height: 3.5rem; 
-                                                            @if($module->etat == 'termine') background-color: var(--success);
-                                                            @elseif($module->etat == 'en_cours') background-color: var(--primary);
-                                                            @elseif($module->etat == 'defaillant') background-color: var(--danger);
-                                                            @else background-color: var(--neutral);
-                                                            @endif
-                                                            border-radius: 0.375rem; 
-                                                            border: 1px solid rgba(0,0,0,0.1); 
-                                                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                                                            transition: all 0.2s;"
-                                                            onmouseover="this.style.transform='scale(1.05)'; this.style.filter='brightness(1.1)';"
-                                                            onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';"
-                                                            title="Module {{ str_replace('Ind', 'Mod', $module->reference_module) }}"
-                                                        >
-                                                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: white; font-weight: 500; font-size: 0.75rem;">
-                                                                <div>{{ $x }},{{ $y }}</div>
-                                                                <div style="font-size: 0.7rem; margin-top: 0.25rem;">{{ preg_replace('/[^0-9]/', '', $module->reference_module) }}</div>
-                                                            </div>
-                                                        </div>
-                                                        <!-- Info-bulle au survol -->
-                                                        <div class="module-tooltip" style="display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); background-color: rgba(17, 24, 39, 0.9); color: white; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; margin-top: 0.5rem; white-space: nowrap; z-index: 10; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
-                                                            <div style="font-weight: 600; margin-bottom: 0.25rem;">{{ str_replace('Ind', 'Mod', $module->reference_module) }}</div>
-                                                            @if($module->numero_serie)
-                                                                <div>ID: {{ $module->numero_serie }}</div>
-                                                            @endif
-                                                            @if($module->interventions->count() > 0)
-                                                                <div>Dernière MAJ: {{ $module->interventions->sortByDesc('updated_at')->first()->updated_at->format('d/m/Y') }}</div>
-                                                            @endif
-                                                            @php
-                                                                $tempsTotal = 0;
-                                                                foreach($module->interventions as $intervention) {
-                                                                    if ($intervention->temps_passe) {
-                                                                        $tempsTotal += $intervention->temps_passe;
-                                                                    }
-                                                                }
-                                                                
-                                                                $heures = floor($tempsTotal / 60);
-                                                                $minutes = $tempsTotal % 60;
-                                                                $tempsFormate = '';
-                                                                
-                                                                if ($heures > 0) {
-                                                                    $tempsFormate .= $heures . 'h';
-                                                                }
-                                                                if ($minutes > 0 || $tempsFormate == '') {
-                                                                    $tempsFormate .= ($tempsFormate ? ' ' : '') . $minutes . 'min';
-                                                                }
-                                                            @endphp
-                                                            @if($tempsTotal > 0)
-                                                                <div>Temps: {{ $tempsFormate }}</div>
-                                                            @endif
-                                                        </div>
-                                                    </a>
-                                                @else
-                                                    <div style="aspect-ratio: 1/1; width: 3.5rem; height: 3.5rem; background-color: rgba(55, 65, 81, 0.3); border-radius: 0.375rem; border: 1px solid rgba(55, 65, 81, 0.5);" title="Emplacement vide">
-                                                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 0.75rem;">
-                                                            {{ $x }},{{ $y }}
-                                                        </div>
-                                                    </div>
-                                                @endif
-                                            @endfor
-                                        @endfor
-                                    </div>
-                                </div>
-                                
-                                <!-- Barre de progression -->
-                                <div style="width: 100%;">
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-muted);">
-                                        <span>{{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%</span>
-                                        <span>{{ $dalle->modules->where('etat', 'termine')->count() }}/{{ $dalle->modules->count() }} modules</span>
-                                    </div>
-                                    <div style="height: 0.5rem; width: 100%; background-color: rgba(55, 65, 81, 0.5); border-radius: 9999px; overflow: hidden;">
-                                        <div style="height: 100%; background-color: var(--success); width: {{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    @endforeach
-                    
-                    <!-- Autres dalles (ni individuelles, ni dans flightcase) -->
-                    @if(!empty($dallesGrouped['autres']))
-                    <div style="margin-top: 1.5rem; padding: 0; border-top: 1px solid var(--border);">
-                        <div style="display: flex; align-items: center; padding: 1rem 1.25rem; background-color: rgba(17, 24, 39, 0.5); border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem;">
-                            <h3 style="font-size: 1rem; margin: 0; color: var(--text-white);">Dalles indépendantes ({{ count($dallesGrouped['autres']) }})</h3>
-                        </div>
-                        
-                        <div style="padding: 1.25rem; background-color: rgba(31, 41, 55, 0.3); border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem;">
-                            @foreach($dallesGrouped['autres'] as $dalle)
-                            <div style="padding: 1rem; margin-bottom: {{ !$loop->last ? '1rem' : '0' }}; background-color: rgba(31, 41, 55, 0.4); border-radius: 0.5rem; border: 1px solid var(--border);">
-                                <h4 style="font-size: 0.9375rem; margin-bottom: 1rem; color: var(--text-white); display: flex; align-items: center;">
-                                    <span>Dalle: {{ $dalle->reference_dalle }}</span>
-                                    @if($dalle->numero_dalle)
-                                        <span style="margin-left: 0.5rem; font-size: 0.75rem; color: var(--primary-light);">[N° {{ $dalle->numero_dalle }}]</span>
-                                    @endif
-                                </h4>
-                                
-                                @php
-                                    // Les mêmes extractions de disposition et code pour chaque dalle
-                                    $nbColonnes = 2; // Par défaut 2x2
-                                    $nbLignes = 2;
-                                    
-                                    // Récupérer disposition_modules depuis l'objet dalle
-                                    $disposition = $dalle->disposition_modules ?? null;
-                                    
-                                    // Si disposition_modules est définie et au format AxB
-                                    if (!empty($disposition) && strpos($disposition, 'x') !== false) {
-                                        $parts = explode('x', $disposition);
-                                        if (count($parts) == 2) {
-                                            $nbColonnes = (int)$parts[0];
-                                            $nbLignes = (int)$parts[1];
-                                        }
-                                    } else {
-                                        // Essayer de calculer la disposition en fonction du nombre de modules
-                                        $nbModules = $dalle->modules->count();
-                                        if ($nbModules == 4) {
-                                            $nbColonnes = 2;
-                                            $nbLignes = 2;
-                                        } elseif ($nbModules == 6) {
-                                            $nbColonnes = 3;
-                                            $nbLignes = 2;
-                                        } elseif ($nbModules == 9) {
-                                            $nbColonnes = 3;
-                                            $nbLignes = 3;
-                                        }
-                                    }
-                                    
-                                    // Créer une grille pour les modules
-                                    $modules = $dalle->modules->all();
-                                    $grille = [];
-                                    
-                                    // Remplir la grille dans l'ordre ligne par ligne
-                                    $moduleIndex = 0;
-                                    for ($y = 1; $y <= $nbLignes; $y++) {
-                                        for ($x = 1; $x <= $nbColonnes; $x++) {
-                                            if ($moduleIndex < count($modules)) {
-                                                $grille[$y][$x] = $modules[$moduleIndex];
-                                                $moduleIndex++;
-                                            } else {
-                                                $grille[$y][$x] = null;
-                                            }
-                                        }
-                                    }
-                                @endphp
-                                
-                                <!-- Affichage sous forme de grille -->
-                                <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
-                                    <div style="display: grid; grid-template-columns: repeat({{ $nbColonnes }}, minmax(0, 1fr)); gap: 0.5rem;">
-                                        @for ($y = 1; $y <= $nbLignes; $y++)
-                                            @for ($x = 1; $x <= $nbColonnes; $x++)
-                                                @if (isset($grille[$y][$x]))
-                                                    @php $module = $grille[$y][$x]; @endphp
-                                                    <a href="{{ route('suivi.module', ['token' => $chantier->token_suivi, 'moduleId' => $module->id]) }}" 
-                                                       class="relative group" style="cursor: pointer; display: block; position: relative;">
-                                                        <div style="aspect-ratio: 1/1; width: 3.5rem; height: 3.5rem; 
-                                                            @if($module->etat == 'termine') background-color: var(--success);
-                                                            @elseif($module->etat == 'en_cours') background-color: var(--primary);
-                                                            @elseif($module->etat == 'defaillant') background-color: var(--danger);
-                                                            @else background-color: var(--neutral);
-                                                            @endif
-                                                            border-radius: 0.375rem; 
-                                                            border: 1px solid rgba(0,0,0,0.1); 
-                                                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                                                            transition: all 0.2s;"
-                                                            onmouseover="this.style.transform='scale(1.05)'; this.style.filter='brightness(1.1)';"
-                                                            onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';"
-                                                            title="Module {{ str_replace('Ind', 'Mod', $module->reference_module) }}"
-                                                        >
-                                                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: white; font-weight: 500; font-size: 0.75rem;">
-                                                                <div>{{ $x }},{{ $y }}</div>
-                                                                <div style="font-size: 0.7rem; margin-top: 0.25rem;">{{ preg_replace('/[^0-9]/', '', $module->reference_module) }}</div>
-                                                            </div>
-                                                        </div>
-                                                        <!-- Info-bulle au survol -->
-                                                        <div class="module-tooltip" style="display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); background-color: rgba(17, 24, 39, 0.9); color: white; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; margin-top: 0.5rem; white-space: nowrap; z-index: 10; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
-                                                            <div style="font-weight: 600; margin-bottom: 0.25rem;">{{ str_replace('Ind', 'Mod', $module->reference_module) }}</div>
-                                                            @if($module->numero_serie)
-                                                                <div>ID: {{ $module->numero_serie }}</div>
-                                                            @endif
-                                                            @if($module->interventions->count() > 0)
-                                                                <div>Dernière MAJ: {{ $module->interventions->sortByDesc('updated_at')->first()->updated_at->format('d/m/Y') }}</div>
-                                                            @endif
-                                                            @php
-                                                                $tempsTotal = 0;
-                                                                foreach($module->interventions as $intervention) {
-                                                                    if ($intervention->temps_passe) {
-                                                                        $tempsTotal += $intervention->temps_passe;
-                                                                    }
-                                                                }
-                                                                
-                                                                $heures = floor($tempsTotal / 60);
-                                                                $minutes = $tempsTotal % 60;
-                                                                $tempsFormate = '';
-                                                                
-                                                                if ($heures > 0) {
-                                                                    $tempsFormate .= $heures . 'h';
-                                                                }
-                                                                if ($minutes > 0 || $tempsFormate == '') {
-                                                                    $tempsFormate .= ($tempsFormate ? ' ' : '') . $minutes . 'min';
-                                                                }
-                                                            @endphp
-                                                            @if($tempsTotal > 0)
-                                                                <div>Temps: {{ $tempsFormate }}</div>
-                                                            @endif
-                                                        </div>
-                                                    </a>
-                                                @else
-                                                    <div style="aspect-ratio: 1/1; width: 3.5rem; height: 3.5rem; background-color: rgba(55, 65, 81, 0.3); border-radius: 0.375rem; border: 1px solid rgba(55, 65, 81, 0.5);" title="Emplacement vide">
-                                                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 0.75rem;">
-                                                            {{ $x }},{{ $y }}
-                                                        </div>
-                                                    </div>
-                                                @endif
-                                            @endfor
-                                        @endfor
-                                    </div>
-                                </div>
-                                
-                                <!-- Barre de progression -->
-                                <div style="width: 100%;">
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-muted);">
-                                        <span>{{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%</span>
-                                        <span>{{ $dalle->modules->where('etat', 'termine')->count() }}/{{ $dalle->modules->count() }} modules</span>
-                                    </div>
-                                    <div style="height: 0.5rem; width: 100%; background-color: rgba(55, 65, 81, 0.5); border-radius: 9999px; overflow: hidden;">
-                                        <div style="height: 100%; background-color: var(--success); width: {{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    @endif
-                    
-                    @if(empty($dallesGrouped['individuel']) && empty($dallesGrouped['flightcases']) && empty($dallesGrouped['autres']))
-                    <!-- Si aucune dalle groupée, afficher les dalles individuellement -->
-                    @foreach($produit->dalles as $dalle)
-                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-                        <h3 style="font-size: 1rem; margin-bottom: 1rem;">
-                            @if($dalle->reference_dalle == "INDIVIDUEL")
-                                <span style="color: var(--warning);">Modules individuels</span>
-                            @else
-                                Dalle: {{ $dalle->reference_dalle }}
-                            @endif
-                        </h3>
-                        
-                        @php
-                            // Extraire les dimensions depuis disposition_modules
-                            $nbColonnes = 2; // Par défaut 2x2
-                            $nbLignes = 2;
-                            
-                            // Récupérer disposition_modules depuis l'objet dalle
-                            $disposition = $dalle->disposition_modules ?? null;
-                            
-                            // Si disposition_modules est définie et au format AxB
-                            if (!empty($disposition) && strpos($disposition, 'x') !== false) {
-                                $parts = explode('x', $disposition);
-                                if (count($parts) == 2) {
-                                    $nbColonnes = (int)$parts[0];
-                                    $nbLignes = (int)$parts[1];
-                                }
-                            } else {
-                                // Essayer de calculer la disposition en fonction du nombre de modules
-                                $nbModules = $dalle->modules->count();
-                                if ($nbModules == 4) {
-                                    $nbColonnes = 2;
-                                    $nbLignes = 2;
-                                } elseif ($nbModules == 6) {
-                                    $nbColonnes = 3;
-                                    $nbLignes = 2;
-                                } elseif ($nbModules == 9) {
-                                    $nbColonnes = 3;
-                                    $nbLignes = 3;
-                                }
-                            }
-                            
-                            // Créer une grille pour les modules
-                            $modules = $dalle->modules->all();
-                            $grille = [];
-                            
-                            // Remplir la grille dans l'ordre ligne par ligne
-                            $moduleIndex = 0;
-                            for ($y = 1; $y <= $nbLignes; $y++) {
-                                for ($x = 1; $x <= $nbColonnes; $x++) {
-                                    if ($moduleIndex < count($modules)) {
-                                        $grille[$y][$x] = $modules[$moduleIndex];
-                                        $moduleIndex++;
-                                    } else {
-                                        $grille[$y][$x] = null;
-                                    }
-                                }
-                            }
-                        @endphp
-                        
-                        <!-- Affichage sous forme de grille -->
-                        <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
-                            <div style="display: grid; grid-template-columns: repeat({{ $nbColonnes }}, minmax(0, 1fr)); gap: 0.5rem;">
-                                @for ($y = 1; $y <= $nbLignes; $y++)
-                                    @for ($x = 1; $x <= $nbColonnes; $x++)
-                                        @if (isset($grille[$y][$x]))
-                                            @php $module = $grille[$y][$x]; @endphp
-                                            <a href="{{ route('suivi.module', ['token' => $chantier->token_suivi, 'moduleId' => $module->id]) }}" 
-                                               class="relative group" style="cursor: pointer; display: block; position: relative;">
-                                                <div style="aspect-ratio: 1/1; width: 3.5rem; height: 3.5rem; 
-                                                    @if($module->etat == 'termine') background-color: var(--success);
-                                                    @elseif($module->etat == 'en_cours') background-color: var(--primary);
-                                                    @elseif($module->etat == 'defaillant') background-color: var(--danger);
-                                                    @else background-color: var(--neutral);
-                                                    @endif
-                                                    border-radius: 0.375rem; 
-                                                    border: 1px solid rgba(0,0,0,0.1); 
-                                                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                                                    transition: all 0.2s;"
-                                                    onmouseover="this.style.transform='scale(1.05)'; this.style.filter='brightness(1.1)';"
-                                                    onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';"
-                                                    title="Module {{ str_replace('Ind', 'Mod', $module->reference_module) }}"
-                                                >
-                                                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: white; font-weight: 500; font-size: 0.75rem;">
-                                                        <div>{{ $x }},{{ $y }}</div>
-                                                        <div style="font-size: 0.7rem; margin-top: 0.25rem;">{{ preg_replace('/[^0-9]/', '', $module->reference_module) }}</div>
-                                                    </div>
-                                                </div>
-                                                <!-- Info-bulle au survol -->
-                                                <div class="module-tooltip" style="display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); background-color: rgba(17, 24, 39, 0.9); color: white; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; margin-top: 0.5rem; white-space: nowrap; z-index: 10; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
-                                                    <div style="font-weight: 600; margin-bottom: 0.25rem;">{{ str_replace('Ind', 'Mod', $module->reference_module) }}</div>
-                                                    @if($module->numero_serie)
-                                                        <div>ID: {{ $module->numero_serie }}</div>
-                                                    @endif
-                                                    @if($module->interventions->count() > 0)
-                                                        <div>Dernière MAJ: {{ $module->interventions->sortByDesc('updated_at')->first()->updated_at->format('d/m/Y') }}</div>
-                                                    @endif
-                                                    @php
-                                                        $tempsTotal = 0;
-                                                        foreach($module->interventions as $intervention) {
-                                                            if ($intervention->temps_passe) {
-                                                                $tempsTotal += $intervention->temps_passe;
-                                                            }
-                                                        }
-                                                        
-                                                        $heures = floor($tempsTotal / 60);
-                                                        $minutes = $tempsTotal % 60;
-                                                        $tempsFormate = '';
-                                                        
-                                                        if ($heures > 0) {
-                                                            $tempsFormate .= $heures . 'h';
-                                                        }
-                                                        if ($minutes > 0 || $tempsFormate == '') {
-                                                            $tempsFormate .= ($tempsFormate ? ' ' : '') . $minutes . 'min';
-                                                        }
-                                                    @endphp
-                                                    @if($tempsTotal > 0)
-                                                        <div>Temps: {{ $tempsFormate }}</div>
-                                                    @endif
-                                                </div>
-                                            </a>
-                                        @else
-                                            <div style="aspect-ratio: 1/1; width: 3.5rem; height: 3.5rem; background-color: rgba(55, 65, 81, 0.3); border-radius: 0.375rem; border: 1px solid rgba(55, 65, 81, 0.5);" title="Emplacement vide">
-                                                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 0.75rem;">
-                                                    {{ $x }},{{ $y }}
-                                                </div>
-                                            </div>
-                                        @endif
-                                    @endfor
-                                @endfor
-                            </div>
-                        </div>
-                        
-                        <!-- Barre de progression -->
-                        <div style="width: 100%;">
-                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.25rem; color: var(--text-muted);">
-                                <span>{{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%</span>
-                                <span>{{ $dalle->modules->where('etat', 'termine')->count() }}/{{ $dalle->modules->count() }} modules</span>
-                            </div>
-                            <div style="height: 0.5rem; width: 100%; background-color: rgba(55, 65, 81, 0.5); border-radius: 9999px; overflow: hidden;">
-                                <div style="height: 100%; background-color: var(--success); width: {{ round(($dalle->modules->where('etat', 'termine')->count() / max($dalle->modules->count(), 1)) * 100) }}%;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    @endforeach
-                    @endif
-    <!-- Footer -->
+                </div>
+            </div>
+            
+        </div>
+    </main>
+    
     <footer>
-        <div class="container footer-content">
-            <p style="margin-bottom: 0.5rem;">Ce suivi est mis à jour en temps réel. Dernière consultation: {{ now()->format('d/m/Y H:i:s') }}</p>
-            <p style="margin-bottom: 0.5rem;">Pour toute question concernant votre chantier, n'hésitez pas à contacter notre équipe.</p>
-            <p>&copy; {{ date('Y') }} TecaLED. Tous droits réservés.</p>
+        <div class="container">
+            <div class="footer-content">
+                <p>Rapport généré le {{ now()->format('d/m/Y à H:i') }} par TecaLED</p>
+                <p>Ce document est confidentiel et réservé à l'usage exclusif du client</p>
+            </div>
         </div>
     </footer>
-
-    <!-- Scripts pour les graphiques -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     
+    <!-- Module Details Modal -->
+    <div id="moduleDetailsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background-color: var(--bg-card); border-radius: 0.5rem; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 1.5rem; border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+                <h3 id="moduleTitle" style="font-size: 1.125rem; font-weight: 600;"></h3>
+                <button onclick="closeModuleDetails()" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="moduleDetails" style="margin-bottom: 1.5rem;">
+                <div class="info-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="info-item">
+                        <div class="info-label">Référence</div>
+                        <div id="moduleReference" class="info-value"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Position</div>
+                        <div id="modulePosition" class="info-value"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Dalle</div>
+                        <div id="moduleDalle" class="info-value"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">État</div>
+                        <div id="moduleStatus" class="info-value"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="moduleInterventions">
+                <h4 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem; color: var(--primary-light);">
+                    Interventions
+                </h4>
+                <div id="interventionsLoading" style="display: flex; justify-content: center; padding: 1rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="animate-spin" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <div id="interventionsList">
+                    <!-- Les interventions seront injectées ici via JavaScript -->
+                </div>
+                <div id="noInterventions" style="display: none; text-align: center; padding: 1rem; color: var(--text-muted);">
+                    Aucune intervention n'a encore été effectuée sur ce module.
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Définir les couleurs pour les graphiques
+        const colors = {
+            blue: '#3b82f6',
+            green: '#10b981',
+            red: '#ef4444',
+            yellow: '#f59e0b',
+            gray: '#6b7280',
+            purple: '#a78bfa',
+            indigo: '#818cf8',
+            pink: '#f472b6'
+        };
+        
+        // Les sections sont maintenant toujours visibles
+        
+        // Fonction pour afficher les détails d'un module
+        function showModuleDetails(moduleId, reference, etat, dalle, position) {
+            // Mettre à jour les informations dans le modal
+            document.getElementById('moduleTitle').textContent = 'Module ' + reference;
+            document.getElementById('moduleReference').textContent = reference;
+            document.getElementById('modulePosition').textContent = position;
+            document.getElementById('moduleDalle').textContent = 'Dalle ' + dalle;
+            
+            // Mettre à jour le statut avec la couleur appropriée
+            const statusElement = document.getElementById('moduleStatus');
+            statusElement.textContent = formatStatus(etat);
+            statusElement.className = 'info-value';
+            
+            if (etat === 'termine') {
+                statusElement.style.color = colors.green;
+            } else if (etat === 'en_cours') {
+                statusElement.style.color = colors.blue;
+            } else if (etat === 'stand_by') {
+                statusElement.style.color = colors.yellow;
+            } else if (etat === 'defaillant') {
+                statusElement.style.color = colors.red;
+            } else {
+                statusElement.style.color = colors.gray;
+            }
+            
+            // Réinitialiser la section des interventions
+            document.getElementById('interventionsLoading').style.display = 'flex';
+            document.getElementById('interventionsList').innerHTML = '';
+            document.getElementById('noInterventions').style.display = 'none';
+            
+            // Afficher le modal
+            const modal = document.getElementById('moduleDetailsModal');
+            modal.style.display = 'flex';
+            
+            // Simuler le chargement des interventions (dans une vraie application, vous feriez un appel API)
+            // Pour l'instant, nous allons juste afficher un message "aucune intervention"
+            setTimeout(() => {
+                document.getElementById('interventionsLoading').style.display = 'none';
+                document.getElementById('noInterventions').style.display = 'block';
+            }, 1000);
+        }
+        
+        // Fonction pour fermer le modal
+        function closeModuleDetails() {
+            document.getElementById('moduleDetailsModal').style.display = 'none';
+        }
+        
+        // Fonction pour formater l'état
+        function formatStatus(etat) {
+            switch(etat) {
+                case 'non_commence': return 'Non commencé';
+                case 'en_cours': return 'En cours';
+                case 'termine': return 'Terminé';
+                case 'stand_by': return 'En attente';
+                case 'defaillant': return 'Défaillant';
+                default: return etat ? etat.charAt(0).toUpperCase() + etat.slice(1) : 'Inconnu';
+            }
+        }
+        
+        // Initialiser les graphiques après le chargement de la page
         document.addEventListener('DOMContentLoaded', function() {
-            // Enregistrer le plugin datalabels
+            // Enregistrer le plugin datalabels globalement
             Chart.register(ChartDataLabels);
             
-            // Configuration des couleurs pour les graphiques
-            const colors = {
-                success: '#10b981', // Terminé
-                primary: '#3b82f6', // En cours
-                danger: '#ef4444',  // Défaillant
-                neutral: '#6b7280',  // Non commencé
-                purple: '#8b5cf6',   // LEDs
-                indigo: '#6366f1',   // ICs
-                pink: '#ec4899',     // Masques
-                blue: '#3b82f6',     // Usure normale
-                orange: '#f59e0b',   // Défaut usine
-                gray: '#6b7280'      // Autre
-            };
-            
-            // Graphique d'état des modules
+            // Graphique de l'état des modules
             const modulesCtx = document.getElementById('modulesChart').getContext('2d');
             const modulesChart = new Chart(modulesCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Terminés', 'En cours', 'Défaillants', 'Non commencés'],
+                    labels: ['Terminés', 'En cours', 'En attente', 'Non commencés', 'Défaillants'],
                     datasets: [{
-                        data: [{{ $modulesTermines }}, {{ $modulesEnCours }}, {{ $modulesDefaillants }}, {{ $modulesNonCommences }}],
-                        backgroundColor: [colors.success, colors.primary, colors.danger, colors.neutral],
+                        data: [{{ $modulesTermines }}, {{ $modulesEnCours }}, {{ $modulesStandBy }}, {{ $modulesNonCommences }}, {{ $modulesDefaillants }}],
+                        backgroundColor: [colors.green, colors.blue, colors.yellow, colors.gray, colors.red],
                         borderColor: '#1f2937',
                         borderWidth: 2
                     }]
@@ -1643,7 +1855,7 @@
                 data: {
                     labels: ['LEDs', 'ICs', 'Masques'],
                     datasets: [{
-                        data: [{{ $totalLEDsRemplacees }}, {{ $totalICsRemplaces }}, {{ $totalMasquesRemplaces }}],
+                        data: [{{ $totalLEDsRemplacees ?? 0 }}, {{ $totalICsRemplaces ?? 0 }}, {{ $totalMasquesRemplaces ?? 0 }}],
                         backgroundColor: [colors.purple, colors.indigo, colors.pink],
                         borderColor: '#1f2937',
                         borderWidth: 2
@@ -1698,11 +1910,12 @@
             const causesChart = new Chart(causesCtx, {
                 type: 'bar',
                 data: {
-                    labels: ['Usure normale', 'Dommage physique', 'Défaut de fabrication', 'Autre cause'],
+                    labels: ['Usure normale', 'Choc/Impact', 'Défaut usine', 'Autre'],
                     datasets: [{
                         data: [{{ $causes['usure_normale'] }}, {{ $causes['choc'] }}, {{ $causes['defaut_usine'] }}, {{ $causes['autre'] }}],
-                        backgroundColor: [colors.blue, colors.danger, colors.orange, colors.gray],
-                        borderWidth: 0,
+                        backgroundColor: [colors.blue, colors.yellow, colors.red, colors.gray],
+                        borderColor: '#1f2937',
+                        borderWidth: 1,
                         borderRadius: 4
                     }]
                 },
@@ -1718,21 +1931,13 @@
                             titleColor: '#fff',
                             bodyColor: '#e5e7eb',
                             borderColor: '#374151',
-                            borderWidth: 1,
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                    return `${value} cas (${percentage}%)`;
-                                }
-                            }
+                            borderWidth: 1
                         },
                         datalabels: {
                             color: 'white',
                             anchor: 'end',
                             align: 'top',
-                            offset: 0,
+                            offset: 4,
                             font: {
                                 weight: 'bold'
                             },
@@ -1742,10 +1947,10 @@
                         }
                     },
                     scales: {
-                        x: {
+                        y: {
+                            beginAtZero: true,
                             grid: {
-                                display: false,
-                                color: 'rgba(75, 85, 99, 0.2)'
+                                color: 'rgba(55, 65, 81, 0.3)'
                             },
                             ticks: {
                                 color: '#9ca3af',
@@ -1754,14 +1959,11 @@
                                 }
                             }
                         },
-                        y: {
-                            beginAtZero: true,
+                        x: {
                             grid: {
-                                color: 'rgba(75, 85, 99, 0.2)',
-                                borderDash: [2, 4]
+                                display: false
                             },
                             ticks: {
-                                precision: 0,
                                 color: '#9ca3af',
                                 font: {
                                     size: 11
@@ -1772,22 +1974,6 @@
                 }
             });
         });
-        
-        // Script pour gérer l'affichage des infobulles sur les modules
-        document.addEventListener('DOMContentLoaded', function() {
-            // Ajouter des événements pour toutes les instances de modules
-            document.querySelectorAll('.relative.group').forEach(function(el) {
-                el.addEventListener('mouseenter', function() {
-                    const tooltip = this.querySelector('.module-tooltip');
-                    if (tooltip) tooltip.style.display = 'block';
-                });
-                el.addEventListener('mouseleave', function() {
-                    const tooltip = this.querySelector('.module-tooltip');
-                    if (tooltip) tooltip.style.display = 'none';
-                });
-            });
-        });
     </script>
 </body>
 </html>
-@endforeach
