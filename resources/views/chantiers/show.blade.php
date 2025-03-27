@@ -416,94 +416,19 @@
                                                 @foreach($dallesGrouped['individuel'] as $dalle)
                                                     <div class="flex flex-wrap gap-2 justify-center mt-3">
                                                         @foreach($dalle->modules as $module)
-                                                            <div x-data="{ hover: false, showActions: false, moduleId: {{ $module->id }} }" 
-                                                               class="relative group module-container">
+                                                            <div class="relative group module-container">
                                                                 <div class="aspect-square w-10 h-10 
                                                                     @if($module->etat == 'termine') bg-accent-green
-                                                                    @elseif($module->etat == 'en_cours') bg-accent-yellow
+                                                                    @elseif($module->etat == 'stand_by') bg-accent-yellow
                                                                     @elseif($module->etat == 'defaillant') bg-accent-red
                                                                     @else bg-gray-600
                                                                     @endif
                                                                     rounded-sm border border-black/10 transition-all hover:shadow-lg duration-150 transform hover:scale-105 cursor-pointer"
-                                                                    title="Module #{{ $module->id }} - {{ ucfirst($module->etat) }}"
-                                                                    @mouseenter="hover = true; showActions = true; if(window.moduleTimeoutId) clearTimeout(window.moduleTimeoutId)"
-                                                                    @mouseleave="hover = false; window.moduleTimeoutId = setTimeout(() => showActions = false, 1000)"
-                                                                    @click="window.location.href='{{ route('modules.show', $module) }}'"
+                                                                    title="Module #{{ $module->id }} - {{ ucfirst(str_replace('_', ' ', $module->etat)) }}"
                                                                 >
                                                                     <div class="flex items-center justify-center h-full text-xs font-medium text-white/90">
                                                                         {{ preg_replace('/[^0-9]/', '', $module->reference_module) }}
                                                                     </div>
-                                                                </div>
-                                                                
-                                                                <!-- Nom du module (au survol) -->
-                                                                <div x-show="hover" 
-                                                                     x-transition:enter="transition ease-out duration-200"
-                                                                     x-transition:enter-start="opacity-0 scale-95"
-                                                                     x-transition:enter-end="opacity-100 scale-100"
-                                                                     class="absolute top-[-20px] left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
-                                                                    Module #{{ $module->id }}
-                                                                </div>
-                                                                
-                                                                <!-- Actions popup -->
-                                                                <div x-show="showActions" 
-                                                                     x-transition:enter="transition ease-out duration-200"
-                                                                     x-transition:enter-start="opacity-0 scale-95"
-                                                                     x-transition:enter-end="opacity-100 scale-100"
-                                                                     x-transition:leave="transition ease-in duration-150"
-                                                                     x-transition:leave-start="opacity-100 scale-100"
-                                                                     x-transition:leave-end="opacity-0 scale-95"
-                                                                     class="absolute -top-20 -right-2 bg-gray-900/95 border border-gray-700 rounded-lg p-2 shadow-xl z-20 flex flex-col gap-2 min-w-[120px]"
-                                                                     
-                                                                     @click.away="showActions = false"
-                                                                     @keydown.escape.window="showActions = false">
-                                                                    
-                                                                    <!-- Marquer comme OK -->
-                                                                    <button @click.stop="
-                                                                        fetch('{{ route('modules.update', $module) }}', {
-                                                                            method: 'PATCH',
-                                                                            headers: {
-                                                                                'Content-Type': 'application/json',
-                                                                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                                                                            },
-                                                                            body: JSON.stringify({
-                                                                                dalle_id: '{{ $module->dalle_id }}',
-                                                                                largeur: '{{ $module->largeur }}',
-                                                                                hauteur: '{{ $module->hauteur }}',
-                                                                                nb_pixels_largeur: '{{ $module->nb_pixels_largeur }}',
-                                                                                nb_pixels_hauteur: '{{ $module->nb_pixels_hauteur }}',
-                                                                                etat: 'termine',
-                                                                                reference_module: '{{ $module->reference_module }}',
-                                                                                numero_serie: '{{ $module->numero_serie }}',
-                                                                                technicien_id: '{{ $module->technicien_id }}',
-                                                                                position_x: '{{ $module->position_x }}',
-                                                                                position_y: '{{ $module->position_y }}',
-                                                                                position_lettre: '{{ $module->position_lettre }}',
-                                                                                carte_reception: '{{ $module->carte_reception }}',
-                                                                                hub: '{{ $module->hub }}',
-                                                                                driver: '{{ $module->driver }}',
-                                                                                shift_register: '{{ $module->shift_register }}',
-                                                                                buffer: '{{ $module->buffer }}'
-                                                                            })
-                                                                        })
-                                                                        .then(response => {
-                                                                            if (response.ok) {
-                                                                                window.location.reload();
-                                                                            }
-                                                                        });
-                                                                    " class="flex items-center text-left text-xs px-2 py-1 text-green-400 hover:bg-green-900/30 rounded">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                                        </svg>
-                                                                        <span>Marquer OK</span>
-                                                                    </button>
-                                                                    
-                                                                    <!-- Créer intervention -->
-                                                                    <a href="{{ route('interventions.create', ['module_id' => $module->id]) }}" @click.stop class="flex items-center text-left text-xs px-2 py-1 text-yellow-400 hover:bg-yellow-900/30 rounded">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                                        </svg>
-                                                                        <span>Intervention</span>
-                                                                    </a>
                                                                 </div>
                                                             </div>
                                                         @endforeach
@@ -523,7 +448,7 @@
                                         
                                         <!-- FlightCases -->
                                         @foreach($dallesGrouped['flightcases'] as $fcNumber => $dalles)
-                                            <div class="mb-6" x-data="{ open: false }">
+                                            <div class="mb-6" x-data="{ open: true }">
                                                 <div @click="open = !open" class="flex items-center justify-between bg-gray-800/50 p-2 rounded-t-xl border-t border-l border-r border-gray-700 cursor-pointer">
                                                     <div class="flex items-center">
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -695,25 +620,7 @@
                                                                         @for ($x = 1; $x <= $nbColonnes; $x++)
                                                                             @if (isset($grille[$y][$x]))
                                                                                 @php $module = $grille[$y][$x]; @endphp
-                                                                                <a href="{{ route('modules.show', $module) }}" 
-                                                                                   class="relative group">
-                                                                                    <div class="aspect-square w-10 h-10 
-                                                                                        @if($module->etat == 'termine') bg-accent-green
-                                                                                        @elseif($module->etat == 'en_cours') bg-accent-yellow
-                                                                                        @elseif($module->etat == 'defaillant') bg-accent-red
-                                                                                        @else bg-gray-600
-                                                                                        @endif
-                                                                                        rounded-sm border border-black/10 hover:brightness-110 transition-all hover:shadow-lg duration-150 transform hover:scale-105"
-                                                                                        title="Module #{{ $module->id }} - {{ ucfirst($module->etat) }}"
-                                                                                    >
-                                                                                        <div class="flex items-center justify-center h-full text-xs font-medium text-white/90">
-                                                                                            {{ $x }},{{ $y }}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <div class="block absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
-                                                                                        Module #{{ $module->id }}
-                                                                                    </div>
-                                                                                </a>
+                                                                                @include('components.module.grid-item', ['module' => $module, 'x' => $x, 'y' => $y])
                                                                             @else
                                                                                 <div class="aspect-square w-10 h-10 bg-gray-800/50 rounded-sm border border-gray-700" title="Emplacement vide">
                                                                                     <div class="flex items-center justify-center h-full text-xs text-gray-600">
@@ -743,7 +650,7 @@
                                         
                                         <!-- Autres dalles -->
                                         @if(!empty($dallesGrouped['autres']))
-                                            <div class="mb-6" x-data="{ open: false }">
+                                            <div class="mb-6" x-data="{ open: true }">
                                                 <div @click="open = !open" class="flex items-center justify-between bg-gray-800/50 p-2 rounded-t-xl border-t border-l border-r border-gray-700 cursor-pointer">
                                                     <h6 class="font-medium text-white">Dalles indépendantes ({{ count($dallesGrouped['autres']) }})</h6>
                                                     <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -913,25 +820,7 @@
                                                                         @for ($x = 1; $x <= $nbColonnes; $x++)
                                                                             @if (isset($grille[$y][$x]))
                                                                                 @php $module = $grille[$y][$x]; @endphp
-                                                                                <a href="{{ route('modules.show', $module) }}" 
-                                                                                   class="relative group">
-                                                                                    <div class="aspect-square w-10 h-10 
-                                                                                        @if($module->etat == 'termine') bg-accent-green
-                                                                                        @elseif($module->etat == 'en_cours') bg-accent-yellow
-                                                                                        @elseif($module->etat == 'defaillant') bg-accent-red
-                                                                                        @else bg-gray-600
-                                                                                        @endif
-                                                                                        rounded-sm border border-black/10 hover:brightness-110 transition-all hover:shadow-lg duration-150 transform hover:scale-105"
-                                                                                        title="Module #{{ $module->id }} - {{ ucfirst($module->etat) }}"
-                                                                                    >
-                                                                                        <div class="flex items-center justify-center h-full text-xs font-medium text-white/90">
-                                                                                            {{ $x }},{{ $y }}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <div class="block absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
-                                                                                        Module #{{ $module->id }}
-                                                                                    </div>
-                                                                                </a>
+                                                                                @include('components.module.grid-item', ['module' => $module, 'x' => $x, 'y' => $y])
                                                                             @else
                                                                                 <div class="aspect-square w-10 h-10 bg-gray-800/50 rounded-sm border border-gray-700" title="Emplacement vide">
                                                                                     <div class="flex items-center justify-center h-full text-xs text-gray-600">
@@ -1087,6 +976,34 @@
                 }, 5000);
             });
         }
+
+        // Utilise la fonction moduleMenuPosition définie dans app.blade.php
+        // Cette fonction est vide mais existe pour retrocompatibilité
+        function showModuleMenu(menuId) {
+            // La fonction moduleMenuPosition est maintenant utilisée à la place
+            console.log("showModuleMenu est obsolète, utilisez moduleMenuPosition à la place");
+        }
+
+        // Ajouter un gestionnaire global pour gérer les survols des modules
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gérer le survol des modules pour afficher les menus
+            document.querySelectorAll('.module-trigger').forEach(trigger => {
+                // S'assurer que tous les déclencheurs ont l'attribut data-module-id
+                if (trigger.hasAttribute('data-module-id')) {
+                    const moduleId = trigger.getAttribute('data-module-id');
+                    
+                    // Ajouter l'événement mouseenter s'il n'existe pas déjà
+                    if (!trigger.hasAttribute('onmouseover')) {
+                        trigger.setAttribute('onmouseover', `moduleMenuPosition('module-menu-${moduleId}', this)`);
+                    }
+                    
+                    // Ajouter un gestionnaire programmatique pour une meilleure compatibilité
+                    trigger.addEventListener('mouseenter', function() {
+                        moduleMenuPosition('module-menu-' + moduleId, this);
+                    });
+                }
+            });
+        });
     </script>
     @endpush
 </x-app-layout>

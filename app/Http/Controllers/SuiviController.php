@@ -89,6 +89,7 @@ class SuiviController extends Controller
         $modulesEnCours = 0;
         $modulesDefaillants = 0;
         $modulesNonCommences = 0;
+        $modulesHS = 0;
         $tempsTotal = 0;
         $interventionsEnCours = 0;
         $totalLEDsRemplacees = 0;
@@ -125,6 +126,7 @@ class SuiviController extends Controller
                 $modulesTermines += $dalle->modules->where('etat', 'termine')->count();
                 $modulesEnCours += $dalle->modules->where('etat', 'en_cours')->count();
                 $modulesDefaillants += $dalle->modules->where('etat', 'defaillant')->count();
+                $modulesHS += $dalle->modules->where('etat', 'hs')->count();
                 $modulesNonCommences += $dalle->modules->where('etat', 'non_commence')->count();
                 
                 foreach ($dalle->modules as $module) {
@@ -208,6 +210,7 @@ class SuiviController extends Controller
             'modulesTermines',
             'modulesEnCours',
             'modulesDefaillants',
+            'modulesHS',
             'modulesNonCommences',
             'pourcentageTermines',
             'tempsFormate',

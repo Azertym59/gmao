@@ -23,9 +23,10 @@
             --primary: #3b82f6;
             --primary-dark: #2563eb;
             --primary-light: #60a5fa;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
+            --success: #00d624; /* Vert - Terminé */
+            --warning: #ffc107; /* Jaune - Stand by */
+            --danger: #19918d;  /* Turquoise - Défaillant */
+            --hs: #dc3545;      /* Rouge - HS */
             --neutral: #6b7280;
             --bg-dark: #111827;
             --bg-card: #1f2937;
@@ -239,21 +240,27 @@
         }
         
         .status-termine {
-            background-color: rgba(16, 185, 129, 0.1);
+            background-color: rgba(0, 214, 36, 0.1);
             color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(0, 214, 36, 0.2);
         }
         
         .status-defaillant {
-            background-color: rgba(239, 68, 68, 0.1);
+            background-color: rgba(25, 145, 141, 0.1);
             color: var(--danger);
-            border: 1px solid rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(25, 145, 141, 0.2);
         }
         
         .status-stand_by {
-            background-color: rgba(245, 158, 11, 0.1);
+            background-color: rgba(255, 193, 7, 0.1);
             color: var(--warning);
-            border: 1px solid rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.2);
+        }
+        
+        .status-hs {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--hs);
+            border: 1px solid rgba(220, 53, 69, 0.2);
         }
         
         .status-indicator {
@@ -282,6 +289,10 @@
         
         .indicator-stand_by {
             background-color: var(--warning);
+        }
+        
+        .indicator-hs {
+            background-color: var(--hs);
         }
         
         @keyframes pulse {
@@ -419,6 +430,48 @@
             font-weight: 700;
         }
         
+        /* Légende des couleurs */
+        .color-legend {
+            background-color: rgba(31, 41, 55, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .color-legend-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 0.75rem;
+            text-align: center;
+        }
+        
+        .color-legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+        }
+        
+        .color-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .color-dot {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .color-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
         /* Charts */
         .charts-grid {
             display: grid;
@@ -680,6 +733,74 @@
             gap: 1.25rem;
         }
         
+        /* Style pour l'affichage en pleine largeur des dalles individuelles */
+        .dalles-full-width {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            width: 100%;
+        }
+        
+        .dalle-individuelle {
+            width: 100%;
+        }
+        
+        /* Style pour la grille des modules individuels sans flightcase */
+        .modules-container-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .individual-module-card {
+            background-color: rgba(17, 24, 39, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        
+        .individual-module-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .individual-module-header {
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .individual-module-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-white);
+        }
+        
+        .individual-module-status {
+            font-size: 0.7rem;
+            padding: 0.1rem 0.5rem;
+            border-radius: 9999px;
+            font-weight: 500;
+        }
+        
+        .individual-module-details {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            margin-top: 0.5rem;
+        }
+        
+        /* Responsive pour les petits écrans */
+        @media (max-width: 640px) {
+            .modules-container-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+        
         .dalle-card {
             background-color: rgba(17, 24, 39, 0.4); /* Glassmorphism style */
             backdrop-filter: blur(5px);
@@ -845,6 +966,20 @@
             body {
                 background-color: white;
                 color: black;
+            }
+            
+            .color-legend {
+                background-color: #f9fafb;
+                border: 1px solid #e5e7eb;
+                page-break-inside: avoid;
+            }
+            
+            .color-legend-title {
+                color: #111827;
+            }
+            
+            .color-label {
+                color: #374151;
             }
             
             .header {
@@ -1175,25 +1310,29 @@
                     </div>
                     
                     <div class="stats-grid">
-                        <div class="stat-card" style="--stat-color: var(--success);">
+                        <div class="stat-card" style="--stat-color: #00d624;">
                             <div class="stat-label">Modules terminés</div>
-                            <div class="stat-value" style="color: var(--success);">{{ $modulesTermines }}</div>
+                            <div class="stat-value" style="color: #00d624;">{{ $modulesTermines }}</div>
                         </div>
-                        <div class="stat-card" style="--stat-color: var(--primary);">
+                        <div class="stat-card" style="--stat-color: #3b82f6;">
                             <div class="stat-label">Modules en cours</div>
-                            <div class="stat-value" style="color: var(--primary);">{{ $modulesEnCours }}</div>
+                            <div class="stat-value" style="color: #3b82f6;">{{ $modulesEnCours }}</div>
                         </div>
-                        <div class="stat-card" style="--stat-color: var(--warning);">
+                        <div class="stat-card" style="--stat-color: #ffc107;">
                             <div class="stat-label">Modules en attente</div>
-                            <div class="stat-value" style="color: var(--warning);">{{ $modulesStandBy }}</div>
+                            <div class="stat-value" style="color: #ffc107;">{{ $modulesStandBy }}</div>
                         </div>
-                        <div class="stat-card" style="--stat-color: var(--neutral);">
+                        <div class="stat-card" style="--stat-color: #6b7280;">
                             <div class="stat-label">Modules non commencés</div>
-                            <div class="stat-value" style="color: var(--neutral);">{{ $modulesNonCommences }}</div>
+                            <div class="stat-value" style="color: #6b7280;">{{ $modulesNonCommences }}</div>
                         </div>
-                        <div class="stat-card" style="--stat-color: var(--danger);">
+                        <div class="stat-card" style="--stat-color: #19918d;">
                             <div class="stat-label">Modules défaillants</div>
-                            <div class="stat-value" style="color: var(--danger);">{{ $modulesDefaillants }}</div>
+                            <div class="stat-value" style="color: #19918d;">{{ $modulesDefaillants }}</div>
+                        </div>
+                        <div class="stat-card" style="--stat-color: #dc3545;">
+                            <div class="stat-label">Modules HS</div>
+                            <div class="stat-value" style="color: #dc3545;">{{ $modulesHS ?? 0 }}</div>
                         </div>
                     </div>
                     
@@ -1301,6 +1440,7 @@
                             </div>
                         </div>
                     </div>
+                    
                 </div>
             </div>
             
@@ -1394,6 +1534,36 @@
                                 @endphp
                                 
                                 @if(!empty($dallesGrouped['individuel']) || !empty($dallesGrouped['flightcases']) || !empty($dallesGrouped['autres']))
+                                    <!-- Légende des couleurs -->
+                                    <div class="color-legend">
+                                        <h4 class="color-legend-title">Légende des états des modules</h4>
+                                        <div class="color-legend-items">
+                                            <div class="color-legend-item">
+                                                <span class="color-dot" style="background-color: #00d624;"></span>
+                                                <span class="color-label">Terminé</span>
+                                            </div>
+                                            <div class="color-legend-item">
+                                                <span class="color-dot" style="background-color: #3b82f6;"></span>
+                                                <span class="color-label">En cours</span>
+                                            </div>
+                                            <div class="color-legend-item">
+                                                <span class="color-dot" style="background-color: #ffc107;"></span>
+                                                <span class="color-label">En attente</span>
+                                            </div>
+                                            <div class="color-legend-item">
+                                                <span class="color-dot" style="background-color: #19918d;"></span>
+                                                <span class="color-label">Défaillant</span>
+                                            </div>
+                                            <div class="color-legend-item">
+                                                <span class="color-dot" style="background-color: #dc3545;"></span>
+                                                <span class="color-label">Hors service</span>
+                                            </div>
+                                            <div class="color-legend-item">
+                                                <span class="color-dot" style="background-color: #6b7280;"></span>
+                                                <span class="color-label">Non commencé</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <!-- Modules individuels -->
                                     @if(!empty($dallesGrouped['individuel']))
                                         <div class="flightcase-section">
@@ -1411,9 +1581,9 @@
                                                 </div>
                                             </div>
                                             <div id="individuel-{{ $produit->id }}" class="flightcase-body flightcase-body ">
-                                                <div class="dalles-grid">
+                                                <div class="dalles-full-width">
                                                     @foreach($dallesGrouped['individuel'] as $dalle)
-                                                        <div class="dalle-card">
+                                                        <div class="dalle-card dalle-individuelle">
                                                             <div class="dalle-header">
                                                                 <div class="dalle-title">
                                                                     Dalle {{ $dalle->reference_dalle ?? $dalle->id }}
@@ -1433,14 +1603,16 @@
                                                                         En attente
                                                                     @elseif($dalle->etat == 'defaillant')
                                                                         Défaillante
+                                                                    @elseif($dalle->etat == 'hs')
+                                                                        Hors service
                                                                     @else
                                                                         {{ ucfirst($dalle->etat) }}
                                                                     @endif
                                                                 </div>
                                                             </div>
                                                             <div class="dalle-body">
-                                                                <!-- Dalle Content - Uses the same implementation from above -->
-                                                                @include('suivi.partials.dalle-content', ['dalle' => $dalle])
+                                                                <!-- Utiliser l'implémentation spécifique pour les modules individuels -->
+                                                                @include('suivi.partials.dalle-content-modules-individuels', ['dalle' => $dalle])
                                                             </div>
                                                         </div>
                                                     @endforeach
@@ -1740,15 +1912,17 @@
             statusElement.className = 'info-value';
             
             if (etat === 'termine') {
-                statusElement.style.color = colors.green;
+                statusElement.style.color = '#00d624'; // Vert - Terminé
             } else if (etat === 'en_cours') {
-                statusElement.style.color = colors.blue;
+                statusElement.style.color = '#3b82f6'; // Bleu - En cours
             } else if (etat === 'stand_by') {
-                statusElement.style.color = colors.yellow;
+                statusElement.style.color = '#ffc107'; // Jaune - En attente
             } else if (etat === 'defaillant') {
-                statusElement.style.color = colors.red;
+                statusElement.style.color = '#19918d'; // Turquoise - Défaillant
+            } else if (etat === 'hs') {
+                statusElement.style.color = '#dc3545'; // Rouge - HS
             } else {
-                statusElement.style.color = colors.gray;
+                statusElement.style.color = '#6b7280'; // Gris - Non commencé
             }
             
             // Réinitialiser la section des interventions
@@ -1781,6 +1955,7 @@
                 case 'termine': return 'Terminé';
                 case 'stand_by': return 'En attente';
                 case 'defaillant': return 'Défaillant';
+                case 'hs': return 'Hors Service';
                 default: return etat ? etat.charAt(0).toUpperCase() + etat.slice(1) : 'Inconnu';
             }
         }
@@ -1795,10 +1970,10 @@
             const modulesChart = new Chart(modulesCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Terminés', 'En cours', 'En attente', 'Non commencés', 'Défaillants'],
+                    labels: ['Terminés', 'En cours', 'En attente', 'Non commencés', 'Défaillants', 'HS'],
                     datasets: [{
-                        data: [{{ $modulesTermines }}, {{ $modulesEnCours }}, {{ $modulesStandBy }}, {{ $modulesNonCommences }}, {{ $modulesDefaillants }}],
-                        backgroundColor: [colors.green, colors.blue, colors.yellow, colors.gray, colors.red],
+                        data: [{{ $modulesTermines }}, {{ $modulesEnCours }}, {{ $modulesStandBy }}, {{ $modulesNonCommences }}, {{ $modulesDefaillants }}, {{ $modulesHS ?? 0 }}],
+                        backgroundColor: ['#00d624', '#3b82f6', '#ffc107', '#6b7280', '#19918d', '#dc3545'],
                         borderColor: '#1f2937',
                         borderWidth: 2
                     }]

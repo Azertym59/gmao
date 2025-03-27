@@ -110,6 +110,18 @@
                                 <p class="text-gray-300"><span class="font-semibold">Masques HS:</span> {{ $diagnostic->nb_masques_hs }}</p>
                             </div>
                         </div>
+                        <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mt-2">
+                            <div>
+                                <p class="text-gray-300">
+                                    <span class="font-semibold">Pose de Fake PCB nécessaire:</span> 
+                                    @if($diagnostic->pose_fake_pcb)
+                                        <span class="text-accent-green">Oui</span>
+                                    @else
+                                        <span class="text-gray-400">Non</span>
+                                    @endif
+                                </p>
+                            </div>
+                        </div>
                         @if($diagnostic->remarques)
                             <div class="mt-2">
                                 <p class="text-gray-300"><span class="font-semibold">Remarques:</span> {{ $diagnostic->remarques }}</p>
@@ -129,6 +141,21 @@
                             </div>
                             <div>
                                 <p class="text-gray-300"><span class="font-semibold">Masques remplacés:</span> {{ $reparation->nb_masques_remplaces }}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                            <div>
+                                <p class="text-gray-300">
+                                    <span class="font-semibold">Pose de Fake PCB effectuée:</span> 
+                                    @if($reparation->fake_pcb_pose)
+                                        <span class="text-accent-green">Oui</span>
+                                        @if($reparation->fake_pcb_nb)
+                                            <span class="text-gray-400">(Quantité: {{ $reparation->fake_pcb_nb }})</span>
+                                        @endif
+                                    @else
+                                        <span class="text-gray-400">Non</span>
+                                    @endif
+                                </p>
                             </div>
                         </div>
                         @if($reparation->remarques)
@@ -168,6 +195,7 @@
                         <input type="hidden" name="reparation_nb_masques_remplaces" value="{{ $reparation->nb_masques_remplaces }}">
                         <input type="hidden" name="reparation_remarques" value="{{ $reparation->remarques }}">
                         <input type="hidden" name="reparation_fake_pcb_pose" value="{{ $reparation->fake_pcb_pose ? 1 : 0 }}">
+                        <input type="hidden" name="reparation_fake_pcb_nb" value="{{ $reparation->fake_pcb_nb }}">
 
                         <div class="grid grid-cols-1 gap-6 mb-6">
                             <div>
@@ -219,9 +247,12 @@
                 console.log('diagnostic_nb_leds_hs:', form.querySelector('[name="diagnostic_nb_leds_hs"]').value);
                 console.log('diagnostic_nb_ic_hs:', form.querySelector('[name="diagnostic_nb_ic_hs"]').value);
                 console.log('diagnostic_nb_masques_hs:', form.querySelector('[name="diagnostic_nb_masques_hs"]').value);
+                console.log('diagnostic_pose_fake_pcb:', form.querySelector('[name="diagnostic_pose_fake_pcb"]').value);
                 console.log('reparation_nb_leds_remplacees:', form.querySelector('[name="reparation_nb_leds_remplacees"]').value);
                 console.log('reparation_nb_ic_remplaces:', form.querySelector('[name="reparation_nb_ic_remplaces"]').value);
                 console.log('reparation_nb_masques_remplaces:', form.querySelector('[name="reparation_nb_masques_remplaces"]').value);
+                console.log('reparation_fake_pcb_pose:', form.querySelector('[name="reparation_fake_pcb_pose"]').value);
+                console.log('reparation_fake_pcb_nb:', form.querySelector('[name="reparation_fake_pcb_nb"]').value);
                 
                 // On pourrait ajouter une validation ici si nécessaire
             });

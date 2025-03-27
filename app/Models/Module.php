@@ -23,6 +23,7 @@ class Module extends Model
         'shift_register',
         'buffer',
         'etat',
+        'etat_precedent',
         'technicien_id',
         'est_occupe',
         'reference_module',
@@ -146,8 +147,24 @@ class Module extends Model
     private function nettoieEtatInconsistant(): void
     {
         try {
+            // Conserver l'état précédent si disponible
+            $etatPrecedent = $this->etat_precedent;
+            
             $this->est_occupe = false;
             $this->technicien_id = null;
+            
+            // Restaurer l'état précédent si existant et valide, sinon laisser l'état actuel
+            if ($etatPrecedent && $etatPrecedent !== 'en_cours') {
+                // Vérifier que l'état est dans une valeur valide
+                $validStates = ['termine', 'defaillant', 'hs', 'stand_by', 'non_commence'];
+                if (in_array($etatPrecedent, $validStates)) {
+                    $this->etat = $etatPrecedent;
+                } else {
+                    // Si l'état précédent n'est pas valide, utiliser "non_commence"
+                    $this->etat = 'non_commence';
+                }
+            }
+            
             $this->save();
             
             // Supprimer le fichier de verrou s'il existe

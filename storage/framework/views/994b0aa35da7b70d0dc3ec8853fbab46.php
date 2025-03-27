@@ -557,96 +557,20 @@
                                                 <?php $__currentLoopData = $dallesGrouped['individuel']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $dalle): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                     <div class="flex flex-wrap gap-2 justify-center mt-3">
                                                         <?php $__currentLoopData = $dalle->modules; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $module): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                            <div x-data="{ hover: false, showActions: false, moduleId: <?php echo e($module->id); ?> }" 
-                                                               class="relative group module-container">
+                                                            <div class="relative group module-container">
                                                                 <div class="aspect-square w-10 h-10 
                                                                     <?php if($module->etat == 'termine'): ?> bg-accent-green
-                                                                    <?php elseif($module->etat == 'en_cours'): ?> bg-accent-yellow
+                                                                    <?php elseif($module->etat == 'stand_by'): ?> bg-accent-yellow
                                                                     <?php elseif($module->etat == 'defaillant'): ?> bg-accent-red
                                                                     <?php else: ?> bg-gray-600
                                                                     <?php endif; ?>
                                                                     rounded-sm border border-black/10 transition-all hover:shadow-lg duration-150 transform hover:scale-105 cursor-pointer"
-                                                                    title="Module #<?php echo e($module->id); ?> - <?php echo e(ucfirst($module->etat)); ?>"
-                                                                    @mouseenter="hover = true; showActions = true; if(window.moduleTimeoutId) clearTimeout(window.moduleTimeoutId)"
-                                                                    @mouseleave="hover = false; window.moduleTimeoutId = setTimeout(() => showActions = false, 1000)"
-                                                                    @click="window.location.href='<?php echo e(route('modules.show', $module)); ?>'"
+                                                                    title="Module #<?php echo e($module->id); ?> - <?php echo e(ucfirst(str_replace('_', ' ', $module->etat))); ?>"
                                                                 >
                                                                     <div class="flex items-center justify-center h-full text-xs font-medium text-white/90">
                                                                         <?php echo e(preg_replace('/[^0-9]/', '', $module->reference_module)); ?>
 
                                                                     </div>
-                                                                </div>
-                                                                
-                                                                <!-- Nom du module (au survol) -->
-                                                                <div x-show="hover" 
-                                                                     x-transition:enter="transition ease-out duration-200"
-                                                                     x-transition:enter-start="opacity-0 scale-95"
-                                                                     x-transition:enter-end="opacity-100 scale-100"
-                                                                     class="absolute top-[-20px] left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
-                                                                    Module #<?php echo e($module->id); ?>
-
-                                                                </div>
-                                                                
-                                                                <!-- Actions popup -->
-                                                                <div x-show="showActions" 
-                                                                     x-transition:enter="transition ease-out duration-200"
-                                                                     x-transition:enter-start="opacity-0 scale-95"
-                                                                     x-transition:enter-end="opacity-100 scale-100"
-                                                                     x-transition:leave="transition ease-in duration-150"
-                                                                     x-transition:leave-start="opacity-100 scale-100"
-                                                                     x-transition:leave-end="opacity-0 scale-95"
-                                                                     class="absolute -top-20 -right-2 bg-gray-900/95 border border-gray-700 rounded-lg p-2 shadow-xl z-20 flex flex-col gap-2 min-w-[120px]"
-                                                                     
-                                                                     @click.away="showActions = false"
-                                                                     @keydown.escape.window="showActions = false">
-                                                                    
-                                                                    <!-- Marquer comme OK -->
-                                                                    <button @click.stop="
-                                                                        fetch('<?php echo e(route('modules.update', $module)); ?>', {
-                                                                            method: 'PATCH',
-                                                                            headers: {
-                                                                                'Content-Type': 'application/json',
-                                                                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                                                                            },
-                                                                            body: JSON.stringify({
-                                                                                dalle_id: '<?php echo e($module->dalle_id); ?>',
-                                                                                largeur: '<?php echo e($module->largeur); ?>',
-                                                                                hauteur: '<?php echo e($module->hauteur); ?>',
-                                                                                nb_pixels_largeur: '<?php echo e($module->nb_pixels_largeur); ?>',
-                                                                                nb_pixels_hauteur: '<?php echo e($module->nb_pixels_hauteur); ?>',
-                                                                                etat: 'termine',
-                                                                                reference_module: '<?php echo e($module->reference_module); ?>',
-                                                                                numero_serie: '<?php echo e($module->numero_serie); ?>',
-                                                                                technicien_id: '<?php echo e($module->technicien_id); ?>',
-                                                                                position_x: '<?php echo e($module->position_x); ?>',
-                                                                                position_y: '<?php echo e($module->position_y); ?>',
-                                                                                position_lettre: '<?php echo e($module->position_lettre); ?>',
-                                                                                carte_reception: '<?php echo e($module->carte_reception); ?>',
-                                                                                hub: '<?php echo e($module->hub); ?>',
-                                                                                driver: '<?php echo e($module->driver); ?>',
-                                                                                shift_register: '<?php echo e($module->shift_register); ?>',
-                                                                                buffer: '<?php echo e($module->buffer); ?>'
-                                                                            })
-                                                                        })
-                                                                        .then(response => {
-                                                                            if (response.ok) {
-                                                                                window.location.reload();
-                                                                            }
-                                                                        });
-                                                                    " class="flex items-center text-left text-xs px-2 py-1 text-green-400 hover:bg-green-900/30 rounded">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                                        </svg>
-                                                                        <span>Marquer OK</span>
-                                                                    </button>
-                                                                    
-                                                                    <!-- Créer intervention -->
-                                                                    <a href="<?php echo e(route('interventions.create', ['module_id' => $module->id])); ?>" @click.stop class="flex items-center text-left text-xs px-2 py-1 text-yellow-400 hover:bg-yellow-900/30 rounded">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                                        </svg>
-                                                                        <span>Intervention</span>
-                                                                    </a>
                                                                 </div>
                                                             </div>
                                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -666,7 +590,7 @@
                                         
                                         <!-- FlightCases -->
                                         <?php $__currentLoopData = $dallesGrouped['flightcases']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $fcNumber => $dalles): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <div class="mb-6" x-data="{ open: false }">
+                                            <div class="mb-6" x-data="{ open: true }">
                                                 <div @click="open = !open" class="flex items-center justify-between bg-gray-800/50 p-2 rounded-t-xl border-t border-l border-r border-gray-700 cursor-pointer">
                                                     <div class="flex items-center">
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -839,27 +763,7 @@
                                                                         <?php for($x = 1; $x <= $nbColonnes; $x++): ?>
                                                                             <?php if(isset($grille[$y][$x])): ?>
                                                                                 <?php $module = $grille[$y][$x]; ?>
-                                                                                <a href="<?php echo e(route('modules.show', $module)); ?>" 
-                                                                                   class="relative group">
-                                                                                    <div class="aspect-square w-10 h-10 
-                                                                                        <?php if($module->etat == 'termine'): ?> bg-accent-green
-                                                                                        <?php elseif($module->etat == 'en_cours'): ?> bg-accent-yellow
-                                                                                        <?php elseif($module->etat == 'defaillant'): ?> bg-accent-red
-                                                                                        <?php else: ?> bg-gray-600
-                                                                                        <?php endif; ?>
-                                                                                        rounded-sm border border-black/10 hover:brightness-110 transition-all hover:shadow-lg duration-150 transform hover:scale-105"
-                                                                                        title="Module #<?php echo e($module->id); ?> - <?php echo e(ucfirst($module->etat)); ?>"
-                                                                                    >
-                                                                                        <div class="flex items-center justify-center h-full text-xs font-medium text-white/90">
-                                                                                            <?php echo e($x); ?>,<?php echo e($y); ?>
-
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <div class="block absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
-                                                                                        Module #<?php echo e($module->id); ?>
-
-                                                                                    </div>
-                                                                                </a>
+                                                                                <?php echo $__env->make('components.module.grid-item', ['module' => $module, 'x' => $x, 'y' => $y], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
                                                                             <?php else: ?>
                                                                                 <div class="aspect-square w-10 h-10 bg-gray-800/50 rounded-sm border border-gray-700" title="Emplacement vide">
                                                                                     <div class="flex items-center justify-center h-full text-xs text-gray-600">
@@ -890,7 +794,7 @@
                                         
                                         <!-- Autres dalles -->
                                         <?php if(!empty($dallesGrouped['autres'])): ?>
-                                            <div class="mb-6" x-data="{ open: false }">
+                                            <div class="mb-6" x-data="{ open: true }">
                                                 <div @click="open = !open" class="flex items-center justify-between bg-gray-800/50 p-2 rounded-t-xl border-t border-l border-r border-gray-700 cursor-pointer">
                                                     <h6 class="font-medium text-white">Dalles indépendantes (<?php echo e(count($dallesGrouped['autres'])); ?>)</h6>
                                                     <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1061,27 +965,7 @@
                                                                         <?php for($x = 1; $x <= $nbColonnes; $x++): ?>
                                                                             <?php if(isset($grille[$y][$x])): ?>
                                                                                 <?php $module = $grille[$y][$x]; ?>
-                                                                                <a href="<?php echo e(route('modules.show', $module)); ?>" 
-                                                                                   class="relative group">
-                                                                                    <div class="aspect-square w-10 h-10 
-                                                                                        <?php if($module->etat == 'termine'): ?> bg-accent-green
-                                                                                        <?php elseif($module->etat == 'en_cours'): ?> bg-accent-yellow
-                                                                                        <?php elseif($module->etat == 'defaillant'): ?> bg-accent-red
-                                                                                        <?php else: ?> bg-gray-600
-                                                                                        <?php endif; ?>
-                                                                                        rounded-sm border border-black/10 hover:brightness-110 transition-all hover:shadow-lg duration-150 transform hover:scale-105"
-                                                                                        title="Module #<?php echo e($module->id); ?> - <?php echo e(ucfirst($module->etat)); ?>"
-                                                                                    >
-                                                                                        <div class="flex items-center justify-center h-full text-xs font-medium text-white/90">
-                                                                                            <?php echo e($x); ?>,<?php echo e($y); ?>
-
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <div class="block absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-white p-1 rounded whitespace-nowrap z-10">
-                                                                                        Module #<?php echo e($module->id); ?>
-
-                                                                                    </div>
-                                                                                </a>
+                                                                                <?php echo $__env->make('components.module.grid-item', ['module' => $module, 'x' => $x, 'y' => $y], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
                                                                             <?php else: ?>
                                                                                 <div class="aspect-square w-10 h-10 bg-gray-800/50 rounded-sm border border-gray-700" title="Emplacement vide">
                                                                                     <div class="flex items-center justify-center h-full text-xs text-gray-600">
@@ -1252,6 +1136,34 @@
                 }, 5000);
             });
         }
+
+        // Utilise la fonction moduleMenuPosition définie dans app.blade.php
+        // Cette fonction est vide mais existe pour retrocompatibilité
+        function showModuleMenu(menuId) {
+            // La fonction moduleMenuPosition est maintenant utilisée à la place
+            console.log("showModuleMenu est obsolète, utilisez moduleMenuPosition à la place");
+        }
+
+        // Ajouter un gestionnaire global pour gérer les survols des modules
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gérer le survol des modules pour afficher les menus
+            document.querySelectorAll('.module-trigger').forEach(trigger => {
+                // S'assurer que tous les déclencheurs ont l'attribut data-module-id
+                if (trigger.hasAttribute('data-module-id')) {
+                    const moduleId = trigger.getAttribute('data-module-id');
+                    
+                    // Ajouter l'événement mouseenter s'il n'existe pas déjà
+                    if (!trigger.hasAttribute('onmouseover')) {
+                        trigger.setAttribute('onmouseover', `moduleMenuPosition('module-menu-${moduleId}', this)`);
+                    }
+                    
+                    // Ajouter un gestionnaire programmatique pour une meilleure compatibilité
+                    trigger.addEventListener('mouseenter', function() {
+                        moduleMenuPosition('module-menu-' + moduleId, this);
+                    });
+                }
+            });
+        });
     </script>
     <?php $__env->stopPush(); ?>
  <?php echo $__env->renderComponent(); ?>

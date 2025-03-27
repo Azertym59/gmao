@@ -24,11 +24,35 @@
     transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out, opacity 0.15s ease-in-out;
 }
 
-/* État occupé */
+/* Classes de couleur pour les états des modules */
+.bg-accent-green {
+    background-color: #00d624 !important; /* Vert - Terminé */
+}
+
+.bg-accent-yellow {
+    background-color: #ffc107 !important; /* Jaune - Stand by / En cours */
+}
+
+/* États distincts pour défaillant et hs */
+.bg-accent-defaillant {
+    background-color: #19918d !important; /* Turquoise - État défaillant */
+}
+
+.bg-accent-hs {
+    background-color: #dc3545 !important; /* Rouge - État HS */
+}
+
+.bg-gray-600 {
+    background-color: #4B5563 !important; /* Gris - Non commencé / Par défaut */
+}
+
+/* État occupé - avec couleur orange vif et plus visible */
 .module-busy {
-    border: 2px solid #ff9800 !important;
-    box-shadow: 0 0 0 1px rgba(255, 152, 0, 0.5), 0 0 5px rgba(255, 152, 0, 0.5);
+    border: 2px solid #ff7b00 !important;
+    box-shadow: 0 0 0 2px rgba(255, 123, 0, 0.8), 0 0 8px rgba(255, 123, 0, 0.6) !important;
     position: relative;
+    z-index: 5;
+    transform: scale(1.05);
 }
 
 .module-busy::before {
@@ -40,13 +64,18 @@
     bottom: 0;
     background: repeating-linear-gradient(
         45deg,
-        rgba(255, 152, 0, 0.3),
-        rgba(255, 152, 0, 0.3) 5px,
-        rgba(255, 152, 0, 0.15) 5px,
-        rgba(255, 152, 0, 0.15) 10px
+        rgba(255, 123, 0, 0.4),
+        rgba(255, 123, 0, 0.4) 5px,
+        rgba(255, 123, 0, 0.2) 5px,
+        rgba(255, 123, 0, 0.2) 10px
     );
     z-index: 1;
     pointer-events: none;
+}
+
+/* Couleur orange vif pour les modules occupés */
+.bg-orange-500 {
+    background-color: #ff7b00 !important;
 }
 
 /* Boutons d'action du module */

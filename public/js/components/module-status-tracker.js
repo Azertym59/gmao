@@ -9,8 +9,8 @@ class ModuleStatusTracker {
     constructor(options = {}) {
         // Options par défaut
         this.options = {
-            checkInterval: options.checkInterval || 15000, // 15 secondes par défaut
-            moduleSelector: options.moduleSelector || '.module-grid-item',
+            checkInterval: options.checkInterval || 10000, // 10 secondes par défaut
+            moduleSelector: options.moduleSelector || '.module-grid-item, [data-module-id]',
             moduleIdAttribute: options.moduleIdAttribute || 'data-module-id',
             showIndicator: options.showIndicator !== undefined ? options.showIndicator : true,
             debug: options.debug || false
@@ -77,17 +77,38 @@ class ModuleStatusTracker {
      * Trouve tous les éléments de module sur la page et extrait leurs IDs
      */
     findModuleElements() {
+        // Réinitialiser les tableaux pour éviter les doublons lors des réexécutions
+        this.moduleElements = [];
+        this.moduleIds = [];
+        
         // Sélectionner tous les éléments correspondant au sélecteur
-        const modulesWithAttributes = document.querySelectorAll(`[${this.options.moduleIdAttribute}]`);
+        const elements = document.querySelectorAll(this.options.moduleSelector);
         
         // Collecter les éléments et leurs IDs
-        modulesWithAttributes.forEach(element => {
-            const moduleId = element.getAttribute(this.options.moduleIdAttribute);
-            if (moduleId) {
+        elements.forEach(element => {
+            let moduleId;
+            
+            // Vérifier si l'élément a l'attribut moduleIdAttribute
+            if (element.hasAttribute(this.options.moduleIdAttribute)) {
+                moduleId = element.getAttribute(this.options.moduleIdAttribute);
+            } 
+            // Vérifier si un parent proche a l'attribut moduleIdAttribute
+            else {
+                const parentWithId = element.closest(`[${this.options.moduleIdAttribute}]`);
+                if (parentWithId) {
+                    moduleId = parentWithId.getAttribute(this.options.moduleIdAttribute);
+                }
+            }
+            
+            // Ajouter l'élément et son ID s'il est valide et unique
+            if (moduleId && !this.moduleIds.includes(moduleId)) {
                 this.moduleElements.push(element);
                 this.moduleIds.push(moduleId);
             }
         });
+        
+        // Log le nombre de modules trouvés
+        this.log(`Trouvé ${this.moduleIds.length} modules à surveiller`);
     }
 
     /**
@@ -147,8 +168,8 @@ class ModuleStatusTracker {
             element.classList.add('module-status-updating');
         });
         
-        // Créer l'URL avec les IDs des modules
-        const apiUrl = `/api/check-modules-status?ids=${this.moduleIds.join(',')}`;
+        // Créer l'URL avec les IDs des modules et un brise-cache pour forcer la réponse fraîche
+        const apiUrl = `/api/check-modules-status?ids=${this.moduleIds.join(',')}&cache_buster=${Date.now()}`;
         
         // Effectuer la requête à l'API
         fetch(apiUrl, {
@@ -156,7 +177,10 @@ class ModuleStatusTracker {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
             }
         })
         .then(response => {
@@ -202,78 +226,127 @@ class ModuleStatusTracker {
      * Met à jour l'état visuel d'un élément de module spécifique
      */
     updateModuleElementStatus(element, moduleData) {
-        // Mettre à jour la classe d'occupation
+        // Trouver l'élément principal du module (qui contient les classes de couleur)
+        const mainElement = element.classList.contains('module-grid-item') ? 
+            element : 
+            element.querySelector('.module-grid-item') || element;
+        
+        // Nous avons déplacé cette logique dans le bloc suivant pour qu'elle soit toujours appliquée
+        
+        // Obtenir et stocker l'état actuel du module venant du serveur
+        const serverState = moduleData.state || 'non_commence';
+        
+        // Toujours sauvegarder l'état actuel de la base de données 
+        // Ce sera l'état auquel on reviendra quand le module n'est plus occupé
+        if (serverState && serverState !== 'en_cours') {
+            mainElement.setAttribute('data-saved-state', serverState);
+        }
+        
+        // Ajouter la classe d'occupation si le module est occupé
         if (moduleData.is_occupied) {
-            element.classList.add('module-busy');
+            // Appliquer l'état visuel "occupé"
+            mainElement.classList.add('module-busy');
+            
+            // Conserver l'état actuel coloré en orange pour les modules occupés
+            mainElement.classList.remove('bg-accent-green', 'bg-accent-yellow', 'bg-accent-red', 'bg-gray-600');
+            mainElement.classList.add('bg-orange-500');
+            
+            // Ce log aide à diagnostiquer les problèmes de mise à jour
+            this.log(`Module #${moduleData.id} marqué comme occupé, état sous-jacent: ${mainElement.getAttribute('data-saved-state') || 'non défini'}`);
         } else {
-            element.classList.remove('module-busy');
+            // Le module n'est pas occupé, retirer les classes d'occupation
+            mainElement.classList.remove('module-busy', 'bg-orange-500');
+            
+            // Retirer toutes les classes d'état pour éviter les conflits
+            mainElement.classList.remove('bg-accent-green', 'bg-accent-yellow', 'bg-accent-defaillant', 'bg-accent-hs', 'bg-accent-red', 'bg-gray-600');
+            
+            // Appliquer la classe correspondant à l'état serveur
+            switch(serverState) {
+                case 'termine':
+                    mainElement.classList.add('bg-accent-green');
+                    break;
+                case 'stand_by':
+                case 'en_cours':
+                    mainElement.classList.add('bg-accent-yellow');
+                    break;
+                case 'defaillant':
+                    mainElement.classList.add('bg-accent-defaillant'); // Turquoise pour défaillant
+                    break;
+                case 'hs':
+                    mainElement.classList.add('bg-accent-hs'); // Rouge pour HS
+                    break;
+                case 'non_commence':
+                default:
+                    mainElement.classList.add('bg-gray-600');
+            }
+            
+            // Logging pour le débogage des couleurs
+            this.log(`État appliqué: ${serverState} → ${mainElement.className.split(' ').filter(c => c.startsWith('bg-')).join(', ')}`);
+            
+            this.log(`Module #${moduleData.id} restauré à l'état: ${serverState}`);
         }
         
-        // Mettre à jour l'état du module (couleur de fond)
-        element.classList.remove('bg-accent-green', 'bg-accent-yellow', 'bg-accent-red', 'bg-gray-600');
-        
-        switch(moduleData.state) {
-            case 'termine':
-                element.classList.add('bg-accent-green');
-                break;
-            case 'en_cours':
-                element.classList.add('bg-accent-yellow');
-                break;
-            case 'defaillant':
-                element.classList.add('bg-accent-red');
-                break;
-            default:
-                element.classList.add('bg-gray-600');
+        // Mettre à jour le titre (tooltip) pour tous les éléments possibles
+        const allModuleElements = [element];
+        const parentModule = element.closest('.module-container');
+        if (parentModule) {
+            allModuleElements.push(parentModule);
+            
+            // Rechercher les enfants potentiels (comme les liens)
+            const childElements = parentModule.querySelectorAll('a, div.module-trigger');
+            childElements.forEach(child => allModuleElements.push(child));
         }
         
-        // Mettre à jour le titre (tooltip)
+        // Mettre à jour les titres de tous les éléments
         let tooltipText = '';
         if (moduleData.is_occupied) {
             tooltipText = `⚠️ MODULE OCCUPÉ${moduleData.technician_name ? ' - Par: ' + moduleData.technician_name : ''}`;
         } else {
-            tooltipText = `Module #${moduleData.id} - ${moduleData.state.charAt(0).toUpperCase() + moduleData.state.slice(1)}`;
+            const stateDisplay = moduleData.state.replace('_', ' ');
+            tooltipText = `Module #${moduleData.id} - ${stateDisplay.charAt(0).toUpperCase() + stateDisplay.slice(1)}`;
         }
-        element.setAttribute('title', tooltipText);
         
-        // Mettre à jour le contenu de l'overlay si nécessaire
-        const overlay = element.querySelector('.module-overlay-content');
-        if (overlay) {
-            // Cette partie est plus spécifique et peut nécessiter une personnalisation
-            // selon la structure de l'overlay dans le HTML
-            // Pour l'instant, nous nous contentons de cacher/afficher les boutons appropriés
-            
-            const buttons = overlay.querySelectorAll('.module-btn');
-            buttons.forEach(btn => {
-                // Si c'est un bouton "OK" ou "Interv." et que le module est occupé, le cacher
-                if ((btn.textContent.includes('OK') || btn.textContent.includes('Interv.')) && moduleData.is_occupied) {
-                    btn.closest('form, a').style.display = 'none';
-                } else if ((btn.textContent.includes('OK') || btn.textContent.includes('Interv.')) && !moduleData.is_occupied) {
-                    btn.closest('form, a').style.display = '';
+        allModuleElements.forEach(el => {
+            if (el && el.hasAttribute) {
+                el.setAttribute('title', tooltipText);
+            }
+        });
+        
+        // Mettre à jour les liens de menu dans les menus flottants associés
+        const menuId = `module-menu-${moduleData.id}`;
+        const menuElement = document.getElementById(menuId);
+        if (menuElement) {
+            // Si le module est occupé, désactiver certains boutons
+            const actionButtons = menuElement.querySelectorAll('button, a');
+            actionButtons.forEach(button => {
+                // Pour les boutons "OK" et "Intervention", les désactiver si occupé
+                if ((button.textContent.trim() === 'OK' || button.textContent.trim() === 'Intervention') && moduleData.is_occupied) {
+                    button.style.opacity = '0.5';
+                    button.style.pointerEvents = 'none';
+                } else if ((button.textContent.trim() === 'OK' || button.textContent.trim() === 'Intervention') && !moduleData.is_occupied) {
+                    button.style.opacity = '1';
+                    button.style.pointerEvents = 'auto';
                 }
                 
-                // Si c'est un bouton "Voir" et que le module n'est pas occupé, le cacher
-                if (btn.textContent.includes('Voir') && !moduleData.is_occupied) {
-                    btn.closest('a').style.display = 'none';
-                } else if (btn.textContent.includes('Voir') && moduleData.is_occupied) {
-                    btn.closest('a').style.display = '';
-                    // Mettre à jour le lien vers l'intervention active
-                    if (moduleData.active_intervention_id) {
-                        btn.closest('a').href = `/interventions/${moduleData.active_intervention_id}/diagnostic`;
+                // Pour le bouton "Voir Intervention", l'activer si occupé
+                if (button.textContent.trim() === 'Voir Intervention') {
+                    if (moduleData.is_occupied && moduleData.active_intervention_id) {
+                        button.style.display = '';
+                        button.href = `/interventions/${moduleData.active_intervention_id}/diagnostic`;
+                    } else {
+                        button.style.display = 'none';
                     }
                 }
-            });
-            
-            // Mettre à jour le message d'occupation
-            const techNameElement = overlay.querySelector('.text-orange-400');
-            if (techNameElement) {
-                if (moduleData.is_occupied) {
-                    techNameElement.textContent = moduleData.technician_name || 'OCCUPÉ';
-                    techNameElement.style.display = '';
-                } else {
-                    techNameElement.style.display = 'none';
+                
+                // Pour le bouton "Déverrouiller", l'activer si occupé
+                if (button.textContent.trim() === 'Déverrouiller') {
+                    button.style.display = moduleData.is_occupied ? '' : 'none';
                 }
-            }
+            });
         }
+        
+        // Loguer les changements d'état si le mode debug est activé
+        this.log(`Module #${moduleData.id} mis à jour: état=${moduleData.state}, occupé=${moduleData.is_occupied}`);
     }
 
     /**
@@ -289,15 +362,48 @@ class ModuleStatusTracker {
 // Initialiser le traqueur lorsque le DOM est chargé
 document.addEventListener('DOMContentLoaded', function() {
     // Vérifier si la page contient des modules à surveiller
-    if (document.querySelector('[data-module-id]')) {
+    if (document.querySelector('[data-module-id], .module-grid-item, .module-trigger')) {
         const tracker = new ModuleStatusTracker({
-            checkInterval: 10000, // Vérifier toutes les 10 secondes
-            debug: false // Activer les logs pour le débogage si nécessaire
+            checkInterval: 3000, // Vérifier toutes les 3 secondes pour une réactivité maximale
+            debug: true, // Activer les logs pour le débogage des problèmes
+            moduleSelector: '.module-grid-item, [data-module-id], .module-trigger, .module-container'
         });
         
         tracker.init();
         
-        // Rendre l'instance disponible globalement si nécessaire
+        // Rendre l'instance disponible globalement pour permettre des vérifications manuelles
         window.moduleStatusTracker = tracker;
+        
+        // Force une vérification initiale après un court délai pour s'assurer que les données sont à jour
+        setTimeout(() => {
+            tracker.findModuleElements();
+            tracker.checkModuleStatus();
+        }, 1000);
+        
+        // Force une autre vérification après un délai plus long pour attraper les éléments qui pourraient
+        // avoir été ajoutés dynamiquement par des frameworks comme Alpine.js
+        setTimeout(() => {
+            tracker.findModuleElements();
+            tracker.checkModuleStatus();
+        }, 3000);
+        
+        // Ajouter un bouton de rafraîchissement manuel (pour le débogage)
+        const refreshButton = document.createElement('button');
+        refreshButton.textContent = '🔄';
+        refreshButton.title = 'Rafraîchir le statut des modules';
+        refreshButton.style.position = 'fixed';
+        refreshButton.style.bottom = '10px';
+        refreshButton.style.left = '10px';
+        refreshButton.style.zIndex = '9999';
+        refreshButton.style.padding = '5px 10px';
+        refreshButton.style.borderRadius = '5px';
+        refreshButton.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+        refreshButton.style.color = 'white';
+        refreshButton.style.cursor = 'pointer';
+        refreshButton.addEventListener('click', () => {
+            tracker.findModuleElements();
+            tracker.checkModuleStatus();
+        });
+        document.body.appendChild(refreshButton);
     }
 });

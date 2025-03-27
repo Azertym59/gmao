@@ -229,7 +229,18 @@ class InterventionService
             
             // Mettre à jour le module avec l'état sélectionné
             $module = $intervention->module;
+            
+            // Sauvegarder l'état actuel avant de libérer le module
+            // Cela permettra de restaurer l'état après occupation
+            if ($moduleEtat !== 'en_cours') {
+                $module->etat_precedent = $moduleEtat;
+            } else {
+                // Si l'état est "en_cours", utiliser "stand_by" au lieu de non_commence
+                $module->etat_precedent = "stand_by";
+            }
+            
             $module->est_occupe = false;
+            $module->technicien_id = null;
             $module->etat = $moduleEtat;
             $module->save();
             
