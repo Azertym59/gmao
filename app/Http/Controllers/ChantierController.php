@@ -1269,8 +1269,8 @@ class ChantierController extends Controller
             'generate_report' => 'nullable|boolean',
         ]);
         
-        // Marquer le chantier comme commencé
-        $chantier->update(['etat' => 'en_cours']);
+        // Marquer le chantier comme non commencé (état initial)
+        $chantier->update(['etat' => 'non_commence']);
         
         // Si demandé, générer un rapport
         if ($request->has('generate_report')) {

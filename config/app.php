@@ -63,4 +63,11 @@ return [
     'aliases' => [
         // 'Example' => App\Facades\Example::class,
     ],
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Paramètres personnalisés
+    |--------------------------------------------------------------------------
+    */
+    'send_chantier_notifications' => env('APP_SEND_CHANTIER_NOTIFICATIONS', false),
 ];

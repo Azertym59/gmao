@@ -146,6 +146,8 @@
                                         $modulesTermines = 0;
                                         $modulesEnCours = 0;
                                         $modulesDefaillants = 0;
+                                        $modulesStandBy = 0;
+                                        $modulesHS = 0;
                                         $modulesNonCommences = 0;
                                         
                                         foreach($chantier->produits as $produit) {
@@ -154,6 +156,8 @@
                                                 $modulesTermines += $dalle->modules->where('etat', 'termine')->count();
                                                 $modulesEnCours += $dalle->modules->where('etat', 'en_cours')->count();
                                                 $modulesDefaillants += $dalle->modules->where('etat', 'defaillant')->count();
+                                                $modulesStandBy += $dalle->modules->where('etat', 'stand_by')->count();
+                                                $modulesHS += $dalle->modules->where('etat', 'hs')->count();
                                                 $modulesNonCommences += $dalle->modules->where('etat', 'non_commence')->count();
                                             }
                                         }
@@ -179,12 +183,20 @@
                                             <span>Terminés: {{ $modulesTermines }}</span>
                                         </div>
                                         <div class="flex items-center">
-                                            <span class="inline-block w-3 h-3 rounded-full bg-accent-yellow mr-2"></span>
+                                            <span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
                                             <span>En cours: {{ $modulesEnCours }}</span>
                                         </div>
                                         <div class="flex items-center">
-                                            <span class="inline-block w-3 h-3 rounded-full bg-accent-red mr-2"></span>
+                                            <span class="inline-block w-3 h-3 rounded-full bg-accent-yellow mr-2"></span>
+                                            <span>En attente: {{ $modulesStandBy }}</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <span class="inline-block w-3 h-3 rounded-full bg-accent-defaillant mr-2" style="background-color: #19918d;"></span>
                                             <span>Défaillants: {{ $modulesDefaillants }}</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <span class="inline-block w-3 h-3 rounded-full bg-accent-hs mr-2" style="background-color: #dc3545;"></span>
+                                            <span>Hors service: {{ $modulesHS }}</span>
                                         </div>
                                         <div class="flex items-center">
                                             <span class="inline-block w-3 h-3 rounded-full bg-gray-500 mr-2"></span>
@@ -866,7 +878,7 @@
                             </div>
                         @endif
                     </div>
-                    <!-- Bouton QR Code -->
+                    <!-- Boutons QR Code et Etiquettes -->
                     <div class="flex justify-center mt-6 space-x-4">
                         <x-print-button 
                             tag="a" 
@@ -884,6 +896,13 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                             </svg>
                             Imprimer QR Code
+                        </a>
+                        
+                        <a href="{{ route('etiquettes.flightcase', $chantier->id) }}" class="btn-action btn-warning">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" />
+                            </svg>
+                            Étiquettes Flightcases
                         </a>
                     </div>
                 </div>

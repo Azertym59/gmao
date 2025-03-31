@@ -39,7 +39,7 @@
 </head>
 <body>
     <div class="header">
-        <img src="https://www.tecaled.fr/Logos/Logo%20rectangle%20flag%20repair.png" alt="TecaLED" class="logo" />
+        <img src="https://www.tecaled.fr/Logos/Logo%20rectangle%20flag%20repair%20new.png" alt="TecaLED" class="logo" />
         <h1>Les réparations ont commencé</h1>
     </div>
     
@@ -66,11 +66,7 @@
             <br><small style="display: block; margin-top: 10px;">Ce lien est unique à votre chantier et vous permet de suivre en temps réel l'état des réparations.</small>
         </p>
         
-        <p style="background-color: #ebf5ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <strong>Accédez à l'historique de tous vos projets !</strong><br>
-            Créez un compte client pour consulter facilement l'ensemble de vos chantiers de réparation en un seul endroit.
-            <a href="{{ $lienInscription }}" style="display: inline-block; background-color: #4299e1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">Créer mon compte</a>
-        </p>
+        <!-- Section d'inscription supprimée -->
         
         <p>Si vous avez des questions concernant l'avancement des réparations, n'hésitez pas à nous contacter.</p>
         

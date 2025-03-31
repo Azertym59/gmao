@@ -95,11 +95,29 @@ class InterventionService
             // Mettre à jour l'état du chantier si nécessaire
             $chantier = $module->dalle->produit->chantier;
             if ($chantier->etat !== 'en_cours') {
+                $etatPrecedent = $chantier->etat;
                 $chantier->etat = 'en_cours';
                 $chantier->save();
                 
                 // Log l'action pour référence
-                Log::info('État du chantier #' . $chantier->id . ' automatiquement mis à jour: non_commence → en_cours');
+                Log::info('État du chantier #' . $chantier->id . ' automatiquement mis à jour: ' . $etatPrecedent . ' → en_cours');
+                
+                // Envoyer un email seulement si le chantier était en état "non_commence"
+                if ($etatPrecedent === 'non_commence') {
+                    try {
+                        // Vérifier si les notifications sont activées
+                        if (config('app.send_chantier_notifications', false)) {
+                            $emailService = app(\App\Services\EmailService::class);
+                            $emailService->sendInterventionsStartedEmail($chantier);
+                            Log::info('Email de début des interventions envoyé pour le chantier #' . $chantier->id);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Erreur lors de l\'envoi de l\'email de début des interventions', [
+                            'chantier_id' => $chantier->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
             }
             
             DB::commit();

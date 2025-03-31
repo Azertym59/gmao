@@ -22,6 +22,7 @@ use App\Http\Middleware\ClientMiddleware;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 // Routes publiques
 // Route d'accès direct sans authentification (TEMPORAIRE)
@@ -135,6 +136,9 @@ Route::middleware(['auth'])->group(function () {
     // Routes pour les étiquettes
     Route::get('/chantiers/{chantier}/etiquette', [App\Http\Controllers\EtiquetteController::class, 'chantierEtiquette'])->name('etiquettes.chantier');
     Route::get('/chantiers/{chantier}/etiquette/ptouch', [App\Http\Controllers\EtiquetteController::class, 'chantierPTouchTemplate'])->name('etiquettes.chantier.ptouch');
+    Route::get('/chantiers/{chantier}/flightcase-etiquettes', [App\Http\Controllers\EtiquetteController::class, 'flightcaseEtiquettes'])->name('etiquettes.flightcase');
+    Route::get('/chantiers/{chantier}/flightcase-etiquettes/{flightcase}/print', [App\Http\Controllers\EtiquetteController::class, 'printFlightcaseEtiquette'])->name('etiquettes.flightcase.print');
+    Route::get('/chantiers/{chantier}/flightcase-etiquettes/{flightcase}/download', [App\Http\Controllers\EtiquetteController::class, 'downloadFlightcasePdf'])->name('etiquettes.flightcase.download');
     Route::get('/dalles/{dalle}/etiquette', [App\Http\Controllers\EtiquetteController::class, 'dalleEtiquette'])->name('etiquettes.dalle');
     Route::get('/modules/{module}/etiquette', [App\Http\Controllers\EtiquetteController::class, 'moduleEtiquette'])->name('etiquettes.module');
     Route::get('/etiquettes/test', [App\Http\Controllers\EtiquetteController::class, 'testEtiquettes'])->name('etiquettes.test');
@@ -249,6 +253,17 @@ Route::prefix('qr')->group(function () {
 
 // Routes pour tester l'impression
 Route::middleware(['auth'])->group(function () {
+    // Printer Management Routes
+    Route::resource('printers', App\Http\Controllers\PrinterController::class);
+    Route::post('/printers/{printer}/set-default', [App\Http\Controllers\PrinterController::class, 'setDefault'])->name('printers.set-default');
+    Route::get('/printers/{id}/test', [App\Http\Controllers\PrinterController::class, 'testPrint'])->name('printers.test');
+    
+    // QZ Tray Routes
+    Route::get('/printers/test-qz-tray', [App\Http\Controllers\PrinterController::class, 'testQzTray'])->name('printers.test-qz-tray');
+    Route::post('/printers/print-test-qr', [App\Http\Controllers\PrinterController::class, 'printTestQr'])->name('printers.print-test-qr');
+    Route::get('/printers/test-labels', [App\Http\Controllers\PrinterController::class, 'testLabels'])->name('printers.test-labels');
+    Route::post('/printers/process-test-labels', [App\Http\Controllers\PrinterController::class, 'processTestLabels'])->name('printers.process-test-labels');
+    
     // Route simple de test
     Route::get('/test-etiquette', function () {
         // Générer un QR code pour le test
@@ -291,6 +306,118 @@ Route::middleware(['auth'])->group(function () {
         // Rendu de la vue
         return view('etiquettes.brother_test_62x70', $viewData);
     })->name('test-impression-rouleau-continu');
+    
+    // Route de test directe pour PrintNode sans passer par le système complexe
+    Route::get('/printnode-test-direct', function() {
+        // PrintNode API credentials
+        $apiKey = 'JTDVu0eHs2bXjVOb_HDUKVimF_WechuZM2XuwQAiE04';
+        $printerId = 74188357; // Brother QL-820NWB (Copie 1)
+        
+        // Créer une image simple
+        $width = 696;   // 62mm à 300 DPI
+        $height = 1181; // 100mm à 300 DPI
+        
+        try {
+            Log::debug('Début du test PrintNode direct');
+            
+            $image = imagecreatetruecolor($width, $height);
+            $white = imagecolorallocate($image, 255, 255, 255);
+            $black = imagecolorallocate($image, 0, 0, 0);
+            $red = imagecolorallocate($image, 255, 0, 0);
+            
+            // Remplir l'arrière-plan en blanc
+            imagefill($image, 0, 0, $white);
+            
+            // Dessiner un cadre
+            imagerectangle($image, 0, 0, $width-1, $height-1, $black);
+            
+            // Ajouter du texte
+            imagestring($image, 5, 20, 20, "TECALED GMAO", $black);
+            imagestring($image, 5, 20, 60, "Test d'impression", $red);
+            imagestring($image, 4, 20, 100, "Flightcase Label", $black);
+            imagestring($image, 4, 20, 140, "Date: " . date('Y-m-d H:i:s'), $black);
+            
+            // Sauvegarder l'image dans un buffer
+            ob_start();
+            imagepng($image);
+            $imageData = ob_get_clean();
+            
+            // Libérer la mémoire
+            imagedestroy($image);
+            
+            // Convertir en base64
+            $imageBase64 = base64_encode($imageData);
+            
+            // Log de l'opération
+            Log::info('Test direct PrintNode - Image générée', [
+                'taille_base64' => strlen($imageBase64),
+                'taille_image' => $width . 'x' . $height
+            ]);
+            
+            // Créer le payload pour PrintNode
+            $payload = [
+                "printerId" => (int)$printerId,
+                "title" => "Test Flightcase Label " . date('Y-m-d H:i:s'),
+                "contentType" => "raw_base64",
+                "content" => $imageBase64,
+                "source" => "GMAO TecaLED Print Test",
+                "options" => [
+                    "paper" => "Custom.62x100mm",
+                    "bin" => "dk22205",
+                    "media" => "continuous",
+                    "fit-to-page" => true,
+                    "orientation" => "portrait"
+                ]
+            ];
+            
+            // Envoyer la requête à l'API PrintNode
+            $ch = curl_init("https://api.printnode.com/printjobs");
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Authorization: Basic ' . base64_encode($apiKey . ':')
+            ]);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            
+            // Exécuter la requête
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            
+            Log::info('Réponse PrintNode direct', [
+                'http_code' => $httpCode,
+                'response' => $response
+            ]);
+            
+            curl_close($ch);
+            
+            if ($httpCode >= 200 && $httpCode < 300) {
+                $printJobId = json_decode($response);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Test d\'impression envoyé avec succès !',
+                    'print_job_id' => $printJobId
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur API PrintNode',
+                    'http_code' => $httpCode,
+                    'response' => $response
+                ], 500);
+            }
+            
+        } catch (Exception $e) {
+            Log::error('Exception test PrintNode direct: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Exception: ' . $e->getMessage()
+            ], 500);
+        }
+    })->name('printnode-test-direct');
 });
 
 // Routes pour l'authentification client

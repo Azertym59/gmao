@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\DalleController;
 use App\Http\Controllers\Api\ProduitController;
 use App\Http\Controllers\Api\CartesReceptionController;
 use App\Http\Controllers\Api\PrintController;
+use App\Http\Controllers\Api\PrintNodeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -162,6 +163,14 @@ Route::get('/modeles', function(Request $request) {
 
 // Routes pour l'impression d'étiquettes
 Route::post('/print/test-label', [PrintController::class, 'testLabelPrint'])->name('api.print.test-label');
+
+// Routes PrintNode
+Route::prefix('printnode')->group(function () {
+    Route::get('/printers', [PrintNodeController::class, 'listPrinters']);
+    Route::post('/test', [PrintNodeController::class, 'testPrint']);
+    Route::get('/job/{jobId}', [PrintNodeController::class, 'checkPrintJobStatus']);
+    Route::post('/label', [PrintNodeController::class, 'printLabel']);
+});
 
 // Route pour enregistrer un heartbeat de présence sur une intervention
 Route::post('/intervention-heartbeat', function (Request $request) {

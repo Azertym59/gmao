@@ -7,11 +7,218 @@ use App\Models\Dalle;
 use App\Models\Module;
 use App\Models\Printer;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Exception;
 
 class EtiquetteController extends Controller
 {
+    /**
+     * Télécharger une étiquette flightcase au format PDF
+     *
+     * @param int $chantier_id ID du chantier
+     * @param int $flightcase_number Numéro du flightcase
+     * @return \Illuminate\Http\Response
+     */
+    public function downloadFlightcasePdf($chantier_id, $flightcase_number)
+    {
+        // Récupérer le chemin du fichier temporaire depuis la session
+        $tempFile = session('pdf_temp_file_' . $chantier_id . '_' . $flightcase_number);
+        
+        if (!$tempFile || !file_exists($tempFile)) {
+            // Si le fichier n'existe pas, générer un nouveau PDF
+            $chantier = Chantier::with(['client', 'produits', 'produits.dalles'])->findOrFail($chantier_id);
+            
+            // Récupérer toutes les dalles du chantier pour ce flightcase
+            $dalles = [];
+            $totalFlightcases = 0;
+            
+            // Compter le nombre total de flightcases
+            foreach ($chantier->produits as $produit) {
+                foreach ($produit->dalles as $dalle) {
+                    if (isset($dalle->flightcase_number) && !empty($dalle->flightcase_number)) {
+                        if (!in_array($dalle->flightcase_number, $dalles)) {
+                            $totalFlightcases++;
+                        }
+                    }
+                }
+            }
+            
+            // Récupérer les dalles du flightcase spécifié
+            foreach ($chantier->produits as $produit) {
+                foreach ($produit->dalles as $dalle) {
+                    if (isset($dalle->flightcase_number) && $dalle->flightcase_number == $flightcase_number) {
+                        $dalles[] = $dalle;
+                    }
+                }
+            }
+            
+            // Générer le QR code pour le suivi du chantier
+            $qrValue = route('suivi.chantier', $chantier->getTokenSuivi());
+            $qrCode = base64_encode(QrCode::format('png')->size(300)->errorCorrection('H')->margin(1)->generate($qrValue));
+            $qrBase64 = 'data:image/png;base64,' . $qrCode;
+            
+            // Générer le contenu HTML pour le PDF en utilisant le même style que flightcase.blade.php
+            $html = '<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Étiquette Flightcase</title>
+                <style>
+                    @page {
+                        size: 62mm 90mm;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        font-family: Arial, sans-serif;
+                        width: 62mm;
+                        height: 90mm;
+                    }
+                    .etiquette {
+                        width: 62mm;
+                        height: 90mm;
+                        padding: 2mm;
+                        box-sizing: border-box;
+                        overflow: hidden;
+                        position: relative;
+                    }
+                    .header {
+                        text-align: center;
+                        padding-bottom: 1mm;
+                        border-bottom: 1pt solid #000;
+                        margin-bottom: 2mm;
+                    }
+                    .logo {
+                        height: 8mm;
+                        margin-bottom: 1mm;
+                    }
+                    .company {
+                        font-size: 10pt;
+                        font-weight: bold;
+                        margin: 0;
+                    }
+                    .reference {
+                        font-size: 12pt;
+                        font-weight: bold;
+                        color: #cc0000;
+                        margin: 1mm 0;
+                    }
+                    .client {
+                        font-size: 10pt;
+                        margin: 1mm 0;
+                    }
+                    .flightcase-info {
+                        border: 1pt solid #000;
+                        padding: 1mm;
+                        margin: 2mm 0;
+                        font-size: 10pt;
+                        font-weight: bold;
+                        text-align: center;
+                    }
+                    .qrcode-container {
+                        text-align: center;
+                        margin: 3mm 0;
+                    }
+                    .qrcode {
+                        width: 28mm;
+                        height: 28mm;
+                    }
+                    .remarque {
+                        border: 1pt solid #000;
+                        padding: 1mm;
+                        margin-top: 2mm;
+                        min-height: 15mm;
+                    }
+                    .remarque-label {
+                        font-size: 8pt;
+                        font-weight: bold;
+                        margin-bottom: 1mm;
+                    }
+                    .dalles-info {
+                        font-size: 9pt;
+                        margin: 2mm 0;
+                    }
+                    .footer {
+                        position: absolute;
+                        bottom: 2mm;
+                        left: 2mm;
+                        right: 2mm;
+                        font-size: 7pt;
+                        text-align: center;
+                        color: #666;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="etiquette">
+                    <div class="header">
+                        <img src="https://www.tecaled.fr/Logos/Logo%20rectangle%20flag%20repair%20new.png" alt="TecaLED" class="logo">
+                        <p class="company">TECALED GMAO</p>
+                    </div>
+                    
+                    <p class="reference">' . $chantier->reference . '</p>
+                    <p class="client">' . $chantier->client->societe . '</p>
+                    
+                    <div class="flightcase-info">
+                        FLIGHTCASE ' . $flightcase_number . '/' . $totalFlightcases . '
+                    </div>
+                    
+                    <p class="dalles-info">Contient ' . count($dalles) . ' dalle(s)</p>
+                    
+                    <div class="qrcode-container">
+                        <img src="' . $qrBase64 . '" alt="QR Code" class="qrcode">
+                    </div>
+                    
+                    <div class="remarque">
+                        <div class="remarque-label">REMARQUES:</div>
+                    </div>
+                    
+                    <div class="footer">
+                        Scan QR code pour accès au chantier - ' . date('d/m/Y') . '
+                    </div>
+                </div>
+            </body>
+            </html>';
+            
+            // Générer le PDF avec DomPDF
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+            $pdf->setPaper([0, 0, 175.75, 254.65], 'portrait'); // 62mm x 90mm en points (1pt = 0.352778mm)
+            $pdf->setOptions([
+                'dpi' => 300,
+                'defaultFont' => 'sans-serif',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true
+            ]);
+            
+            // Créer un nom de fichier temporaire
+            $tempFile = tempnam(sys_get_temp_dir(), 'label_') . '.pdf';
+            file_put_contents($tempFile, $pdf->output());
+            
+            // Sauvegarder le chemin pour les futurs téléchargements
+            session(['pdf_temp_file_' . $chantier_id . '_' . $flightcase_number => $tempFile]);
+            
+            // Log de l'action
+            Log::info('PDF flightcase généré', [
+                'chantier_id' => $chantier_id,
+                'flightcase_number' => $flightcase_number,
+                'temp_file' => $tempFile,
+                'file_size' => filesize($tempFile)
+            ]);
+        }
+        
+        // Préparer la réponse avec le fichier PDF
+        $filename = 'flightcase_' . $flightcase_number . '_' . date('Ymd') . '.pdf';
+        
+        return response()->file($tempFile, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+        ]);
+    }
     /**
      * Afficher la page d'impression d'étiquette pour un chantier
      *
@@ -55,428 +262,123 @@ class EtiquetteController extends Controller
         // Convertir l'image en base64 pour l'envoyer à PrintNode
         $qrBase64 = base64_encode($qrData);
         
-        try {
-            // Obtenir l'imprimante par défaut ou spécifiée
-            $printer = Printer::where('is_default', true)->first();
-            $printerName = $printer ? $printer->name : 'Brother QL-820NWB';
+        // Création directe d'une image
+        $width = 696;   // 62mm à 300 DPI
+        $height = 1181; // 100mm à 300 DPI
+        
+        $image = imagecreatetruecolor($width, $height);
+        $white = imagecolorallocate($image, 255, 255, 255);
+        $black = imagecolorallocate($image, 0, 0, 0);
+        $red = imagecolorallocate($image, 255, 0, 0);
+        
+        // Remplir l'arrière-plan en blanc
+        imagefill($image, 0, 0, $white);
+        
+        // Dessiner un cadre
+        imagerectangle($image, 0, 0, $width-1, $height-1, $black);
+        
+        // Ajouter le titre
+        imagestring($image, 5, 20, 20, "TECALED GMAO", $black);
+        imagestring($image, 5, 20, 60, "Chantier: " . $chantier->reference, $red);
+        imagestring($image, 4, 20, 100, "Client: " . $chantier->client->societe, $black);
+        
+        // Ajouter le QR code
+        $qrImage = imagecreatefromstring(base64_decode($qrBase64));
+        if ($qrImage) {
+            $qrWidth = imagesx($qrImage);
+            $qrHeight = imagesy($qrImage);
             
-            // Vérifier si on utilise le mode d'impression spécifié dans les options de l'imprimante
-            $printMode = $printer->options['print_mode'] ?? 'raster';
-            Log::info('Mode d\'impression configuré pour la Brother: ' . $printMode, [
-                'printer_name' => $printerName,
-                'printer_id' => $printer->id ?? 'default'
+            imagecopyresampled(
+                $image, $qrImage,
+                ($width - $qrWidth) / 2, 180,
+                0, 0,
+                $qrWidth, $qrHeight,
+                $qrWidth, $qrHeight
+            );
+            
+            imagedestroy($qrImage);
+        }
+        
+        // Ajouter un texte en bas
+        imagestring($image, 3, 20, $height - 40, "Scannez pour details - " . date('d/m/Y'), $black);
+        
+        // Sauvegarder l'image dans un buffer
+        ob_start();
+        imagepng($image);
+        $imageData = ob_get_clean();
+        
+        // Libérer la mémoire
+        imagedestroy($image);
+        
+        // Convertir en base64 pour PrintNode
+        $imageBase64 = base64_encode($imageData);
+        
+        // PrintNode API credentials
+        $apiKey = 'JTDVu0eHs2bXjVOb_HDUKVimF_WechuZM2XuwQAiE04';
+        $printerId = 74188357; // Brother QL-820NWB (Copie 1)
+        
+        try {
+            // Log de l'opération
+            Log::info('Test impression chantier', [
+                'chantier' => $chantier->reference,
+                'taille_base64' => strlen($imageBase64)
             ]);
             
-            // Utilisation directe de brother_ql si disponible
-            if (file_exists('/usr/local/bin/brother_ql') || file_exists('/usr/bin/brother_ql')) {
-                \Log::info('Tentative d\'utilisation directe de brother_ql');
-                
-                // Générer l'image à imprimer
-                $tempImageFile = tempnam(sys_get_temp_dir(), 'brother_ql_') . '.png';
-                
-                // Créer une image pour l'étiquette
-                $width = 696;   // 62mm à 300 DPI
-                $height = 1181; // 100mm à 300 DPI
-                
-                $image = imagecreatetruecolor($width, $height);
-                $white = imagecolorallocate($image, 255, 255, 255);
-                $black = imagecolorallocate($image, 0, 0, 0);
-                $red = imagecolorallocate($image, 255, 0, 0);
-                
-                // Remplir l'arrière-plan en blanc
-                imagefill($image, 0, 0, $white);
-                
-                // Dessiner un cadre
-                imagerectangle($image, 0, 0, $width-1, $height-1, $black);
-                
-                // Ajouter le titre
-                imagestring($image, 5, 20, 20, "TECALED GMAO", $black);
-                imagestring($image, 5, 20, 60, "Chantier: " . $chantier->reference, $red);
-                imagestring($image, 4, 20, 100, "Client: " . $chantier->client->societe, $black);
-                
-                // Ajouter le QR code
-                $qrImage = imagecreatefromstring(base64_decode($qrBase64));
-                if ($qrImage) {
-                    $qrWidth = imagesx($qrImage);
-                    $qrHeight = imagesy($qrImage);
-                    
-                    imagecopyresampled(
-                        $image, $qrImage,
-                        ($width - $qrWidth) / 2, 180,
-                        0, 0,
-                        $qrWidth, $qrHeight,
-                        $qrWidth, $qrHeight
-                    );
-                    
-                    imagedestroy($qrImage);
-                }
-                
-                // Ajouter un texte en bas
-                imagestring($image, 3, 20, $height - 40, "Scannez pour details - " . date('d/m/Y'), $black);
-                
-                // Sauvegarder l'image
-                imagepng($image, $tempImageFile);
-                imagedestroy($image);
-                
-                // Utilisation de la méthode directe pour Brother QL-800 en mode raster
-                // Conformément à la documentation Brother: P-touch Template Command Reference
-
-                // Créer un fichier de commandes raster
-                $rasterCommandFile = tempnam(sys_get_temp_dir(), 'brother_cmd_');
-                
-                // En-tête de commande raster (initialisation) pour QL-800 selon la documentation
-                // ESC @ - Initialize
-                // ESC i a - Switch to raster mode (Mode Selection) - 1 = raster mode
-                // ESC i M - Various mode settings - 0 = default settings
-                // ESC i R - Raster transfer mode setting - 0 = default
-                // ESC i K - Advanced raster command setting - 0 = default
-                // ESC i Q - Page margins (LTRB) - chaque valeur = 0 pour utiliser les marges par défaut
-                $rasterInit = chr(27) . '@' 
-                           . chr(27) . 'i' . 'a' . chr(1)  // Raster Mode
-                           . chr(27) . 'i' . 'M' . chr(0)  // Default Settings
-                           . chr(27) . 'i' . 'R' . chr(0)  // Raster Transfer Mode
-                           . chr(27) . 'i' . 'K' . chr(8)  // Advanced Raster Command (8 = adjusts the print density)
-                           . chr(27) . 'i' . 'Q' . chr(0) . chr(0) . chr(0) . chr(0); // No margins
-                file_put_contents($rasterCommandFile, $rasterInit, FILE_BINARY);
-                
-                // Préparation d'une image binaire spécifique au format Brother
-                // Chargement de l'image originale
-                $originalImage = imagecreatefrompng($tempImageFile);
-                
-                // Récupérer les dimensions
-                $width = imagesx($originalImage);
-                $height = imagesy($originalImage);
-                
-                // Calculer la taille en octets de chaque ligne raster (chaque bit représente un pixel)
-                // Pour une largeur de 696 pixels, cela donne 696/8 = 87 octets par ligne
-                $bytesPerLine = ceil($width / 8);
-                
-                // Créer un buffer pour stocker les données raster
-                $rasterData = "";
-                
-                // Commande pour spécifier les informations de raster
-                // ESC i z - Specify the raster data information
-                // 1st parameter: 0x01 (raster image, 1bpp black/white)
-                // 2-3: Width in bytes (little-endian)
-                // 4-5: Height in pixels (little-endian)
-                $rasterData .= chr(27) . 'i' . 'z' . chr(1) . chr($bytesPerLine & 0xFF) . chr(($bytesPerLine >> 8) & 0xFF) . chr($height & 0xFF) . chr(($height >> 8) & 0xFF);
-                
-                // Convertir l'image en données raster binaires (noir et blanc)
-                for ($y = 0; $y < $height; $y++) {
-                    $lineBits = '';
-                    for ($x = 0; $x < $width; $x += 8) {
-                        $byte = 0;
-                        for ($bit = 0; $bit < 8; $bit++) {
-                            if ($x + $bit < $width) {
-                                $color = imagecolorat($originalImage, $x + $bit, $y);
-                                $r = ($color >> 16) & 0xFF;
-                                $g = ($color >> 8) & 0xFF;
-                                $b = $color & 0xFF;
-                                
-                                // Convertir en noir et blanc (seuil à 127)
-                                $gray = ($r + $g + $b) / 3;
-                                if ($gray < 127) {
-                                    // Pixel noir (1)
-                                    $byte |= (1 << (7 - $bit));
-                                }
-                                // Pixel blanc (0) - déjà 0 par défaut
-                            }
-                        }
-                        $lineBits .= chr($byte);
-                    }
-                    $rasterData .= $lineBits;
-                }
-                
-                // Libérer la mémoire
-                imagedestroy($originalImage);
-                
-                // Ajouter les données raster au fichier de commande
-                file_put_contents($rasterCommandFile, $rasterData, FILE_APPEND | FILE_BINARY);
-                
-                // Commande de coupe (si nécessaire)
-                $cutCommand = chr(27) . 'i' . 'C' . chr(1);
-                file_put_contents($rasterCommandFile, $cutCommand, FILE_APPEND | FILE_BINARY);
-                
-                // Créer un script pour l'envoi des données avec différentes méthodes
-                $scriptFile = tempnam(sys_get_temp_dir(), 'brother_script_');
-                $scriptContent = "#!/bin/bash\n\n";
-                
-                // Informations de débogage
-                $scriptContent .= "echo \"Tentative d'impression QL-800 en mode Raster\"\n";
-                $scriptContent .= "echo \"Taille du fichier: $(wc -c \"$rasterCommandFile\" | awk '{print $1}') octets\"\n\n";
-                
-                // Méthode 1: Connexion directe via socket
-                $scriptContent .= "echo \"Méthode 1: Envoi direct via socket TCP...\"\n";
-                $scriptContent .= "cat \"$rasterCommandFile\" | nc -w 10 " . $printer->ip_address . " " . ($printer->port ?: '9100') . " 2>&1\n";
-                $scriptContent .= "NC_STATUS=$?\n";
-                $scriptContent .= "if [ $NC_STATUS -eq 0 ]; then\n";
-                $scriptContent .= "  echo \"Envoi socket TCP réussi\"\n";
-                $scriptContent .= "  exit 0\n";
-                $scriptContent .= "else\n";
-                $scriptContent .= "  echo \"Échec de l'envoi via socket TCP\"\n";
-                $scriptContent .= "fi\n\n";
-                
-                // Méthode 2: Utiliser lpr avec options raw
-                $scriptContent .= "echo \"Méthode 2: Utilisation de lpr...\"\n";
-                $scriptContent .= "if command -v lpr > /dev/null 2>&1; then\n";
-                $scriptContent .= "  lpr -l -P " . ($printer->queue_name ?: 'BROTHER_QL_SERIES') . " -o raw \"$rasterCommandFile\"\n";
-                $scriptContent .= "  LPR_STATUS=$?\n";
-                $scriptContent .= "  if [ $LPR_STATUS -eq 0 ]; then\n";
-                $scriptContent .= "    echo \"Envoi lpr réussi\"\n";
-                $scriptContent .= "    exit 0\n";
-                $scriptContent .= "  else\n";
-                $scriptContent .= "    echo \"Échec de l'envoi via lpr\"\n";
-                $scriptContent .= "  fi\n";
-                $scriptContent .= "else\n";
-                $scriptContent .= "  echo \"Commande lpr non disponible\"\n";
-                $scriptContent .= "fi\n\n";
-                
-                // Méthode 3: Utiliser curl pour envoyer à l'API REST de l'imprimante
-                $scriptContent .= "echo \"Méthode 3: Tentative via API HTTP...\"\n";
-                $scriptContent .= "if command -v curl > /dev/null 2>&1; then\n";
-                $scriptContent .= "  curl -v --data-binary @\"$rasterCommandFile\" -H \"Content-Type: application/octet-stream\" http://" . $printer->ip_address . "/print\n";
-                $scriptContent .= "  CURL_STATUS=$?\n";
-                $scriptContent .= "  if [ $CURL_STATUS -eq 0 ]; then\n";
-                $scriptContent .= "    echo \"Envoi HTTP réussi\"\n";
-                $scriptContent .= "    exit 0\n";
-                $scriptContent .= "  else\n";
-                $scriptContent .= "    echo \"Échec de l'envoi via HTTP\"\n";
-                $scriptContent .= "  fi\n";
-                $scriptContent .= "else\n";
-                $scriptContent .= "  echo \"Commande curl non disponible\"\n";
-                $scriptContent .= "fi\n\n";
-                
-                // Finalisation du script
-                $scriptContent .= "echo \"Toutes les méthodes ont échoué\"\n";
-                $scriptContent .= "exit 1\n";
-                
-                // Écrire et rendre exécutable le script
-                file_put_contents($scriptFile, $scriptContent);
-                chmod($scriptFile, 0755);
-                
-                // Commande d'exécution du script
-                $command = "$scriptFile";
-                \Log::info('Tentative directe avec données raster spécifiques en mode binaire');
-                
-                // En alternative, essayer aussi brother_ql si disponible
-                $brother_ql_command = "brother_ql --backend network --printer " . $printer->ip_address . ":" . ($printer->port ?: '9100') . " print --label 62 --rotate 0 \"$tempImageFile\" 2>&1";
-                \Log::info('Commande brother_ql alternative: ' . $brother_ql_command);
-                
-                \Log::info('Exécution de la commande directe raster', [
-                    'command' => $command
-                ]);
-                
-                // Exécuter la commande directe
-                exec($command, $output, $returnCode);
-                
-                // Si la commande directe échoue, essayer brother_ql
-                if ($returnCode !== 0 && (file_exists('/usr/local/bin/brother_ql') || file_exists('/usr/bin/brother_ql'))) {
-                    \Log::info('Tentative avec brother_ql après échec direct');
-                    exec($brother_ql_command, $output_brother_ql, $returnCode_brother_ql);
-                    
-                    if ($returnCode_brother_ql === 0) {
-                        $output = $output_brother_ql;
-                        $returnCode = 0; // Considérer comme réussi
-                    }
-                }
-                
-                // Nettoyage
-                @unlink($rasterCommandFile);
-                @unlink($scriptFile);
-                @unlink($tempImageFile);
-                
-                \Log::info('Résultat de brother_ql', [
-                    'output' => $output,
-                    'return_code' => $returnCode
-                ]);
-                
-                if ($returnCode === 0) {
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Étiquette envoyée à l\'impression avec succès (brother_ql)',
-                        'printer' => $printerName
-                    ]);
-                }
-            }
-            
-            // Si brother_ql n'est pas disponible ou a échoué, on continue avec PrintNode
-            Log::info('Utilisation de PrintNode comme fallback');
-            
-            // Configuration de PrintNode
-            $printNodeApiKey = config('printing.printnode_api_key', env('PRINTNODE_API_KEY'));
-            
-            if (!$printNodeApiKey) {
-                throw new \Exception("Clé API PrintNode non configurée. Veuillez ajouter PRINTNODE_API_KEY dans votre fichier .env");
-            }
-            
-            // ID de l'imprimante PrintNode (à configurer dans l'interface de PrintNode)
-            $printNodePrinterId = $printer->printnode_id ?? config('printing.printnode_printer_id', env('PRINTNODE_PRINTER_ID'));
-            
-            if (!$printNodePrinterId) {
-                throw new \Exception("ID de l'imprimante PrintNode non configuré. Veuillez configurer l'imprimante dans PrintNode et ajouter son ID.");
-            }
-            
-            // Préparer l'URL de l'API PrintNode
-            $apiUrl = "https://api.printnode.com/printjobs";
-            
-            // Construction d'un contenu PDF pour l'étiquette Brother DK-22205 (62mm x longueur continue)
-            // Utilisation du HTML existant, converti en PDF compatible avec l'impression d'étiquettes
-            
-            // Créer un PDF réel avec DomPDF
-            $html = view('etiquettes.brother_print', [
-                'chantier' => $chantier,
-                'qrCode' => 'data:image/png;base64,' . $qrBase64
-            ])->render();
-            
-            // Utilisons la méthode "raw_base64" pour envoyer une image simple
-            try {
-                // Générer une image PNG simple
-                $width = 696;   // 62mm à 300 DPI (62 * 11.81 pixels par mm à 300 DPI)
-                $height = 1181; // 100mm à 300 DPI (100 * 11.81)
-                
-                $image = imagecreatetruecolor($width, $height);
-                $white = imagecolorallocate($image, 255, 255, 255);
-                $black = imagecolorallocate($image, 0, 0, 0);
-                $red = imagecolorallocate($image, 255, 0, 0);
-                
-                // Remplir l'arrière-plan en blanc
-                imagefill($image, 0, 0, $white);
-                
-                // Dessiner un cadre noir fin
-                imagerectangle($image, 0, 0, $width-1, $height-1, $black);
-                
-                // Ajouter les informations du chantier
-                $reference = isset($chantier->reference) ? $chantier->reference : 'GMAO-' . str_pad($chantier->id, 3, '0', STR_PAD_LEFT);
-                $clientName = isset($chantier->client) && isset($chantier->client->societe) ? $chantier->client->societe : 'Client';
-                
-                // Ajouter du texte
-                imagestring($image, 5, 20, 20, "TECALED GMAO", $black);
-                imagestring($image, 5, 20, 60, "Chantier: ".$reference, $red);
-                imagestring($image, 4, 20, 100, "Client: ".$clientName, $black);
-                
-                // Convertir la chaine base64 du QR code en image
-                $qrImage = imagecreatefromstring(base64_decode($qrBase64));
-                if ($qrImage) {
-                    // Obtenir les dimensions de l'image QR
-                    $qrWidth = imagesx($qrImage);
-                    $qrHeight = imagesy($qrImage);
-                    
-                    // Copier l'image QR sur l'étiquette (centré horizontalement, aligné en haut)
-                    imagecopyresampled(
-                        $image, $qrImage,
-                        ($width - $qrWidth) / 2, 180,  // Destination x, y (centré)
-                        0, 0,                          // Source x, y (coin supérieur gauche)
-                        $qrWidth, $qrHeight,           // Destination width, height
-                        $qrWidth, $qrHeight            // Source width, height
-                    );
-                    
-                    // Libérer la mémoire
-                    imagedestroy($qrImage);
-                }
-                
-                // Ajouter un texte en bas
-                imagestring($image, 3, 20, $height - 40, "Scannez pour details - " . date('d/m/Y'), $black);
-                
-                // Sauvegarder l'image dans un buffer
-                ob_start();
-                imagepng($image);
-                $imageData = ob_get_clean();
-                
-                // Libérer la mémoire
-                imagedestroy($image);
-                
-                // Sauvegarder l'image dans un fichier temporaire pour débogage
-                $tempImageFile = tempnam(sys_get_temp_dir(), 'debug_img_') . '.png';
-                file_put_contents($tempImageFile, $imageData);
-                \Log::info('Image temporaire générée pour débogage:', ['file' => $tempImageFile]);
-                
-                // Convertir l'image en "raw" (base64) - en utilisant "raw_base64" comme format
-                $rawBase64 = base64_encode($imageData);
-                $contentType = "raw_base64";
-                $pdfBase64 = $rawBase64;
-                
-            } catch (\Exception $e) {
-                // En cas d'erreur, utiliser un PDF minimal
-                \Log::error('Erreur lors de la génération de l\'image:', [
-                    'message' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-                
-                // PDF minimal valide
-                $pdfContent = "%PDF-1.4\n1 0 obj\n<</Type /Catalog /Pages 2 0 R>>\nendobj\n";
-                $pdfContent .= "2 0 obj\n<</Type /Pages /Kids [3 0 R] /Count 1>>\nendobj\n";
-                $pdfContent .= "3 0 obj\n<</Type /Page /Parent 2 0 R /Resources 4 0 R /MediaBox [0 0 234.8 377.9] /Contents 5 0 R>>\nendobj\n";
-                $pdfContent .= "4 0 obj\n<</Font <</F1 <<>>>>>>\nendobj\n";
-                $pdfContent .= "5 0 obj\n<</Length 48>>\nstream\nBT /F1 12 Tf 10 360 Td (Etiquette chantier) Tj ET\nendstream\nendobj\n";
-                $pdfContent .= "xref\n0 6\n0000000000 65535 f\n0000000010 00000 n\n0000000056 00000 n\n0000000111 00000 n\n";
-                $pdfContent .= "0000000212 00000 n\n0000000254 00000 n\ntrailer\n<</Size 6 /Root 1 0 R>>\nstartxref\n352\n%%EOF";
-                $pdfBase64 = base64_encode($pdfContent);
-                $contentType = "pdf_base64";
-                
-                // Écrire le PDF dans un fichier temporaire pour débogage
-                $tempPdfFile = tempnam(sys_get_temp_dir(), 'debug_pdf_') . '.pdf';
-                file_put_contents($tempPdfFile, $pdfContent);
-                \Log::info('PDF de fallback généré pour débogage:', ['file' => $tempPdfFile]);
-            }
-            
-            // Préparer les données pour PrintNode
-            // Créer un job d'impression avec des options encore plus minimales
-            $data = [
-                "printerId" => (int) $printNodePrinterId,
-                "title" => "Étiquette Chantier #" . $chantier->id,
-                "contentType" => $contentType, // "raw_base64" ou "pdf_base64"
-                "content" => $pdfBase64,
+            // Créer le payload pour PrintNode
+            $payload = [
+                "printerId" => (int)$printerId,
+                "title" => "Étiquette Chantier: " . $chantier->reference,
+                "contentType" => "raw_base64",
+                "content" => $imageBase64,
                 "source" => "GMAO TecaLED",
-                // Options minimales pour les imprimantes Brother
                 "options" => [
-                    "paper" => "A4", // Format standard A4
-                    "bin" => null,   // Pas de bac spécifique
-                    "media" => null  // Pas de type de média spécifique
+                    "paper" => "Custom.62x100mm",
+                    "bin" => "dk22205",
+                    "media" => "continuous",
+                    "fit-to-page" => true,
+                    "orientation" => "portrait"
                 ]
             ];
             
-            // Effectuer la requête à l'API PrintNode
-            $ch = curl_init($apiUrl);
+            // Envoyer la requête à l'API PrintNode
+            $ch = curl_init("https://api.printnode.com/printjobs");
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
-                'Authorization: Basic ' . base64_encode($printNodeApiKey . ':')
+                'Authorization: Basic ' . base64_encode($apiKey . ':')
             ]);
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
             
             // Exécuter la requête
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
             
-            // Journaliser la réponse
-            \Log::info('Réponse PrintNode', [
-                'response' => $response,
+            Log::info('Réponse PrintNode', [
                 'http_code' => $httpCode,
-                'chantier_id' => $id
+                'response' => $response
             ]);
             
-            // Traiter la réponse
+            curl_close($ch);
+            
             if ($httpCode >= 200 && $httpCode < 300) {
                 $printJobId = json_decode($response);
-                
                 return response()->json([
                     'success' => true,
                     'message' => 'Étiquette envoyée à l\'impression avec succès',
-                    'printer' => $printerName,
+                    'printer' => 'Brother QL-820NWB (Copie 1)',
                     'print_job_id' => $printJobId
                 ]);
             } else {
-                // En cas d'erreur
-                throw new \Exception("Erreur API PrintNode: " . $response);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur API PrintNode: ' . $response
+                ], 500);
             }
             
         } catch (\Exception $e) {
-            \Log::error('Exception lors de l\'impression PrintNode', [
-                'exception' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'chantier_id' => $id
+            Log::error('Exception lors de l\'impression: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
             ]);
             
             return response()->json([
@@ -582,5 +484,381 @@ class EtiquetteController extends Controller
             'dalleQR' => $dalleQR,
             'chantierQR' => $chantierQR
         ]);
+    }
+    
+    /**
+     * Générer les étiquettes pour les flightcases d'un chantier
+     *
+     * @param int $chantier_id ID du chantier
+     * @return \Illuminate\View\View
+     */
+    public function flightcaseEtiquettes($chantier_id)
+    {
+        // Charger le chantier avec ses relations
+        $chantier = Chantier::with(['client', 'produits', 'produits.dalles'])
+                        ->findOrFail($chantier_id);
+        
+        // Générer le QR code pour le suivi du chantier
+        $qrValue = route('suivi.chantier', $chantier->getTokenSuivi());
+        $qrCode = base64_encode(QrCode::format('png')->size(300)->errorCorrection('H')->margin(1)->generate($qrValue));
+        $qrBase64 = 'data:image/png;base64,' . $qrCode;
+        
+        // Récupérer toutes les dalles du chantier groupées par flightcase
+        $dallesByFlightcase = [];
+        $totalFlightcases = 0;
+        
+        foreach ($chantier->produits as $produit) {
+            foreach ($produit->dalles as $dalle) {
+                // Si la dalle a un numéro de flightcase
+                if (isset($dalle->flightcase_number) && !empty($dalle->flightcase_number)) {
+                    $flightcaseNumber = $dalle->flightcase_number;
+                    
+                    if (!isset($dallesByFlightcase[$flightcaseNumber])) {
+                        $dallesByFlightcase[$flightcaseNumber] = [];
+                        $totalFlightcases++;
+                    }
+                    
+                    $dallesByFlightcase[$flightcaseNumber][] = $dalle;
+                }
+            }
+        }
+        
+        // Si aucun flightcase n'est défini, montrer un message d'erreur ou créer un flightcase par défaut
+        if (empty($dallesByFlightcase)) {
+            // Créer un flightcase par défaut avec toutes les dalles
+            $flightcaseNumber = 1;
+            $dallesByFlightcase[$flightcaseNumber] = [];
+            
+            foreach ($chantier->produits as $produit) {
+                foreach ($produit->dalles as $dalle) {
+                    $dallesByFlightcase[$flightcaseNumber][] = $dalle;
+                }
+            }
+            
+            $totalFlightcases = 1;
+        }
+        
+        // Préparer les données pour les étiquettes
+        $flightcases = [];
+        
+        foreach ($dallesByFlightcase as $flightcaseNumber => $dalles) {
+            $flightcases[] = [
+                'flightcaseNumber' => $flightcaseNumber,
+                'totalFlightcases' => $totalFlightcases,
+                'nbDalles' => count($dalles),
+                'chantier' => $chantier,
+                'qrCode' => $qrBase64
+            ];
+        }
+        
+        // Retourner la vue avec les données
+        return view('etiquettes.flightcase_batch', [
+            'flightcases' => $flightcases,
+            'chantier' => $chantier,
+            'qrCode' => $qrBase64
+        ]);
+    }
+    
+    /**
+     * Imprimer directement une étiquette de flightcase
+     *
+     * @param int $chantier_id ID du chantier
+     * @param int $flightcase_number Numéro du flightcase
+     * @return \Illuminate\Http\Response
+     */
+    public function printFlightcaseEtiquette($chantier_id, $flightcase_number)
+    {
+        // Charger le chantier avec ses relations
+        $chantier = Chantier::with(['client', 'produits', 'produits.dalles'])
+                        ->findOrFail($chantier_id);
+        
+        // Générer le QR code pour le suivi du chantier
+        $qrValue = route('suivi.chantier', $chantier->getTokenSuivi());
+        $qrCode = base64_encode(QrCode::format('png')->size(300)->errorCorrection('H')->margin(1)->generate($qrValue));
+        
+        // Récupérer toutes les dalles du chantier pour ce flightcase
+        $dalles = [];
+        $totalFlightcases = 0;
+        
+        // Compter le nombre total de flightcases
+        foreach ($chantier->produits as $produit) {
+            foreach ($produit->dalles as $dalle) {
+                if (isset($dalle->flightcase_number) && !empty($dalle->flightcase_number)) {
+                    if (!in_array($dalle->flightcase_number, $dalles)) {
+                        $totalFlightcases++;
+                    }
+                }
+            }
+        }
+        
+        // Récupérer les dalles du flightcase spécifié
+        foreach ($chantier->produits as $produit) {
+            foreach ($produit->dalles as $dalle) {
+                if (isset($dalle->flightcase_number) && $dalle->flightcase_number == $flightcase_number) {
+                    $dalles[] = $dalle;
+                }
+            }
+        }
+        
+        // Si aucune dalle n'est trouvée pour ce flightcase, renvoyer une erreur
+        if (empty($dalles)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Aucune dalle trouvée pour ce flightcase'
+            ], 404);
+        }
+        
+        // NOUVELLE APPROCHE: Direct PrintNode API sans dépendances
+        try {
+            // Ajoutons des logs pour déboguer
+            Log::debug('Entrée dans la fonction printFlightcaseEtiquette', [
+                'chantier_id' => $chantier_id,
+                'flightcase_number' => $flightcase_number
+            ]);
+            
+            // Récupérer les informations d'imprimante depuis la configuration et la base de données
+            $apiKey = config('services.printnode.api_key');
+            
+            // TENTATIVE ALTERNATIVE : Essayer d'utiliser une méthode directe Windows
+            // PrintNode rencontre une erreur interne avec le moteur d'impression
+            $printerId = 74188357; // ID de votre Brother QL-820NWB dans PrintNode
+            $printerName = 'Brother QL-820NWB Printer'; // Nom exact dans Windows
+            
+            // Log pour débogage
+            Log::info('Utilisation directe de l\'imprimante', [
+                'printnode_id' => $printerId,
+                'printer_name' => $printerName
+            ]);
+            
+            // Logging pour le diagnostic
+            Log::info('Configuration PrintNode récupérée', [
+                'api_key_set' => !empty($apiKey),
+                'printer_id' => $printerId,
+                'printer_name' => $printerName
+            ]);
+            
+            // Log des informations initiales
+            Log::info('Début impression flightcase', [
+                'chantier' => $chantier->reference,
+                'flightcase' => $flightcase_number,
+                'nb_dalles' => count($dalles)
+            ]);
+            
+            // Création d'une image simple pour l'impression
+            $width = 696;   // 62mm à 300 DPI
+            $height = 1181; // 100mm à 300 DPI
+            
+            $image = imagecreatetruecolor($width, $height);
+            $white = imagecolorallocate($image, 255, 255, 255);
+            $black = imagecolorallocate($image, 0, 0, 0);
+            $red = imagecolorallocate($image, 255, 0, 0);
+            
+            // Remplir l'arrière-plan en blanc
+            imagefill($image, 0, 0, $white);
+            
+            // Dessiner un cadre
+            imagerectangle($image, 0, 0, $width-1, $height-1, $black);
+            
+            // Ajouter le titre et informations
+            imagestring($image, 5, 20, 20, "TECALED GMAO", $black);
+            imagestring($image, 5, 20, 60, "Chantier: ".$chantier->reference, $red);
+            imagestring($image, 4, 20, 100, "Client: ".$chantier->client->societe, $black);
+            imagestring($image, 4, 20, 140, "FLIGHTCASE {$flightcase_number}/{$totalFlightcases}", $black);
+            imagestring($image, 4, 20, 170, "Contient " . count($dalles) . " dalle(s)", $black);
+            
+            // Ajouter le QR code (déjà généré plus haut)
+            $qrImage = imagecreatefromstring(base64_decode($qrCode));
+            if ($qrImage) {
+                $qrWidth = imagesx($qrImage);
+                $qrHeight = imagesy($qrImage);
+                
+                imagecopyresampled(
+                    $image, $qrImage,
+                    ($width - $qrWidth) / 2, 220,
+                    0, 0,
+                    $qrWidth, $qrHeight,
+                    $qrWidth, $qrHeight
+                );
+                
+                imagedestroy($qrImage);
+            }
+            
+            // Ajouter un texte en bas
+            imagestring($image, 3, 20, $height - 40, "Scannez pour details - " . date('d/m/Y'), $black);
+            
+            // Convertir l'image en PNG puis en base64 pour l'intégrer dans un HTML
+            ob_start();
+            imagepng($image);
+            $imageData = ob_get_clean();
+            imagedestroy($image);
+            
+            $imageBase64InHtml = 'data:image/png;base64,' . base64_encode($imageData);
+            
+            // Utiliser DomPDF (déjà disponible dans Laravel) pour créer un PDF
+            $html = '<!DOCTYPE html>
+                <html>
+                <head>
+                    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+                    <style>
+                        @page {
+                            margin: 0;
+                            padding: 0;
+                            size: 62mm 100mm;
+                        }
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            width: 62mm;
+                            height: 100mm;
+                        }
+                        img {
+                            width: 62mm;
+                            height: 100mm;
+                            object-fit: cover;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <img src="' . $imageBase64InHtml . '" alt="Flightcase Label" />
+                </body>
+                </html>';
+            
+            // Générer le PDF avec DomPDF
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+            $pdf->setPaper([0, 0, 175.75, 283.46], 'portrait'); // 62mm x 100mm en points
+            $pdf->setOptions([
+                'dpi' => 300,
+                'defaultFont' => 'sans-serif',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true
+            ]);
+            
+            // Récupérer le contenu du PDF
+            $pdfContent = $pdf->output();
+            
+            // Encodage en base64 pour PrintNode
+            $imageBase64 = base64_encode($pdfContent);
+            
+            Log::debug('PDF généré pour l\'impression', [
+                'taille_pdf' => strlen($pdfContent),
+                'taille_base64' => strlen($imageBase64)
+            ]);
+            
+            Log::info('Image générée pour flightcase', [
+                'taille_base64' => strlen($imageBase64)
+            ]);
+            
+            // Essayer avec du texte brut comme alternative
+            $rawText = "TECALED GMAO\n";
+            $rawText .= "Chantier: " . $chantier->reference . "\n";
+            $rawText .= "Client: " . $chantier->client->societe . "\n";
+            $rawText .= "FLIGHTCASE {$flightcase_number}/{$totalFlightcases}\n";
+            $rawText .= "Contient " . count($dalles) . " dalle(s)\n";
+            $rawText .= "Date: " . date('d/m/Y') . "\n";
+            
+            // Créer le payload PrintNode pour format texte brut
+            $payload = [
+                "printerId" => (int)$printerId,
+                "title" => "Étiquette Flightcase #{$flightcase_number} - Texte simple",
+                "contentType" => "raw_base64",
+                "content" => base64_encode($rawText),
+                "source" => "GMAO TecaLED"
+            ];
+            
+            // Alternatif: essayer avec PNG direct
+            if (isset($_GET['png'])) {
+                // Utiliser le PNG directement comme alternative
+                $payload = [
+                    "printerId" => (int)$printerId,
+                    "title" => "Étiquette Flightcase #{$flightcase_number} - PNG",
+                    "contentType" => "png_base64",
+                    "content" => base64_encode($imageData),
+                    "source" => "GMAO TecaLED"
+                ];
+            }
+            
+            // Log du payload pour débogage
+            Log::debug('Payload PrintNode', [
+                'printerId' => (int)$printerId, 
+                'content_size' => isset($imageBase64) ? strlen($imageBase64) : 0,
+                'content_type' => $payload['contentType'],
+                'raw_text_length' => isset($rawText) ? strlen($rawText) : 0
+            ]);
+            
+            // Méthode alternative : Créer un fichier PDF local et l'ouvrir avec Acrobat Reader
+            try {
+                // Créer un nom de fichier temporaire pour le PDF
+                $tempFile = tempnam(sys_get_temp_dir(), 'label_') . '.pdf';
+                
+                // Générer le contenu HTML pour le PDF
+                $html = '<!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>Étiquette Flightcase</title>
+                    <style>
+                        @page { size: 62mm 100mm; margin: 0; }
+                        body { font-family: Arial, sans-serif; font-size: 10pt; margin: 2mm; }
+                        .title { font-size: 12pt; font-weight: bold; text-align: center; margin-bottom: 3mm; }
+                        .info { margin: 2mm 0; }
+                        .reference { font-size: 14pt; font-weight: bold; color: #cc0000; }
+                        .box { border: 1px solid #000; padding: 2mm; margin: 2mm 0; text-align: center; }
+                    </style>
+                </head>
+                <body>
+                    <div class="title">TECALED GMAO</div>
+                    <div class="reference">' . $chantier->reference . '</div>
+                    <div class="info">Client: ' . $chantier->client->societe . '</div>
+                    <div class="box">FLIGHTCASE ' . $flightcase_number . '/' . $totalFlightcases . '</div>
+                    <div class="info">Contient ' . count($dalles) . ' dalle(s)</div>
+                    <div>Date: ' . date('d/m/Y') . '</div>
+                </body>
+                </html>';
+                
+                // Générer le PDF avec DomPDF
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+                $pdf->setPaper([0, 0, 175.75, 283.46], 'portrait'); // 62mm x 100mm en points
+                $pdf->setOptions(['dpi' => 300]);
+                
+                // Enregistrer le PDF dans un fichier temporaire
+                file_put_contents($tempFile, $pdf->output());
+                
+                // Log de l'action
+                Log::info('Fichier PDF créé', [
+                    'tempFile' => $tempFile,
+                    'filesize' => filesize($tempFile)
+                ]);
+                
+                // Sauvegarder le chemin du fichier pour le téléchargement
+                session(['pdf_temp_file_' . $chantier->id . '_' . $flightcase_number => $tempFile]);
+                
+                // Demande de lancer le processus d'impression via le navigateur
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Étiquette flightcase générée - Utilisez l\'option d\'impression manuelle',
+                    'action' => 'print_pdf',
+                    'pdf_url' => url('/chantiers/' . $chantier->id . '/flightcase-etiquettes/' . $flightcase_number . '/download'),
+                    'tempFile' => basename($tempFile)
+                ]);
+            } catch (Exception $e) {
+                Log::error('Erreur lors de la création du PDF', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                throw $e;
+            }
+            
+        } catch (Exception $e) {
+            Log::error('Exception lors de l\'impression d\'étiquette flightcase', [
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'impression: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

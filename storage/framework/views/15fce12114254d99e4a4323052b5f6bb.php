@@ -1,7 +1,7 @@
 <?php $attributes ??= new \Illuminate\View\ComponentAttributeBag;
 
 $__newAttributes = [];
-$__propNames = \Illuminate\View\ComponentAttributeBag::extractPropNames((['tag' => 'button', 'href' => '#', 'color' => 'primary']));
+$__propNames = \Illuminate\View\ComponentAttributeBag::extractPropNames((['tag' => 'button', 'href' => '#']));
 
 foreach ($attributes->all() as $__key => $__value) {
     if (in_array($__key, $__propNames)) {
@@ -16,7 +16,7 @@ $attributes = new \Illuminate\View\ComponentAttributeBag($__newAttributes);
 unset($__propNames);
 unset($__newAttributes);
 
-foreach (array_filter((['tag' => 'button', 'href' => '#', 'color' => 'primary']), 'is_string', ARRAY_FILTER_USE_KEY) as $__key => $__value) {
+foreach (array_filter((['tag' => 'button', 'href' => '#']), 'is_string', ARRAY_FILTER_USE_KEY) as $__key => $__value) {
     $$__key = $$__key ?? $__value;
 }
 
@@ -28,18 +28,14 @@ foreach ($attributes->all() as $__key => $__value) {
 
 unset($__defined_vars); ?>
 
-<?php
-    $buttonClass = 'btn-action btn-' . $color;
-?>
-
 <?php if($tag === 'a'): ?>
-<a href="<?php echo e($href); ?>" <?php echo e($attributes->merge(['class' => $buttonClass])); ?>>
+<a href="<?php echo e($href); ?>" <?php echo e($attributes->merge(['class' => 'btn-primary'])); ?>>
     <?php echo e($slot); ?>
 
 </a>
 <?php else: ?>
-<button <?php echo e($attributes->merge(['type' => 'button', 'class' => $buttonClass])); ?>>
+<button <?php echo e($attributes->merge(['type' => 'submit', 'class' => 'btn-primary'])); ?>>
     <?php echo e($slot); ?>
 
 </button>
-<?php endif; ?><?php /**PATH /var/www/gmao/resources/views/components/action-button.blade.php ENDPATH**/ ?>
+<?php endif; ?><?php /**PATH /var/www/gmao/resources/views/components/primary-button.blade.php ENDPATH**/ ?>
